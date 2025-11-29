@@ -1,0 +1,455 @@
+// NotificationsPage.jsx
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+export default function NotificationsPage({ palette }) {
+  const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
+
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "New Mock Exam Available",
+      message: "Civil Service Mock Exam #15 is now live! Test your knowledge with 100 new questions covering all major topics.",
+      type: "New Content",
+      status: "Published",
+      publishedDate: "Today at 10:00 AM",
+      recipients: "All Users",
+      views: 1247,
+    },
+    {
+      id: 2,
+      title: "System Maintenance Scheduled",
+      message: "Scheduled maintenance on Sunday, December 1st from 2:00 AM to 4:00 AM. The system will be temporarily unavailable.",
+      type: "Maintenance",
+      status: "Scheduled",
+      publishedDate: "Dec 1, 2024 at 2:00 AM",
+      recipients: "All Users",
+      views: 892,
+    },
+    {
+      id: 3,
+      title: "AI Feature Update",
+      message: "Our AI question generator has been improved! Experience better question quality and faster generation times.",
+      type: "Update",
+      status: "Published",
+      publishedDate: "Yesterday at 3:00 PM",
+      recipients: "All Users",
+      views: 1534,
+    },
+  ]);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingNotification, setEditingNotification] = useState(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    message: "",
+    type: "Announcement",
+    status: "Draft",
+    recipients: "All Users",
+  });
+
+  const notificationTypes = ["Announcement", "New Content", "Maintenance", "Update", "Reminder"];
+
+  const handleCreateNotification = () => {
+    setEditingNotification(null);
+    setFormData({
+      title: "",
+      message: "",
+      type: "Announcement",
+      status: "Draft",
+      recipients: "All Users",
+    });
+    setShowCreateModal(true);
+  };
+
+  const handleEditNotification = (notification) => {
+    setEditingNotification(notification);
+    setFormData(notification);
+    setShowCreateModal(true);
+  };
+
+  const handleSaveNotification = () => {
+    if (editingNotification) {
+      setNotifications(notifications.map(n => 
+        n.id === editingNotification.id ? { ...formData, id: n.id, views: n.views } : n
+      ));
+    } else {
+      const newNotification = {
+        ...formData,
+        id: Date.now(),
+        publishedDate: formData.status === "Published" ? "Just now" : "Not published",
+        views: 0,
+      };
+      setNotifications([newNotification, ...notifications]);
+    }
+    setShowCreateModal(false);
+  };
+
+  const handleDeleteNotification = (id) => {
+    if (window.confirm("Are you sure you want to delete this notification?")) {
+      setNotifications(notifications.filter(n => n.id !== id));
+    }
+  };
+
+  const handlePublishNotification = (id) => {
+    setNotifications(notifications.map(n => 
+      n.id === id ? { ...n, status: "Published", publishedDate: "Just now" } : n
+    ));
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case "New Content": return successColor;
+      case "Maintenance": return warningColor;
+      case "Update": return primaryGradientFrom;
+      case "Reminder": return primaryGradientTo;
+      default: return primaryGradientFrom;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Published": return successColor;
+      case "Scheduled": return warningColor;
+      case "Draft": return secondaryText;
+      default: return secondaryText;
+    }
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case "New Content": return "fa-file-alt";
+      case "Maintenance": return "fa-tools";
+      case "Update": return "fa-sync";
+      case "Reminder": return "fa-clock";
+      default: return "fa-bell";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: "Total Notifications", value: notifications.length.toString(), icon: "fa-bell", color: primaryGradientFrom },
+          { label: "Published", value: notifications.filter(n => n.status === "Published").length.toString(), icon: "fa-check-circle", color: successColor },
+          { label: "Total Views", value: notifications.reduce((sum, n) => sum + n.views, 0).toString(), icon: "fa-eye", color: primaryGradientTo },
+          { label: "Drafts", value: notifications.filter(n => n.status === "Draft").length.toString(), icon: "fa-file", color: warningColor },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-6 rounded-2xl"
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${borderColor}`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${stat.color}20` }}
+              >
+                <i className={`fas ${stat.icon} text-xl`} style={{ color: stat.color }}></i>
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold mb-1" style={{ color: textColor }}>{stat.value}</h3>
+            <p className="text-sm" style={{ color: secondaryText }}>{stat.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Create Button */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold mb-1" style={{ color: textColor }}>Manage Notifications</h2>
+          <p style={{ color: secondaryText }}>Send announcements and reminders to all users</p>
+        </div>
+        <button
+          onClick={handleCreateNotification}
+          className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
+          style={{
+            background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
+            color: "#fff",
+            boxShadow: isDark ? "0 4px 12px rgba(59,130,246,0.3)" : "0 4px 12px rgba(59,130,246,0.2)",
+          }}
+        >
+          <i className="fas fa-plus"></i>
+          Create Notification
+        </button>
+      </div>
+
+      {/* Notifications List */}
+      <div className="space-y-4">
+        {notifications.map((notification) => (
+          <motion.div
+            key={notification.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-6 rounded-2xl"
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${borderColor}`,
+              boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${getTypeColor(notification.type)}20` }}
+                >
+                  <i
+                    className={`fas ${getTypeIcon(notification.type)} text-xl`}
+                    style={{ color: getTypeColor(notification.type) }}
+                  ></i>
+                </div>
+
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        backgroundColor: `${getStatusColor(notification.status)}20`,
+                        color: getStatusColor(notification.status),
+                      }}
+                    >
+                      {notification.status}
+                    </span>
+                    <span
+                      className="px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        backgroundColor: `${getTypeColor(notification.type)}20`,
+                        color: getTypeColor(notification.type),
+                      }}
+                    >
+                      {notification.type}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-bold mb-2" style={{ color: textColor }}>
+                    {notification.title}
+                  </h3>
+                  <p className="text-sm mb-3" style={{ color: secondaryText }}>
+                    {notification.message}
+                  </p>
+
+                  <div className="flex items-center gap-4 text-sm" style={{ color: secondaryText }}>
+                    <span><i className="fas fa-users mr-1"></i>{notification.recipients}</span>
+                    <span><i className="fas fa-clock mr-1"></i>{notification.publishedDate}</span>
+                    {notification.status === "Published" && (
+                      <span><i className="fas fa-eye mr-1"></i>{notification.views} views</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {notification.status === "Draft" && (
+                  <button
+                    onClick={() => handlePublishNotification(notification.id)}
+                    className="px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: `${successColor}20`,
+                      color: successColor,
+                    }}
+                  >
+                    <i className="fas fa-paper-plane mr-2"></i>
+                    Publish
+                  </button>
+                )}
+                <button
+                  onClick={() => handleEditNotification(notification)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                  style={{
+                    backgroundColor: `${primaryGradientFrom}20`,
+                    color: primaryGradientFrom,
+                  }}
+                >
+                  <i className="fas fa-edit"></i>
+                </button>
+                <button
+                  onClick={() => handleDeleteNotification(notification.id)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                  style={{
+                    backgroundColor: `${errorColor}20`,
+                    color: errorColor,
+                  }}
+                >
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Create/Edit Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowCreateModal(false)}
+          >
+            <motion.div
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+              style={{ backgroundColor: cardBg }}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold" style={{ color: textColor }}>
+                  {editingNotification ? "Edit Notification" : "Create New Notification"}
+                </h3>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
+                >
+                  <i className="fas fa-times" style={{ color: textColor }}></i>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Notification Title</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border outline-none"
+                    style={{
+                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+                      borderColor,
+                      color: textColor,
+                    }}
+                    placeholder="e.g., New Mock Exam Available"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Message</label>
+                  <textarea
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    rows="4"
+                    className="w-full px-4 py-3 rounded-xl border outline-none resize-none"
+                    style={{
+                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+                      borderColor,
+                      color: textColor,
+                    }}
+                    placeholder="Enter your notification message..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Type</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border outline-none"
+                      style={{
+                        backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+                        borderColor,
+                        color: textColor,
+                      }}
+                    >
+                      {notificationTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border outline-none"
+                      style={{
+                        backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+                        borderColor,
+                        color: textColor,
+                      }}
+                    >
+                      <option value="Draft">Save as Draft</option>
+                      <option value="Published">Publish Immediately</option>
+                      <option value="Scheduled">Schedule for Later</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Recipients</label>
+                  <select
+                    value={formData.recipients}
+                    onChange={(e) => setFormData({ ...formData, recipients: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border outline-none"
+                    style={{
+                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+                      borderColor,
+                      color: textColor,
+                    }}
+                  >
+                    <option value="All Users">All Users</option>
+                    <option value="Active Users">Active Users Only</option>
+                    <option value="Inactive Users">Inactive Users Only</option>
+                  </select>
+                </div>
+
+                <div
+                  className="p-4 rounded-xl"
+                  style={{ backgroundColor: `${warningColor}10`, border: `1px solid ${warningColor}30` }}
+                >
+                  <div className="flex items-start gap-3">
+                    <i className="fas fa-info-circle mt-0.5" style={{ color: warningColor }}></i>
+                    <div>
+                      <p className="text-sm font-semibold mb-1" style={{ color: textColor }}>
+                        Note about Publishing
+                      </p>
+                      <p className="text-xs" style={{ color: secondaryText }}>
+                        Publishing a notification will immediately send it to all selected recipients. This action cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleSaveNotification}
+                    className="flex-1 py-3 rounded-xl font-semibold transition-all hover:scale-105"
+                    style={{
+                      background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
+                      color: "#fff",
+                    }}
+                  >
+                    {editingNotification ? "Update Notification" : "Create Notification"}
+                  </button>
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                      color: textColor,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -1,0 +1,301 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { BookOpen, TrendingUp, Bookmark } from "lucide-react";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { getUserQuestionStats } from "../../services/questionBankService";
+import { getAllBookmarks } from "../../services/bookmarkService";
+
+export default function QuestionBankStats({ theme = "light" }) {
+  const isDark = theme === "dark";
+  const [stats, setStats] = useState(null);
+  const [bookmarkedCount, setBookmarkedCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real user stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [userStats, bookmarks] = await Promise.all([
+          getUserQuestionStats(),
+          getAllBookmarks()
+        ]);
+        
+        setStats(userStats);
+        setBookmarkedCount(bookmarks.length || 0);
+      } catch (error) {
+        console.error('Failed to load question bank stats:', error);
+        setStats({ mastered: 0, learning: 0, needsReview: 0, total: 0, totalAvailable: 0 });
+        setBookmarkedCount(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // ✅ ALWAYS show all 4 categories (including Bookmarked)
+  const chartData = stats ? [
+    { name: "Mastered", value: stats.mastered || 0 },
+    { name: "Learning", value: stats.learning || 0 },
+    { name: "Needs Review", value: stats.needsReview || 0 },
+    { name: "Bookmarked", value: bookmarkedCount || 0 },
+  ] : [];
+
+  const COLORS = [
+    { gradient: "from-blue-500 to-cyan-400", solid: "#3b82f6", glow: "rgba(59, 130, 246, 0.6)" },
+    { gradient: "from-green-500 to-emerald-400", solid: "#10b981", glow: "rgba(16, 185, 129, 0.6)" },
+    { gradient: "from-orange-500 to-amber-400", solid: "#f59e0b", glow: "rgba(245, 158, 11, 0.6)" },
+    { gradient: "from-pink-500 to-red-400", solid: "#ec4899", glow: "rgba(236, 72, 153, 0.6)" },
+  ];
+
+  // Calculate mastery percentage
+  const masteryPercentage = stats && stats.total > 0 
+    ? Math.round((stats.mastered / stats.total) * 100) 
+    : 0;
+
+  // ✅ Check if we have ANY data at all
+  const hasAnyData = chartData.some(item => item.value > 0);
+
+  if (loading) {
+    return (
+      <div className={`${isDark ? "bg-gray-900/60" : "bg-white"} backdrop-blur-xl rounded-2xl p-6 shadow-lg border ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-700 rounded w-1/2"></div>
+          <div className="h-48 bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className={`${
+        isDark ? "bg-gray-900/60" : "bg-white"
+      } backdrop-blur-xl rounded-2xl p-6 shadow-lg border ${
+        isDark ? "border-gray-800" : "border-gray-200"
+      } transition-all duration-500`}
+    >
+      {/* Header */}
+      <div className="mb-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div
+            className={`w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${
+              isDark ? "shadow-blue-500/40" : "shadow-blue-500/20"
+            }`}
+          >
+            <BookOpen className="text-white" size={20} />
+          </div>
+          <h2 className={`text-xl font-bold ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+            Question Bank Stats
+          </h2>
+        </div>
+        <p className={`ml-12 text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+          Track your learning progress across all categories
+        </p>
+      </div>
+
+      {/* Chart + Legend */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+        {/* Pie Chart */}
+        <div
+          className={`relative flex items-center justify-center p-4 rounded-xl ${
+            isDark
+              ? "bg-gray-800 border border-gray-700"
+              : "bg-gray-50 border border-gray-200"
+          } transition-all duration-500`}
+        >
+          {isDark && (
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
+          )}
+          
+          {hasAnyData ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <defs>
+                  {COLORS.map((color, idx) => (
+                    <linearGradient key={idx} id={`gradient-${idx}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={color.solid} stopOpacity={1} />
+                      <stop offset="100%" stopColor={color.solid} stopOpacity={0.7} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <Pie
+                  data={chartData.filter(item => item.value > 0)}
+                  dataKey="value"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={65}
+                  innerRadius={40}
+                  paddingAngle={3}
+                >
+                  {chartData.filter(item => item.value > 0).map((entry, index) => {
+                    const originalIndex = chartData.findIndex(item => item.name === entry.name);
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={`url(#gradient-${originalIndex})`}
+                        stroke={isDark ? "#111827" : "#ffffff"}
+                        strokeWidth={2}
+                        style={{
+                          filter: isDark
+                            ? `drop-shadow(0 0 6px ${COLORS[originalIndex].glow})`
+                            : "none"
+                        }}
+                      />
+                    );
+                  })}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDark ? "rgba(31,41,55,0.95)" : "#ffffff",
+                    border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                  }}
+                  itemStyle={{
+                    color: isDark ? "#f3f4f6" : "#111827",
+                    fontSize: "13px",
+                    fontWeight: 600
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-8">
+              <BookOpen className={`w-12 h-12 mx-auto mb-2 ${isDark ? "text-gray-700" : "text-gray-300"}`} />
+              <p className={`text-sm ${isDark ? "text-gray-500" : "text-gray-600"}`}>
+                No questions attempted yet
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Legend - ✅ ALWAYS SHOW ALL 4 CATEGORIES */}
+        <div className="space-y-2">
+          {chartData.map((stat, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + idx * 0.05 }}
+              className={`flex items-center justify-between p-3 rounded-lg ${
+                isDark
+                  ? "bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors"
+                  : "bg-white border border-gray-200 shadow-sm"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {stat.name === "Bookmarked" ? (
+                  <Bookmark 
+                    className="w-4 h-4 text-pink-500" 
+                    fill="currentColor"
+                    style={{
+                      filter: isDark ? "drop-shadow(0 0 4px rgba(236, 72, 153, 0.6))" : "none"
+                    }}
+                  />
+                ) : (
+                  <div
+                    className={`w-4 h-4 rounded-md bg-gradient-to-br ${COLORS[idx].gradient}`}
+                    style={{
+                      boxShadow: isDark ? `0 0 8px ${COLORS[idx].glow}` : "none"
+                    }}
+                  />
+                )}
+                <span
+                  className={`text-sm font-semibold ${
+                    isDark ? "text-gray-200" : "text-gray-700"
+                  }`}
+                >
+                  {stat.name}
+                </span>
+              </div>
+              <span
+                className={`text-lg font-bold bg-gradient-to-r ${COLORS[idx].gradient} bg-clip-text text-transparent`}
+              >
+                {stat.value}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Total Available Questions Section - NEW */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className={`mt-5 pt-4 border-t ${isDark ? "border-gray-800" : "border-gray-200"}`}
+      >
+        <div
+          className={`flex items-center justify-between p-4 py-2 rounded-xl ${
+            isDark
+              ? "bg-gray-800 border border-gray-700"
+              : "bg-gradient-to-r from-blue-50 via-cyan-50 to-teal-50 border border-blue-200"
+          }`}
+        >
+          <div>
+            <span
+              className={`text-xs font-semibold uppercase tracking-wider ${
+                isDark ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
+              Total Available Questions
+            </span>
+            <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+              Questions in database
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+              {stats?.totalAvailable || 0}
+            </span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Total Questions Attempted Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="mt-3"
+      >
+        <div
+          className={`flex items-center justify-between p-4 py-2 rounded-xl ${
+            isDark
+              ? "bg-gray-800 border border-gray-700"
+              : "bg-gradient-to-r from-purple-50 via-pink-50 to-rose-50 border border-purple-200"
+          }`}
+        >
+          <div>
+            <span
+              className={`text-xs font-semibold uppercase tracking-wider ${
+                isDark ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
+              Total Questions Attempted
+            </span>
+            <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+              Across all categories
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+              {stats?.total || 0}
+            </span>
+            <div className="flex items-center gap-1 justify-end mt-1">
+              <TrendingUp className="w-3 h-3 text-green-500" />
+              <span className="text-xs text-green-500 font-semibold">
+                {masteryPercentage}% Mastered
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
