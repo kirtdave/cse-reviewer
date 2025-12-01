@@ -8,9 +8,10 @@ const SummaryPanel = ({
   timeLimit,
   categories,
   file,
+  printExam,
   handleStartExam,
-  isGenerating, 
-}) => {
+  isGenerating,
+}) => { 
   const isDark = theme === "dark";
   const navigate = useNavigate();
 
@@ -81,6 +82,21 @@ const SummaryPanel = ({
                 ))}
             </div>
           </div>
+
+          {/* ✅ NEW: Print Status Display */}
+          {printExam && (
+            <div className={`pt-4 border-t ${isDark ? "border-gray-700/50" : "border-gray-300/50"}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <i className="fa-solid fa-print text-purple-500"></i>
+                <p className={`text-xs font-semibold uppercase tracking-wide ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  Print Enabled
+                </p>
+              </div>
+              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                Questionnaire will download after test generation
+              </p>
+            </div>
+          )}
 
           {file && (
             <div className={`pt-4 border-t ${isDark ? "border-gray-700/50" : "border-gray-300/50"}`}>

@@ -1,67 +1,41 @@
 // MessagesPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getMessages, markMessageAsRead, deleteMessage, replyToMessage } from "../../services/adminApi";
 
 export default function MessagesPage({ palette }) {
   const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "John Doe",
-      email: "john@example.com",
-      subject: "Question about mock exam scheduling",
-      message: "Hello admin, I was wondering when the next mock exam will be available? I'm preparing for the upcoming CSE and would like to practice more.",
-      status: "Unread",
-      priority: "Normal",
-      receivedDate: "2 hours ago",
-      avatar: "J",
-    },
-    {
-      id: 2,
-      sender: "Jane Smith",
-      email: "jane@example.com",
-      subject: "Technical issue with AI-generated questions",
-      message: "I'm experiencing issues with the AI question generator. It keeps showing an error message. Can you please help?",
-      status: "Unread",
-      priority: "Urgent",
-      receivedDate: "5 hours ago",
-      avatar: "J",
-    },
-    {
-      id: 3,
-      sender: "Mike Johnson",
-      email: "mike@example.com",
-      subject: "Feedback on the platform",
-      message: "I just wanted to say thank you for this amazing platform! The AI features are really helpful. Keep up the great work!",
-      status: "Read",
-      priority: "Normal",
-      receivedDate: "1 day ago",
-      avatar: "M",
-    },
-    {
-      id: 4,
-      sender: "Sarah Williams",
-      email: "sarah@example.com",
-      subject: "Request for additional study materials",
-      message: "Could you please add more resources for the Analytical Ability section? I find the current materials a bit limited.",
-      status: "Read",
-      priority: "Normal",
-      receivedDate: "2 days ago",
-      avatar: "S",
-    },
-  ]);
-
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterPriority, setFilterPriority] = useState("All");
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState("");
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
 
-  const filteredMessages = messages.filter((msg) => {
-    const matchesStatus = filterStatus === "All" || msg.status === filterStatus;
-    const matchesPriority = filterPriority === "All" || msg.priority === filterPriority;
-    return matchesStatus && matchesPriority;
-  });
+  useEffect(() => {
+    fetchMessages();
+  }, [pagination.page, filterStatus, filterPriority]);
+
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+      const data = await getMessages({
+        page: pagination.page,
+        limit: pagination.limit,
+        status: filterStatus,
+        priority: filterPriority
+      });
+      
+      setMessages(data.messages);
+      setPagination(prev => ({ ...prev, ...data.pagination }));
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     return status === "Unread" ? errorColor : successColor;
@@ -71,39 +45,57 @@ export default function MessagesPage({ palette }) {
     return priority === "Urgent" ? errorColor : primaryGradientFrom;
   };
 
-  const handleMarkAsRead = (messageId) => {
-    setMessages(messages.map(msg => 
-      msg.id === messageId ? { ...msg, status: "Read" } : msg
-    ));
-  };
-
-  const handleDeleteMessage = (messageId) => {
-    if (window.confirm("Are you sure you want to delete this message?")) {
-      setMessages(messages.filter(msg => msg.id !== messageId));
-      setSelectedMessage(null);
+  const handleMarkAsRead = async (messageId) => {
+    try {
+      await markMessageAsRead(messageId);
+      setMessages(messages.map(msg => 
+        msg.id === messageId ? { ...msg, status: "Read" } : msg
+      ));
+    } catch (error) {
+      console.error('Error marking message as read:', error);
     }
   };
 
-  const handleSendReply = () => {
+  const handleDeleteMessage = async (messageId) => {
+    if (window.confirm("Are you sure you want to delete this message?")) {
+      try {
+        await deleteMessage(messageId);
+        setSelectedMessage(null);
+        fetchMessages();
+      } catch (error) {
+        console.error('Error deleting message:', error);
+        alert('Failed to delete message');
+      }
+    }
+  };
+
+  const handleSendReply = async () => {
     if (replyText.trim()) {
-      alert(`Reply sent to ${selectedMessage.sender}: ${replyText}`);
-      setReplyText("");
-      handleMarkAsRead(selectedMessage.id);
-      setSelectedMessage(null);
+      try {
+        await replyToMessage(selectedMessage.id, replyText);
+        alert(`Reply sent successfully to ${selectedMessage.sender}`);
+        setReplyText("");
+        handleMarkAsRead(selectedMessage.id);
+        setSelectedMessage(null);
+      } catch (error) {
+        console.error('Error sending reply:', error);
+        alert('Failed to send reply');
+      }
     }
   };
 
   const unreadCount = messages.filter(msg => msg.status === "Unread").length;
+  const urgentCount = messages.filter(m => m.priority === "Urgent").length;
 
   return (
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Messages", value: messages.length.toString(), icon: "fa-envelope", color: primaryGradientFrom },
+          { label: "Total Messages", value: pagination.total.toString(), icon: "fa-envelope", color: primaryGradientFrom },
           { label: "Unread", value: unreadCount.toString(), icon: "fa-envelope-open", color: errorColor },
           { label: "Read", value: (messages.length - unreadCount).toString(), icon: "fa-check", color: successColor },
-          { label: "Urgent", value: messages.filter(m => m.priority === "Urgent").length.toString(), icon: "fa-exclamation-circle", color: warningColor },
+          { label: "Urgent", value: urgentCount.toString(), icon: "fa-exclamation-circle", color: warningColor },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -143,7 +135,10 @@ export default function MessagesPage({ palette }) {
             <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Status</label>
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
               className="w-full px-4 py-2.5 rounded-xl border outline-none"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
@@ -160,7 +155,10 @@ export default function MessagesPage({ palette }) {
             <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Priority</label>
             <select
               value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
+              onChange={(e) => {
+                setFilterPriority(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
               className="w-full px-4 py-2.5 rounded-xl border outline-none"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
@@ -177,92 +175,131 @@ export default function MessagesPage({ palette }) {
       </div>
 
       {/* Messages List */}
-      <div className="space-y-4">
-        {filteredMessages.map((msg) => (
-          <motion.div
-            key={msg.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 rounded-2xl cursor-pointer hover:scale-[1.01] transition-all"
-            style={{
-              backgroundColor: cardBg,
-              border: `1px solid ${borderColor}`,
-              opacity: msg.status === "Unread" ? 1 : 0.7,
-            }}
-            onClick={() => {
-              setSelectedMessage(msg);
-              if (msg.status === "Unread") {
-                handleMarkAsRead(msg.id);
-              }
-            }}
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                {msg.avatar}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-bold" style={{ color: textColor }}>{msg.sender}</h4>
-                      {msg.status === "Unread" && (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <i className="fas fa-spinner fa-spin text-3xl" style={{ color: primaryGradientFrom }}></i>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-4">
+            {messages.map((msg) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-6 rounded-2xl cursor-pointer hover:scale-[1.01] transition-all"
+                style={{
+                  backgroundColor: cardBg,
+                  border: `1px solid ${borderColor}`,
+                  opacity: msg.status === "Unread" ? 1 : 0.7,
+                }}
+                onClick={() => {
+                  setSelectedMessage(msg);
+                  if (msg.status === "Unread") {
+                    handleMarkAsRead(msg.id);
+                  }
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                    {msg.avatar}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold" style={{ color: textColor }}>{msg.sender}</h4>
+                          {msg.status === "Unread" && (
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: errorColor }}
+                            ></span>
+                          )}
+                        </div>
+                        <p className="text-sm" style={{ color: secondaryText }}>{msg.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: errorColor }}
-                        ></span>
-                      )}
+                          className="px-3 py-1 rounded-full text-xs font-semibold"
+                          style={{
+                            backgroundColor: `${getStatusColor(msg.status)}20`,
+                            color: getStatusColor(msg.status),
+                          }}
+                        >
+                          {msg.status}
+                        </span>
+                        {msg.priority === "Urgent" && (
+                          <span
+                            className="px-3 py-1 rounded-full text-xs font-semibold"
+                            style={{
+                              backgroundColor: `${errorColor}20`,
+                              color: errorColor,
+                            }}
+                          >
+                            Urgent
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm" style={{ color: secondaryText }}>{msg.email}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: `${getStatusColor(msg.status)}20`,
-                        color: getStatusColor(msg.status),
-                      }}
-                    >
-                      {msg.status}
-                    </span>
-                    {msg.priority === "Urgent" && (
-                      <span
-                        className="px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{
-                          backgroundColor: `${errorColor}20`,
-                          color: errorColor,
-                        }}
-                      >
-                        Urgent
-                      </span>
-                    )}
-                  </div>
-                </div>
 
-                <h5 className="font-semibold mb-2" style={{ color: textColor }}>{msg.subject}</h5>
-                <p className="text-sm line-clamp-2 mb-2" style={{ color: secondaryText }}>{msg.message}</p>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: secondaryText }}>
-                    <i className="fas fa-clock mr-1"></i>
-                    {msg.receivedDate}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedMessage(msg);
-                    }}
-                    className="text-xs font-semibold"
-                    style={{ color: primaryGradientFrom }}
-                  >
-                    View Details →
-                  </button>
+                    <h5 className="font-semibold mb-2" style={{ color: textColor }}>{msg.subject}</h5>
+                    <p className="text-sm line-clamp-2 mb-2" style={{ color: secondaryText }}>{msg.message}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs" style={{ color: secondaryText }}>
+                        <i className="fas fa-clock mr-1"></i>
+                        {msg.receivedDate}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMessage(msg);
+                        }}
+                        className="text-xs font-semibold"
+                        style={{ color: primaryGradientFrom }}
+                      >
+                        View Details →
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                disabled={pagination.page === 1}
+                className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                style={{
+                  backgroundColor: `${primaryGradientFrom}20`,
+                  color: primaryGradientFrom
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ color: textColor }}>
+                Page {pagination.page} of {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
+                disabled={pagination.page === pagination.pages}
+                className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                style={{
+                  backgroundColor: `${primaryGradientFrom}20`,
+                  color: primaryGradientFrom
+                }}
+              >
+                Next
+              </button>
             </div>
-          </motion.div>
-        ))}
-      </div>
+          )}
+        </>
+      )}
 
       {/* Message Details Modal */}
       <AnimatePresence>

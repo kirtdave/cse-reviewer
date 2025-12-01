@@ -1,43 +1,13 @@
 // NotificationsPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getNotifications, createNotification, updateNotification, deleteNotification, publishNotification } from "../../services/adminApi";
 
 export default function NotificationsPage({ palette }) {
   const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New Mock Exam Available",
-      message: "Civil Service Mock Exam #15 is now live! Test your knowledge with 100 new questions covering all major topics.",
-      type: "New Content",
-      status: "Published",
-      publishedDate: "Today at 10:00 AM",
-      recipients: "All Users",
-      views: 1247,
-    },
-    {
-      id: 2,
-      title: "System Maintenance Scheduled",
-      message: "Scheduled maintenance on Sunday, December 1st from 2:00 AM to 4:00 AM. The system will be temporarily unavailable.",
-      type: "Maintenance",
-      status: "Scheduled",
-      publishedDate: "Dec 1, 2024 at 2:00 AM",
-      recipients: "All Users",
-      views: 892,
-    },
-    {
-      id: 3,
-      title: "AI Feature Update",
-      message: "Our AI question generator has been improved! Experience better question quality and faster generation times.",
-      type: "Update",
-      status: "Published",
-      publishedDate: "Yesterday at 3:00 PM",
-      recipients: "All Users",
-      views: 1534,
-    },
-  ]);
-
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingNotification, setEditingNotification] = useState(null);
   const [formData, setFormData] = useState({
@@ -49,6 +19,22 @@ export default function NotificationsPage({ palette }) {
   });
 
   const notificationTypes = ["Announcement", "New Content", "Maintenance", "Update", "Reminder"];
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await getNotifications();
+      setNotifications(data.notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCreateNotification = () => {
     setEditingNotification(null);
@@ -64,37 +50,51 @@ export default function NotificationsPage({ palette }) {
 
   const handleEditNotification = (notification) => {
     setEditingNotification(notification);
-    setFormData(notification);
+    setFormData({
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      status: notification.status,
+      recipients: notification.recipients
+    });
     setShowCreateModal(true);
   };
 
-  const handleSaveNotification = () => {
-    if (editingNotification) {
-      setNotifications(notifications.map(n => 
-        n.id === editingNotification.id ? { ...formData, id: n.id, views: n.views } : n
-      ));
-    } else {
-      const newNotification = {
-        ...formData,
-        id: Date.now(),
-        publishedDate: formData.status === "Published" ? "Just now" : "Not published",
-        views: 0,
-      };
-      setNotifications([newNotification, ...notifications]);
+  const handleSaveNotification = async () => {
+    try {
+      if (editingNotification) {
+        await updateNotification(editingNotification.id, formData);
+      } else {
+        await createNotification(formData);
+      }
+      setShowCreateModal(false);
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error saving notification:', error);
+      alert('Failed to save notification');
     }
-    setShowCreateModal(false);
   };
 
-  const handleDeleteNotification = (id) => {
+  const handleDeleteNotification = async (id) => {
     if (window.confirm("Are you sure you want to delete this notification?")) {
-      setNotifications(notifications.filter(n => n.id !== id));
+      try {
+        await deleteNotification(id);
+        fetchNotifications();
+      } catch (error) {
+        console.error('Error deleting notification:', error);
+        alert('Failed to delete notification');
+      }
     }
   };
 
-  const handlePublishNotification = (id) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, status: "Published", publishedDate: "Just now" } : n
-    ));
+  const handlePublishNotification = async (id) => {
+    try {
+      await publishNotification(id);
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error publishing notification:', error);
+      alert('Failed to publish notification');
+    }
   };
 
   const getTypeColor = (type) => {
@@ -126,15 +126,31 @@ export default function NotificationsPage({ palette }) {
     }
   };
 
+  const formatDate = (date) => {
+    if (!date) return "Not published";
+    const d = new Date(date);
+    return d.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  const publishedCount = notifications.filter(n => n.status === "Published").length;
+  const draftCount = notifications.filter(n => n.status === "Draft").length;
+  const totalViews = notifications.reduce((sum, n) => sum + (n.views || 0), 0);
+
   return (
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: "Total Notifications", value: notifications.length.toString(), icon: "fa-bell", color: primaryGradientFrom },
-          { label: "Published", value: notifications.filter(n => n.status === "Published").length.toString(), icon: "fa-check-circle", color: successColor },
-          { label: "Total Views", value: notifications.reduce((sum, n) => sum + n.views, 0).toString(), icon: "fa-eye", color: primaryGradientTo },
-          { label: "Drafts", value: notifications.filter(n => n.status === "Draft").length.toString(), icon: "fa-file", color: warningColor },
+          { label: "Published", value: publishedCount.toString(), icon: "fa-check-circle", color: successColor },
+          { label: "Total Views", value: totalViews.toString(), icon: "fa-eye", color: primaryGradientTo },
+          { label: "Drafts", value: draftCount.toString(), icon: "fa-file", color: warningColor },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -182,109 +198,115 @@ export default function NotificationsPage({ palette }) {
       </div>
 
       {/* Notifications List */}
-      <div className="space-y-4">
-        {notifications.map((notification) => (
-          <motion.div
-            key={notification.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 rounded-2xl"
-            style={{
-              backgroundColor: cardBg,
-              border: `1px solid ${borderColor}`,
-              boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)",
-            }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${getTypeColor(notification.type)}20` }}
-                >
-                  <i
-                    className={`fas ${getTypeIcon(notification.type)} text-xl`}
-                    style={{ color: getTypeColor(notification.type) }}
-                  ></i>
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: `${getStatusColor(notification.status)}20`,
-                        color: getStatusColor(notification.status),
-                      }}
-                    >
-                      {notification.status}
-                    </span>
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-semibold"
-                      style={{
-                        backgroundColor: `${getTypeColor(notification.type)}20`,
-                        color: getTypeColor(notification.type),
-                      }}
-                    >
-                      {notification.type}
-                    </span>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <i className="fas fa-spinner fa-spin text-3xl" style={{ color: primaryGradientFrom }}></i>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {notifications.map((notification) => (
+            <motion.div
+              key={notification.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-2xl"
+              style={{
+                backgroundColor: cardBg,
+                border: `1px solid ${borderColor}`,
+                boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)",
+              }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${getTypeColor(notification.type)}20` }}
+                  >
+                    <i
+                      className={`fas ${getTypeIcon(notification.type)} text-xl`}
+                      style={{ color: getTypeColor(notification.type) }}
+                    ></i>
                   </div>
 
-                  <h3 className="text-lg font-bold mb-2" style={{ color: textColor }}>
-                    {notification.title}
-                  </h3>
-                  <p className="text-sm mb-3" style={{ color: secondaryText }}>
-                    {notification.message}
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${getStatusColor(notification.status)}20`,
+                          color: getStatusColor(notification.status),
+                        }}
+                      >
+                        {notification.status}
+                      </span>
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${getTypeColor(notification.type)}20`,
+                          color: getTypeColor(notification.type),
+                        }}
+                      >
+                        {notification.type}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-4 text-sm" style={{ color: secondaryText }}>
-                    <span><i className="fas fa-users mr-1"></i>{notification.recipients}</span>
-                    <span><i className="fas fa-clock mr-1"></i>{notification.publishedDate}</span>
-                    {notification.status === "Published" && (
-                      <span><i className="fas fa-eye mr-1"></i>{notification.views} views</span>
-                    )}
+                    <h3 className="text-lg font-bold mb-2" style={{ color: textColor }}>
+                      {notification.title}
+                    </h3>
+                    <p className="text-sm mb-3" style={{ color: secondaryText }}>
+                      {notification.message}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-sm" style={{ color: secondaryText }}>
+                      <span><i className="fas fa-users mr-1"></i>{notification.recipients}</span>
+                      <span><i className="fas fa-clock mr-1"></i>{formatDate(notification.publishedDate)}</span>
+                      {notification.status === "Published" && (
+                        <span><i className="fas fa-eye mr-1"></i>{notification.views || 0} views</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                {notification.status === "Draft" && (
+                <div className="flex gap-2">
+                  {notification.status === "Draft" && (
+                    <button
+                      onClick={() => handlePublishNotification(notification.id)}
+                      className="px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:scale-105"
+                      style={{
+                        backgroundColor: `${successColor}20`,
+                        color: successColor,
+                      }}
+                    >
+                      <i className="fas fa-paper-plane mr-2"></i>
+                      Publish
+                    </button>
+                  )}
                   <button
-                    onClick={() => handlePublishNotification(notification.id)}
-                    className="px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:scale-105"
+                    onClick={() => handleEditNotification(notification)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
                     style={{
-                      backgroundColor: `${successColor}20`,
-                      color: successColor,
+                      backgroundColor: `${primaryGradientFrom}20`,
+                      color: primaryGradientFrom,
                     }}
                   >
-                    <i className="fas fa-paper-plane mr-2"></i>
-                    Publish
+                    <i className="fas fa-edit"></i>
                   </button>
-                )}
-                <button
-                  onClick={() => handleEditNotification(notification)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
-                  style={{
-                    backgroundColor: `${primaryGradientFrom}20`,
-                    color: primaryGradientFrom,
-                  }}
-                >
-                  <i className="fas fa-edit"></i>
-                </button>
-                <button
-                  onClick={() => handleDeleteNotification(notification.id)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
-                  style={{
-                    backgroundColor: `${errorColor}20`,
-                    color: errorColor,
-                  }}
-                >
-                  <i className="fas fa-trash"></i>
-                </button>
+                  <button
+                    onClick={() => handleDeleteNotification(notification.id)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                    style={{
+                      backgroundColor: `${errorColor}20`,
+                      color: errorColor,
+                    }}
+                  >
+                    <i className="fas fa-trash"></i>
+                  </button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       <AnimatePresence>

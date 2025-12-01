@@ -1,4 +1,4 @@
-// controllers/profileController.js - SIMPLIFIED VERSION
+// controllers/profileController.js - FIXED VERSION
 const { User, UserAchievement } = require('../models');
 const { Op } = require('sequelize');
 
@@ -40,13 +40,26 @@ exports.getProfile = async (req, res) => {
       console.warn('⚠️ Could not fetch mastered questions:', masteryError.message);
     }
 
+    // ✅ FIX: GET REAL avgScore FROM TEST ATTEMPTS (same as Dashboard)
+    let realAvgScore = 0;
+    try {
+      const TestAttempt = require('../models').TestAttempt;
+      const testStats = await TestAttempt.getUserStats(user.id);
+      realAvgScore = Math.round(testStats.averageScore || 0);
+      console.log('✅ Real average score from test attempts:', realAvgScore);
+    } catch (statsError) {
+      console.warn('⚠️ Could not fetch test stats:', statsError.message);
+      // Fallback to user model avgScore if test stats fail
+      realAvgScore = Math.round(user.avgScore || 0);
+    }
+
     // Format join date
     const joinDate = new Date(user.createdAt).toLocaleDateString('en-US', { 
       month: 'long', 
       year: 'numeric' 
     });
 
-    // Build profile response - NO MORE achievement history array
+    // Build profile response
     const profileData = {
       id: user.id,
       name: user.name,
@@ -61,15 +74,14 @@ exports.getProfile = async (req, res) => {
       stats: {
         totalTests: user.testsCompleted || 0,
         studyHours: Math.floor((user.totalStudyTimeMinutes || 0) / 60),
-        questionsSolved: user.questionsSolved || 0, // Total correct answers (for stats page)
-        questionsMastered: questionsMastered, // ✅ NEW: Actual mastered count (for profile achievement)
+        questionsSolved: user.questionsSolved || 0,
+        questionsMastered: questionsMastered,
         currentStreak: user.currentStreak || 0,
-        avgScore: Math.round(user.avgScore || 0)
+        avgScore: realAvgScore // ✅ FIXED: Now matches Dashboard calculation
       }
-      // ❌ REMOVED: achievements array - we calculate from stats in frontend now
     };
 
-    console.log('✅ Sending profile data');
+    console.log('✅ Sending profile data with avgScore:', realAvgScore);
 
     res.json({
       success: true,
@@ -166,6 +178,17 @@ exports.updateProfile = async (req, res) => {
       console.warn('⚠️ Could not fetch mastered questions:', masteryError.message);
     }
 
+    // ✅ FIX: GET REAL avgScore FROM TEST ATTEMPTS
+    let realAvgScore = 0;
+    try {
+      const TestAttempt = require('../models').TestAttempt;
+      const testStats = await TestAttempt.getUserStats(user.id);
+      realAvgScore = Math.round(testStats.averageScore || 0);
+    } catch (statsError) {
+      console.warn('⚠️ Could not fetch test stats:', statsError.message);
+      realAvgScore = Math.round(user.avgScore || 0);
+    }
+
     const profileData = {
       id: user.id,
       name: user.name,
@@ -181,11 +204,10 @@ exports.updateProfile = async (req, res) => {
         totalTests: user.testsCompleted || 0,
         studyHours: Math.floor((user.totalStudyTimeMinutes || 0) / 60),
         questionsSolved: user.questionsSolved || 0,
-        questionsMastered: questionsMastered, // ✅ NEW
+        questionsMastered: questionsMastered,
         currentStreak: user.currentStreak || 0,
-        avgScore: Math.round(user.avgScore || 0)
+        avgScore: realAvgScore // ✅ FIXED: Now matches Dashboard
       }
-      // ❌ REMOVED: achievements array
     };
 
     res.json({
@@ -235,7 +257,7 @@ exports.getDetailedStats = async (req, res) => {
           total: testStats.totalAttempts,
           passed: testStats.totalPassed,
           failed: testStats.totalFailed,
-          averageScore: Math.round(testStats.averageScore),
+          averageScore: Math.round(testStats.averageScore), // ✅ This matches Dashboard
           highestScore: Math.round(testStats.highestScore),
           recentActivity: recentTests
         },

@@ -11,7 +11,6 @@ export const calculateSectionScores = (questions, answers, results) => {
     'Analytical Ability': 'analytical',
     'General Knowledge': 'generalInfo',
     'Clerical Ability': 'clerical',
-    'Numerical Reasoning': 'numericalReasoning',
     'Philippine Constitution': 'constitution'
   };
 
@@ -21,7 +20,6 @@ export const calculateSectionScores = (questions, answers, results) => {
     analytical: { correct: 0, total: 0 },
     generalInfo: { correct: 0, total: 0 },
     clerical: { correct: 0, total: 0 },
-    numericalReasoning: { correct: 0, total: 0 },
     constitution: { correct: 0, total: 0 }
   };
 
@@ -35,7 +33,6 @@ export const calculateSectionScores = (questions, answers, results) => {
     if (!sectionKey) {
       const lowerCategory = category.toLowerCase();
       if (lowerCategory.includes('verbal')) sectionKey = 'verbal';
-      else if (lowerCategory.includes('numerical') && lowerCategory.includes('reasoning')) sectionKey = 'numericalReasoning';
       else if (lowerCategory.includes('numerical')) sectionKey = 'numerical';
       else if (lowerCategory.includes('analytical')) sectionKey = 'analytical';
       else if (lowerCategory.includes('clerical')) sectionKey = 'clerical';
@@ -78,16 +75,6 @@ export const calculateQuestionTypeScores = (questions, results) => {
       if (results[index] === 'correct') {
         typeScores.multipleChoice.correct++;
       }
-    } else if (questionType === 'Essay') {
-      typeScores.essay.total++;
-      if (results[index] === 'correct') {
-        typeScores.essay.correct++;
-      }
-    } else if (questionType === 'Situational') {
-      typeScores.situational.total++;
-      if (results[index] === 'correct') {
-        typeScores.situational.correct++;
-      }
     }
   });
 
@@ -116,59 +103,13 @@ const determineQuestionType = (question) => {
 
   const questionText = question.question?.toLowerCase() || '';
   
-  // ✅ CRITICAL: Check if it has options FIRST (most questions are multiple choice)
   // If it has 2+ options, it's definitely Multiple Choice
   if (question.options && Array.isArray(question.options) && question.options.length >= 2) {
-    // Double-check it's not mislabeled
     const hasValidOptions = question.options.every(opt => opt && typeof opt === 'string' && opt.trim().length > 0);
     if (hasValidOptions) {
       return 'Multiple Choice';
     }
   }
-  
-  // Situational questions typically contain scenario keywords
-  const situationalKeywords = [
-    'what would you do',
-    'how would you handle',
-    'in this situation',
-    'if you were',
-    'best approach',
-    'appropriate action',
-    'respond to',
-    'deal with',
-    'situation where',
-    'scenario',
-    'if you are',
-    'what should you'
-  ];
-  
-  // Only classify as Situational if it has scenario keywords AND is asking for action
-  const hasSituationalKeyword = situationalKeywords.some(keyword => questionText.includes(keyword));
-  const isAskingForAction = questionText.includes('do') || questionText.includes('handle') || questionText.includes('respond');
-  
-  if (hasSituationalKeyword && isAskingForAction) {
-    return 'Situational';
-  }
-  
-  // Essay questions - ONLY if there are NO options
-  const essayKeywords = [
-    'explain in detail',
-    'describe in your own words',
-    'discuss thoroughly',
-    'write an essay',
-    'compose',
-    'elaborate on'
-  ];
-  
-  // Only classify as Essay if it explicitly asks for written response AND has no options
-  if (!question.options || question.options.length === 0) {
-    if (essayKeywords.some(keyword => questionText.includes(keyword))) {
-      return 'Essay';
-    }
-  }
-  
-  // Default to Multiple Choice (safest assumption for CSC exams)
-  return 'Multiple Choice';
 };
 
 /**

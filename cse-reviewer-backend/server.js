@@ -13,14 +13,16 @@ const testAttemptRoutes = require('./routes/testAttempts');
 const testRoutes = require('./routes/tests');
 const questionRoutes = require('./routes/questions');
 const profileRoutes = require('./routes/profile');
-const customTestRoutes = require('./routes/customTests');  
+const customTestRoutes = require('./routes/customTests');
+const contactRoutes = require('./routes/contactRoutes');
+const questionReportRoutes = require('./routes/questionReportRoutes'); // ✅ ADD THIS
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // ✅ INCREASED LIMIT for base64 images
-app.use(express.urlencoded({ limit: '10mb', extended: true })); // ✅ INCREASED LIMIT
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ✅ Initialize models and associations
 require('./models');
@@ -37,6 +39,8 @@ app.use('/api/tests', testRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/custom-tests', customTestRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/question-reports', questionReportRoutes); 
 
 // Health check
 app.get('/', (req, res) => {
@@ -56,4 +60,6 @@ app.listen(PORT, () => {
   console.log(`💾 Database: MySQL (XAMPP)`);
   console.log(`📸 Image upload: Base64 (max 10MB)`);
   console.log(`🔗 Model associations loaded`);
-}); 
+  console.log(`📧 Contact routes enabled`);
+  console.log(`📝 Question report routes enabled`);
+});

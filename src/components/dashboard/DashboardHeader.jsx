@@ -5,7 +5,8 @@ import { Bot, MessageCircle, Send, X, Sparkles, Zap } from "lucide-react";
 const DashboardHeader = ({ 
   theme = "light", 
   title = "Welcome back, Guest!", 
-  subtitle = "Here's your learning progress overview." 
+  subtitle = "Here's your learning progress overview.",
+  analyticsData = null // ✅ NEW: Accept analytics data as prop
 }) => {
   const isDark = theme === "dark";
   const [showAICoach, setShowAICoach] = useState(false);
@@ -30,9 +31,18 @@ const DashboardHeader = ({
     try {
       const token = localStorage.getItem('token');
       
+      // ✅ Include analytics data in the request
       const body = {
         message: userInput,
-        conversationHistory: chatMessages
+        conversationHistory: chatMessages,
+        // Include user performance data if available
+        userData: analyticsData ? {
+          avgScore: analyticsData.avgScore,
+          totalExams: analyticsData.totalExams,
+          sections: analyticsData.sections,
+          timeMetrics: analyticsData.timeMetrics,
+          recentAttempts: analyticsData.recentAttempts?.slice(0, 3) // Last 3 attempts
+        } : null
       };
 
       const response = await fetch('http://localhost:5000/api/ai/chat', {
@@ -63,6 +73,71 @@ const DashboardHeader = ({
       }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ✅ Handle quick suggestion clicks with analytics context
+  const handleSuggestionClick = (suggestionText) => {
+    setUserInput(suggestionText);
+    // Auto-send for "Analyze my progress"
+    if (suggestionText === "Analyze my progress") {
+      setTimeout(() => {
+        // Trigger the send
+        const input = suggestionText;
+        setUserInput("");
+        
+        const newMessage = { role: "user", content: input };
+        setChatMessages([newMessage]);
+        setIsLoading(true);
+
+        const token = localStorage.getItem('token');
+        
+        // ✅ DEBUG: Check if analyticsData exists
+        console.log('📊 Analytics Data Available?', !!analyticsData);
+        if (analyticsData) {
+          console.log('✅ Analytics Data:', {
+            avgScore: analyticsData.avgScore,
+            totalExams: analyticsData.totalExams,
+            sections: analyticsData.sections
+          });
+        } else {
+          console.warn('⚠️ analyticsData is NULL or undefined!');
+        }
+        
+        fetch('http://localhost:5000/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            message: input,
+            conversationHistory: [],
+            userData: analyticsData ? {
+              avgScore: analyticsData.avgScore,
+              totalExams: analyticsData.totalExams,
+              sections: analyticsData.sections,
+              timeMetrics: analyticsData.timeMetrics,
+              recentAttempts: analyticsData.recentAttempts?.slice(0, 3)
+            } : null
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setChatMessages(prev => [...prev, { role: "assistant", content: data.response }]);
+          }
+          setIsLoading(false);
+        })
+        .catch(error => {
+          console.error('AI Chat error:', error);
+          setChatMessages(prev => [...prev, { 
+            role: "assistant", 
+            content: "Sorry, I'm having trouble connecting right now." 
+          }]);
+          setIsLoading(false);
+        });
+      }, 100);
     }
   };
 
@@ -234,9 +309,7 @@ const DashboardHeader = ({
                           key={idx}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setUserInput(suggestion.text);
-                          }}
+                          onClick={() => handleSuggestionClick(suggestion.text)}
                           className={`p-3 rounded-xl text-left transition-all ${
                             isDark 
                               ? "bg-gray-700 hover:bg-gray-600 text-gray-200" 

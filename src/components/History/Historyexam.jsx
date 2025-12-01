@@ -99,8 +99,6 @@ export default function ExamHistoryPage({ theme = "dark" }) {
                     attempt.details.sectionScores['General Knowledge'] || 0,
   clerical: attempt.details.sectionScores.clerical || 
             attempt.details.sectionScores['Clerical Ability'] || 0,
-  numericalReasoning: attempt.details.sectionScores.numericalReasoning || 
-                      attempt.details.sectionScores['Numerical Reasoning'] || 0,
   constitution: attempt.details.sectionScores.constitution || 
                 attempt.details.sectionScores['Philippine Constitution'] || 0,
   timeSpent: attempt.details.timeSpent,

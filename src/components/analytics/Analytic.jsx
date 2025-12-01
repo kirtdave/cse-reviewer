@@ -100,7 +100,6 @@ export default function Analytics({ theme = "light" }) {
       { label: "Analytical Ability", value: 0, type: "neutral", gradient: "from-gray-500 to-gray-600" },
       { label: "General Knowledge", value: 0, type: "neutral", gradient: "from-gray-500 to-gray-600" },
       { label: "Clerical Ability", value: 0, type: "neutral", gradient: "from-gray-500 to-gray-600" },
-      { label: "Numerical Reasoning", value: 0, type: "neutral", gradient: "from-gray-500 to-gray-600" },
       { label: "Philippine Constitution", value: 0, type: "neutral", gradient: "from-gray-500 to-gray-600" },
     ],
     recommendations: [

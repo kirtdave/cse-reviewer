@@ -277,7 +277,6 @@ router.get('/stats/sections', protect, async (req, res) => {
       { category: 'Analytical Ability', averageScore: calculateAvg(totals.analytical, counts.analytical) },
       { category: 'General Knowledge', averageScore: calculateAvg(totals.generalInfo, counts.generalInfo) },
       { category: 'Clerical Ability', averageScore: calculateAvg(totals.clerical, counts.clerical) },
-      { category: 'Numerical Reasoning', averageScore: calculateAvg(totals.numericalReasoning, counts.numericalReasoning) },
       { category: 'Philippine Constitution', averageScore: calculateAvg(totals.constitution, counts.constitution) }
     ]);
 

@@ -257,7 +257,6 @@ export default function HistoryTable({
                                         { label: "Analytical Ability", value: exam.details.analytical || 0, gradient: "from-purple-500 to-pink-500", key: "analytical" },
                                         { label: "General Knowledge", value: exam.details.generalKnowledge || 0, gradient: "from-orange-500 to-red-500", key: "general" },
                                         { label: "Clerical Ability", value: exam.details.clerical || 0, gradient: "from-cyan-500 to-blue-500", key: "clerical" },
-                                        { label: "Numerical Reasoning", value: exam.details.numericalReasoning || 0, gradient: "from-indigo-500 to-purple-500", key: "reasoning" },
                                         { label: "Philippine Constitution", value: exam.details.constitution || 0, gradient: "from-yellow-500 to-orange-500", key: "constitution" },
                                       ];
 

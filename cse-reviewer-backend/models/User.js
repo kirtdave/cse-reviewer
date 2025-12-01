@@ -1,4 +1,4 @@
-// models/User.js - Updated avatar field
+// models/User.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 const bcrypt = require('bcryptjs');
@@ -56,7 +56,7 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   avatar: {
-    type: DataTypes.TEXT('long'), // ✅ Changed to TEXT for base64 storage
+    type: DataTypes.TEXT('long'),
     allowNull: true,
     defaultValue: 'https://i.pravatar.cc/200?img=1'
   },
@@ -94,6 +94,24 @@ const User = sequelize.define('User', {
   lastStudyDate: {
     type: DataTypes.DATEONLY,
     allowNull: true
+  },
+  
+  // ✅ NEW: AI Usage Tracking
+  aiRequestCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  questionsGeneratedCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  apiSuccessCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  apiFailureCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   
   lastActive: {
@@ -163,7 +181,13 @@ User.prototype.getProfileData = function() {
       avgScore: Math.round(this.avgScore),
       studyHours: Math.floor(this.totalStudyTimeMinutes / 60),
       questionsSolved: this.questionsSolved,
-      currentStreak: this.currentStreak
+      currentStreak: this.currentStreak,
+      // ✅ NEW: AI stats
+      aiRequests: this.aiRequestCount,
+      questionsGenerated: this.questionsGeneratedCount,
+      apiSuccessRate: this.apiSuccessCount + this.apiFailureCount > 0 
+        ? ((this.apiSuccessCount / (this.apiSuccessCount + this.apiFailureCount)) * 100).toFixed(1)
+        : 0
     }
   };
 };

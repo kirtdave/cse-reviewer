@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Brain, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { StudyScheduleModal, StudyTipsModal, StudyGuideModal } from "./RecommendationModals";
+import { StudyScheduleModal, AIStudyTipsModal, StudyGuideModal } from "./RecommendationModals";
 
 export function SmartRecommendations({ theme = "light", data }) {
   const isDark = theme === "dark";
@@ -339,7 +339,7 @@ export function SmartRecommendations({ theme = "light", data }) {
         theme={theme}
         weakTopic={getWeakTopics()[0]}
       />
-      <StudyTipsModal 
+      <AIStudyTipsModal 
         isOpen={showTipsModal} 
         onClose={() => setShowTipsModal(false)} 
         theme={theme}

@@ -88,7 +88,6 @@ export const generateCategoryBreakdown = (data) => {
     { name: 'Analytical Ability', key: 'analytical', icon: 'fa-brain', color: 'purple' },
     { name: 'General Knowledge', key: 'generalInfo', icon: 'fa-book', color: 'orange' },
     { name: 'Clerical Ability', key: 'clerical', icon: 'fa-file-pen', color: 'pink' },
-    { name: 'Numerical Reasoning', key: 'numericalReasoning', icon: 'fa-chart-line', color: 'cyan' },
     { name: 'Philippine Constitution', key: 'constitution', icon: 'fa-gavel', color: 'red' }
   ];
 
@@ -112,8 +111,6 @@ export const generateQuestionTypeBreakdown = (data) => {
 
   const types = [
     { name: 'Multiple Choice', key: 'multipleChoice', icon: 'fa-list-check', color: 'blue' },
-    { name: 'Essay', key: 'essay', icon: 'fa-pen-to-square', color: 'purple' },
-    { name: 'Situational', key: 'situational', icon: 'fa-sitemap', color: 'orange' }
   ];
 
   return types

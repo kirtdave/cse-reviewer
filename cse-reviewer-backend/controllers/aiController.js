@@ -1,4 +1,6 @@
+// controllers/aiController.js
 const aiService = require('../services/aiService');
+const { User } = require('../models');
 
 // Helper to handle AI-specific errors
 function handleAiError(res, error) {
@@ -30,6 +32,30 @@ function handleAiError(res, error) {
   });
 }
 
+// ✅ NEW: Helper to track AI usage
+async function trackAIUsage(userId, questionsCount = 0, success = true) {
+  try {
+    const user = await User.findByPk(userId);
+    if (user) {
+      user.aiRequestCount = (user.aiRequestCount || 0) + 1;
+      
+      if (success) {
+        user.apiSuccessCount = (user.apiSuccessCount || 0) + 1;
+        if (questionsCount > 0) {
+          user.questionsGeneratedCount = (user.questionsGeneratedCount || 0) + questionsCount;
+        }
+      } else {
+        user.apiFailureCount = (user.apiFailureCount || 0) + 1;
+      }
+      
+      await user.save();
+    }
+  } catch (error) {
+    console.error('Error tracking AI usage:', error);
+    // Don't throw - tracking shouldn't break the main flow
+  }
+}
+
 // ==================== 1. GENERATE QUESTIONS ====================
 exports.generateQuestions = async (req, res) => {
   try {
@@ -49,6 +75,9 @@ exports.generateQuestions = async (req, res) => {
 
     const questions = await aiService.generateQuestions(topic, difficulty, questionCount);
     
+    // ✅ Track successful generation
+    await trackAIUsage(req.user.id, questions.length, true);
+    
     res.status(200).json({ 
       success: true, 
       questions,
@@ -56,6 +85,10 @@ exports.generateQuestions = async (req, res) => {
     });
   } catch (error) {
     console.error('Controller Error generating questions:', error.message);
+    
+    // ✅ Track failed generation
+    await trackAIUsage(req.user.id, 0, false);
+    
     handleAiError(res, error);
   }
 };
@@ -74,12 +107,19 @@ exports.explainAnswer = async (req, res) => {
 
     const explanation = await aiService.explainAnswer(question, studentAnswer, correctAnswer);
     
+    // ✅ Track successful explanation
+    await trackAIUsage(req.user.id, 0, true);
+    
     res.status(200).json({ 
       success: true, 
       explanation 
     });
   } catch (error) {
     console.error('Controller Error explaining answer:', error.message);
+    
+    // ✅ Track failed explanation
+    await trackAIUsage(req.user.id, 0, false);
+    
     handleAiError(res, error);
   }
 };
@@ -95,21 +135,41 @@ exports.getRecommendations = async (req, res) => {
       recentScores || []
     );
     
+    // ✅ Track successful recommendations
+    await trackAIUsage(req.user.id, 0, true);
+    
     res.status(200).json({ 
       success: true, 
       recommendations 
     });
   } catch (error) {
     console.error('Controller Error getting recommendations:', error.message);
+    
+    // ✅ Track failed recommendations
+    await trackAIUsage(req.user.id, 0, false);
+    
     handleAiError(res, error);
   }
 };
 
 
-// ==================== 6. CHAT WITH AI ====================
+// ==================== 6. CHAT WITH AI (UPDATED) ====================
 exports.chat = async (req, res) => {
   try {
-    const { message, conversationHistory = [], questionData } = req.body;
+    const { message, conversationHistory = [], questionData, userData } = req.body;
+
+    // ✅ DEBUG: Log what we received
+    console.log('=== AI CHAT REQUEST ===');
+    console.log('Message:', message);
+    console.log('userData received?', !!userData);
+    if (userData) {
+      console.log('userData.avgScore:', userData.avgScore);
+      console.log('userData.totalExams:', userData.totalExams);
+      console.log('userData.sections:', userData.sections);
+    } else {
+      console.log('⚠️ NO userData in request body!');
+      console.log('Request body keys:', Object.keys(req.body));
+    }
 
     if (!message) {
       return res.status(400).json({ 
@@ -128,12 +188,15 @@ exports.chat = async (req, res) => {
       } else {
         // Fallback: Use regular chat with context
         const contextMessage = `Help me understand this question:\n\nQuestion: ${questionData.questionText}\nCategory: ${questionData.category}\nStudent's Answer: ${questionData.isCorrect ? 'Correct' : 'Wrong'}\n\nStudent asks: ${message}`;
-        response = await aiService.chatWithAI(contextMessage, conversationHistory);
+        response = await aiService.chatWithAI(contextMessage, conversationHistory, userData);
       }
     } else {
-      // Regular chat without question context
-      response = await aiService.chatWithAI(message, conversationHistory);
+      // ✅ PASS userData TO chatWithAI
+      response = await aiService.chatWithAI(message, conversationHistory, userData);
     }
+
+    // ✅ Track successful chat
+    await trackAIUsage(req.user.id, 0, true);
 
     res.json({
       success: true,
@@ -142,6 +205,10 @@ exports.chat = async (req, res) => {
 
   } catch (error) {
     console.error('AI Chat error:', error);
+    
+    // ✅ Track failed chat
+    await trackAIUsage(req.user.id, 0, false);
+    
     handleAiError(res, error);
   }
 };
@@ -163,6 +230,9 @@ exports.questionHelp = async (req, res) => {
 
     const response = await aiService.helpWithQuestion(questionData, userQuery);
 
+    // ✅ Track successful question help
+    await trackAIUsage(req.user.id, 0, true);
+
     res.json({
       success: true,
       response: response,
@@ -171,9 +241,14 @@ exports.questionHelp = async (req, res) => {
 
   } catch (error) {
     console.error('Question help error:', error);
+    
+    // ✅ Track failed question help
+    await trackAIUsage(req.user.id, 0, false);
+    
     handleAiError(res, error);
   }
 };
+
 // ==================== 8. GENERATE ANSWER CHOICES FOR EXISTING QUESTION ====================
 exports.generateAnswerChoices = async (req, res) => {
   try {
@@ -191,6 +266,9 @@ exports.generateAnswerChoices = async (req, res) => {
       category || 'General'
     );
 
+    // ✅ Track successful answer choice generation
+    await trackAIUsage(req.user.id, 0, true);
+
     res.json({
       success: true,
       choices: result.choices,
@@ -200,6 +278,10 @@ exports.generateAnswerChoices = async (req, res) => {
 
   } catch (error) {
     console.error('Error generating answer choices:', error);
+    
+    // ✅ Track failed answer choice generation
+    await trackAIUsage(req.user.id, 0, false);
+    
     handleAiError(res, error);
   }
 };

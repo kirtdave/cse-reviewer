@@ -248,14 +248,50 @@ Your response MUST be ONLY a single, raw JSON object with keys: "priorities" (ar
   }
 };
 
-// ==================== 4. CHATBOT FOR CSE QUESTIONS ====================
-exports.chatWithAI = async (userMessage, conversationHistory = []) => {
+// ==================== 4. CHATBOT FOR CSE QUESTIONS (WITH ANALYTICS DATA) ====================
+exports.chatWithAI = async (userMessage, conversationHistory = [], userData = null) => {
   try {
-    const systemContext = `You are a helpful and friendly Civil Service Exam tutor for the Philippines.
+    let systemContext = `You are a helpful and friendly Civil Service Exam tutor for the Philippines.
 
 IMPORTANT STYLE RULE: You must write your entire response in short but concise straight to the point and complete, flowing paragraphs. Do NOT use any markdown like bullet points with asterisks (*) or lists with dashes (-). Structure your answer as a continuous, conversational block of text, as if you were speaking directly to the student.
 
 Answer questions about exam topics, study tips, and exam procedures. Be clear and educational.`;
+
+    // ✅ ADD USER PERFORMANCE DATA IF PROVIDED
+    if (userData && userData.avgScore !== undefined) {
+      systemContext += `\n\n📊 STUDENT PERFORMANCE DATA (Use this to provide personalized insights):
+- Average Score: ${userData.avgScore}%
+- Total Mock Exams Taken: ${userData.totalExams}
+- Section Performance:
+  * Verbal Ability: ${userData.sections?.verbal || 0}%
+  * Numerical Ability: ${userData.sections?.numerical || 0}%
+  * Analytical Ability: ${userData.sections?.analytical || 0}%
+  * General Knowledge: ${userData.sections?.generalInfo || 0}%
+  * Clerical Ability: ${userData.sections?.clerical || 0}%
+  * Philippine Constitution: ${userData.sections?.constitution || 0}%
+- Time Performance:
+  * Average Time per Question: ${userData.timeMetrics?.avgTimePerQuestion || 0} seconds
+  * Consistency Score: ${userData.timeMetrics?.consistency || 0}%
+  * Speed Score: ${userData.timeMetrics?.speedScore || 0}%`;
+
+      if (userData.recentAttempts && userData.recentAttempts.length > 0) {
+        systemContext += `\n- Recent Test Results:`;
+        userData.recentAttempts.slice(0, 3).forEach((attempt, idx) => {
+          systemContext += `\n  ${idx + 1}. ${attempt.title}: ${attempt.score}% (${attempt.result})`;
+        });
+      }
+
+      systemContext += `\n\n🎯 WHEN THE STUDENT ASKS ABOUT THEIR PROGRESS:
+- Analyze the data above
+- Identify specific strengths (sections with 75%+)
+- Identify weaknesses (sections below 65%)
+- Give concrete, actionable recommendations
+- Mention their overall average (${userData.avgScore}%)
+- Comment on time management if relevant
+- Be encouraging but honest
+
+DO NOT ask for more information - you have all the data you need above. Provide a complete analysis based on this data.`;
+    }
 
     let fullPrompt = systemContext + "\n\n";
     conversationHistory.forEach(msg => {

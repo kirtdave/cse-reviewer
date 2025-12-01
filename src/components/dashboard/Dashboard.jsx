@@ -151,7 +151,11 @@ export default function Dashboard({ theme = "light" }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <DashboardHeader theme={theme} />
+        {/* ✅ FIX: Pass analyticsData to DashboardHeader */}
+        <DashboardHeader 
+          theme={theme} 
+          analyticsData={analyticsData}
+        />
       </motion.div>
       
       <div className="relative z-10 p-6 lg:p-10">

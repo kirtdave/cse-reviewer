@@ -1,29 +1,20 @@
-// src/services/exportService.js
 
-/**
- * Export test review in GATE-style test paper format
- * Similar to the image: "Q.1 - 30 Carry One Mark Each"
- */
 export const exportAsTestPaper = (testData) => {
   const { name, questions, userAnswers, correctAnswers, score, totalQuestions, accuracy, timeSpent } = testData;
   
-  // Generate test paper content
   let content = '';
   
-  // Header
   content += '═══════════════════════════════════════════════════════\n';
   content += `                    ${name.toUpperCase()}\n`;
   content += '                    TEST REVIEW REPORT\n';
   content += '═══════════════════════════════════════════════════════\n\n';
   
-  // Summary
   content += `Generated: ${new Date().toLocaleString()}\n`;
   content += `Score: ${score}/${totalQuestions} (${accuracy}%)\n`;
   content += `Time Spent: ${timeSpent} minutes\n`;
   content += `Status: ${accuracy >= 70 ? 'PASSED ✓' : 'FAILED ✗'}\n`;
   content += '\n═══════════════════════════════════════════════════════\n\n';
   
-  // Group questions by category
   const categorizedQuestions = {};
   questions.forEach((q, idx) => {
     const category = q.category || 'General';
@@ -33,7 +24,6 @@ export const exportAsTestPaper = (testData) => {
     categorizedQuestions[category].push({ question: q, index: idx });
   });
   
-  // Print questions by category
   Object.entries(categorizedQuestions).forEach(([category, items]) => {
     content += `\n${category.toUpperCase()} - ${items.length} Question${items.length > 1 ? 's' : ''}\n`;
     content += '─────────────────────────────────────────────────────\n\n';
@@ -44,27 +34,20 @@ export const exportAsTestPaper = (testData) => {
       const isCorrect = userAnswer === correctAnswer && userAnswer !== null;
       const isUnanswered = userAnswer === null || userAnswer === undefined;
       
-      // Question number and text
       content += `Q.${index + 1} ${question.question}\n\n`;
       
-      // Options with labels
       const optionLabels = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)'];
       question.options.forEach((option, optIdx) => {
         let marker = '   ';
-        
-        // Mark user's answer
         if (userAnswer === optIdx) {
           marker = isCorrect ? ' ✓ ' : ' ✗ ';
         }
-        // Mark correct answer if different from user's
         if (correctAnswer === optIdx && !isCorrect) {
           marker = ' → ';
         }
-        
         content += `    ${marker}${optionLabels[optIdx]} ${option}\n`;
       });
       
-      // Result indicator
       content += '\n';
       if (isUnanswered) {
         content += '    ⚠ NOT ANSWERED\n';
@@ -74,7 +57,6 @@ export const exportAsTestPaper = (testData) => {
         content += `    ✗ WRONG - Correct answer: ${optionLabels[correctAnswer]}\n`;
       }
       
-      // Explanation
       if (question.explanation) {
         content += `\n    💡 Explanation:\n`;
         content += `    ${question.explanation.replace(/\n/g, '\n    ')}\n`;
@@ -84,7 +66,6 @@ export const exportAsTestPaper = (testData) => {
     });
   });
   
-  // Footer with statistics
   content += '\n═══════════════════════════════════════════════════════\n';
   content += '                    DETAILED STATISTICS\n';
   content += '═══════════════════════════════════════════════════════\n\n';
@@ -101,7 +82,6 @@ export const exportAsTestPaper = (testData) => {
   content += `Time Spent:         ${timeSpent} minutes\n`;
   content += `Final Result:       ${accuracy >= 70 ? 'PASSED' : 'FAILED'}\n`;
   
-  // Category-wise breakdown
   content += '\n\nCATEGORY-WISE PERFORMANCE:\n';
   content += '─────────────────────────────────────────────────────\n';
   
@@ -110,7 +90,6 @@ export const exportAsTestPaper = (testData) => {
       userAnswers[index] === correctAnswers[index] && userAnswers[index] !== null
     ).length;
     const categoryAccuracy = Math.round((categoryCorrect / items.length) * 100);
-    
     content += `${category.padEnd(25)} ${categoryCorrect}/${items.length} (${categoryAccuracy}%)\n`;
   });
   
@@ -139,47 +118,299 @@ export const downloadTestPaper = (testData) => {
 };
 
 /**
- * Print test paper (formatted for printing)
+ * Print test paper - GATE STYLE DESIGN (matches print questionnaire)
  */
 export const printTestPaper = (testData) => {
-  const content = exportAsTestPaper(testData);
+  const { name, questions, userAnswers, correctAnswers, score, totalQuestions, accuracy, timeSpent } = testData;
   
-  // Create a new window for printing
+  const correctCount = userAnswers.filter((ans, idx) => ans === correctAnswers[idx] && ans !== null).length;
+  const wrongCount = userAnswers.filter((ans, idx) => ans !== correctAnswers[idx] && ans !== null).length;
+  const unansweredCount = userAnswers.filter(ans => ans === null || ans === undefined).length;
+  const isPassed = accuracy >= 70;
+  
+  const categorizedQuestions = {};
+  questions.forEach((q, idx) => {
+    const category = q.category || 'General';
+    if (!categorizedQuestions[category]) {
+      categorizedQuestions[category] = [];
+    }
+    categorizedQuestions[category].push({ question: q, index: idx });
+  });
+
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${testData.name} - Test Review</title>
+      <meta charset="UTF-8">
+      <title>${name} - Test Review</title>
       <style>
         @page {
           size: A4;
-          margin: 2cm;
+          margin: 1.5cm 1cm;
         }
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
         body {
-          font-family: 'Courier New', monospace;
-          font-size: 12pt;
-          line-height: 1.6;
+          font-family: Arial, sans-serif;
+          line-height: 1.5;
           color: #000;
-          background: #fff;
-          white-space: pre-wrap;
-          max-width: 21cm;
-          margin: 0 auto;
-          padding: 1cm;
+          font-size: 11pt;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
         }
+        
+        /* Compact Header */
+        .main-header {
+          border: 2px solid #000;
+          padding: 10px;
+          margin-bottom: 12px;
+        }
+        
+        .title-section {
+          text-align: center;
+          border-bottom: 1px solid #000;
+          padding-bottom: 6px;
+          margin-bottom: 6px;
+        }
+        
+        .title-section h1 {
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 3px;
+        }
+        
+        .meta-info {
+          font-size: 9px;
+          text-align: center;
+        }
+        
+        /* Stats Row */
+        .stats-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 6px 0;
+          border-top: 1px solid #ddd;
+          font-size: 10px;
+        }
+        
+        .stat-item {
+          text-align: center;
+        }
+        
+        .stat-label {
+          font-size: 8px;
+          text-transform: uppercase;
+          color: #666;
+        }
+        
+        .stat-value {
+          font-size: 12px;
+          font-weight: bold;
+        }
+        
+        .stat-value.pass { color: #16a34a; }
+        .stat-value.fail { color: #dc2626; }
+        
+        /* Section Header */
+        .section-header {
+          background: #f5f5f5;
+          padding: 5px 10px;
+          margin: 10px 0 8px 0;
+          font-size: 11px;
+          font-weight: bold;
+          border-left: 3px solid #000;
+        }
+        
+        /* Questions */
+        .category-title {
+          font-size: 11px;
+          font-weight: bold;
+          margin: 8px 0 5px 0;
+          padding: 3px 0;
+          border-bottom: 1px solid #ddd;
+        }
+        
+        .question-block {
+          margin-bottom: 10px;
+          page-break-inside: avoid;
+        }
+        
+        .question-text {
+          font-size: 12px;
+          font-weight: 500;
+          margin-bottom: 5px;
+        }
+        
+        .question-number {
+          font-weight: bold;
+          color: #000;
+        }
+        
+        .options {
+          margin: 4px 0 4px 12px;
+        }
+        
+        .option {
+          font-size: 10px;
+          margin-bottom: 2px;
+          padding: 2px 0;
+        }
+        
+        .option-letter {
+          font-weight: bold;
+          margin-right: 6px;
+        }
+        
+        .option.correct { 
+          color: #16a34a; 
+          font-weight: 600;
+        }
+        
+        .option.correct .option-letter:before {
+          content: '✓ ';
+          color: #16a34a;
+        }
+        
+        .option.wrong { 
+          color: #dc2626; 
+          font-weight: 600;
+        }
+        
+        .option.wrong .option-letter:before {
+          content: '✗ ';
+          color: #dc2626;
+        }
+        
+        .result-indicator {
+          font-size: 9px;
+          margin-top: 4px;
+          padding: 3px 6px;
+          display: inline-block;
+          border-radius: 3px;
+        }
+        
+        .result-indicator.correct {
+          background: #f0fdf4;
+          color: #16a34a;
+        }
+        
+        .result-indicator.wrong {
+          background: #fef2f2;
+          color: #dc2626;
+        }
+        
+        .result-indicator.unanswered {
+          background: #fff7ed;
+          color: #ea580c;
+        }
+        
+        .explanation {
+          font-size: 12px;
+          margin-top: 4px;
+          padding: 5px;
+          background: #f9f9f9;
+          border-left: 2px solid #3b82f6;
+          line-height: 1.4;
+        }
+        
+        .explanation-title {
+          font-weight: bold;
+          margin-bottom: 3px;
+        }
+        
         @media print {
-          body {
-            padding: 0;
+          .question-block { 
+            page-break-inside: avoid; 
           }
         }
       </style>
     </head>
-    <body>${content}</body>
+    <body>
+      <!-- Minimal Header -->
+      <div class="main-header">
+        <div class="title-section">
+          <h1>${name || 'TEST REVIEW REPORT'}</h1>
+          <div class="meta-info">Generated: ${new Date().toLocaleDateString()} | Time: ${timeSpent}m</div>
+        </div>
+        
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-label">Score</div>
+            <div class="stat-value ${isPassed ? 'pass' : 'fail'}">${correctCount}/${totalQuestions}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Accuracy</div>
+            <div class="stat-value ${isPassed ? 'pass' : 'fail'}">${accuracy}%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Correct</div>
+            <div class="stat-value pass">${correctCount}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Wrong</div>
+            <div class="stat-value fail">${wrongCount}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Skipped</div>
+            <div class="stat-value">${unansweredCount}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Status</div>
+            <div class="stat-value ${isPassed ? 'pass' : 'fail'}">${isPassed ? 'PASS' : 'FAIL'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">DETAILED QUESTION REVIEW</div>
+
+      <!-- Questions by Category -->
+      ${Object.entries(categorizedQuestions).map(([category, items]) => `
+        <div class="category-title">${category.toUpperCase()} (${items.length} questions)</div>
+        ${items.map(({ question, index }) => {
+          const userAnswer = userAnswers[index];
+          const correctAnswer = correctAnswers[index];
+          const isCorrect = userAnswer === correctAnswer && userAnswer !== null;
+          const isUnanswered = userAnswer === null || userAnswer === undefined;
+          const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
+          
+          return `
+            <div class="question-block">
+              <div class="question-text"><span class="question-number">Q.${index + 1}</span> ${question.question}</div>
+              <div class="options">
+                ${question.options.map((opt, optIdx) => {
+                  const isUserAnswer = userAnswer === optIdx;
+                  const isCorrectAnswer = correctAnswer === optIdx;
+                  let optionClass = '';
+                  if (isCorrectAnswer) optionClass = 'correct';
+                  else if (isUserAnswer && !isCorrect) optionClass = 'wrong';
+                  
+                  return `<div class="option ${optionClass}"><span class="option-letter">${optionLabels[optIdx]}.</span>${opt}</div>`;
+                }).join('')}
+              </div>
+              <div class="result-indicator ${isUnanswered ? 'unanswered' : isCorrect ? 'correct' : 'wrong'}">
+                ${isUnanswered ? '⚠ NOT ANSWERED' : isCorrect ? '✓ CORRECT' : `✗ WRONG - Answer: ${optionLabels[correctAnswer]}`}
+              </div>
+              ${question.explanation ? `
+                <div class="explanation">
+                  <div class="explanation-title">💡 Explanation:</div>
+                  <div>${question.explanation}</div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      `).join('')}
+    </body>
     </html>
   `);
-  printWindow.document.close();
   
-  // Wait for content to load then print
+  printWindow.document.close();
   printWindow.onload = () => {
     printWindow.print();
   };

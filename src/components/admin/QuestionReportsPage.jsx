@@ -1,58 +1,40 @@
 // QuestionReportsPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getReports, updateReportStatus, deleteReport } from "../../services/adminApi";
 
 export default function QuestionReportsPage({ palette }) {
   const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
 
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      questionId: "Q-1247",
-      questionText: "What is the capital of the Philippines?",
-      reportedBy: "John Doe",
-      reportType: "Incorrect Answer",
-      description: "The marked correct answer is wrong. Manila is correct, not Cebu.",
-      status: "Pending",
-      priority: "High",
-      submittedDate: "2 hours ago",
-      category: "General Knowledge",
-    },
-    {
-      id: 2,
-      questionId: "Q-0892",
-      questionText: "Calculate: 2 + 2 * 2",
-      reportedBy: "Jane Smith",
-      reportType: "Typo Error",
-      description: "There's a typo in the question statement.",
-      status: "In Review",
-      priority: "Medium",
-      submittedDate: "5 hours ago",
-      category: "Numerical Ability",
-    },
-    {
-      id: 3,
-      questionId: "Q-1534",
-      questionText: "Who wrote 'Noli Me Tangere'?",
-      reportedBy: "Mike Johnson",
-      reportType: "Unclear Wording",
-      description: "The question wording is confusing and needs clarification.",
-      status: "Resolved",
-      priority: "Low",
-      submittedDate: "1 day ago",
-      category: "Verbal Ability",
-    },
-  ]);
-
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterPriority, setFilterPriority] = useState("All");
   const [selectedReport, setSelectedReport] = useState(null);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
 
-  const filteredReports = reports.filter((report) => {
-    const matchesStatus = filterStatus === "All" || report.status === filterStatus;
-    const matchesPriority = filterPriority === "All" || report.priority === filterPriority;
-    return matchesStatus && matchesPriority;
-  });
+  useEffect(() => {
+    fetchReports();
+  }, [pagination.page, filterStatus, filterPriority]);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const data = await getReports({
+        page: pagination.page,
+        limit: pagination.limit,
+        status: filterStatus,
+        priority: filterPriority
+      });
+      
+      setReports(data.reports);
+      setPagination(prev => ({ ...prev, ...data.pagination }));
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -72,28 +54,47 @@ export default function QuestionReportsPage({ palette }) {
     }
   };
 
-  const handleStatusChange = (reportId, newStatus) => {
-    setReports(reports.map(report => 
-      report.id === reportId ? { ...report, status: newStatus } : report
-    ));
-  };
-
-  const handleDeleteReport = (reportId) => {
-    if (window.confirm("Are you sure you want to delete this report?")) {
-      setReports(reports.filter(report => report.id !== reportId));
-      setSelectedReport(null);
+  const handleStatusChange = async (reportId, newStatus) => {
+    try {
+      await updateReportStatus(reportId, newStatus);
+      fetchReports();
+      if (selectedReport?.id === reportId) {
+        setSelectedReport({ ...selectedReport, status: newStatus });
+      }
+    } catch (error) {
+      console.error('Error updating report status:', error);
+      alert('Failed to update report status');
     }
   };
+
+  const handleDeleteReport = async (reportId) => {
+    if (window.confirm("Are you sure you want to delete this report?")) {
+      try {
+        await deleteReport(reportId);
+        setSelectedReport(null);
+        fetchReports();
+      } catch (error) {
+        console.error('Error deleting report:', error);
+        alert('Failed to delete report');
+      }
+    }
+  };
+
+  // Calculate stats from reports
+  const totalReports = pagination.total;
+  const pendingCount = reports.filter(r => r.status === 'Pending').length;
+  const reviewingCount = reports.filter(r => r.status === 'In Review').length;
+  const resolvedCount = reports.filter(r => r.status === 'Resolved').length;
 
   return (
     <div className="space-y-6">
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Reports", value: "127", icon: "fa-flag", color: primaryGradientFrom },
-          { label: "Pending", value: "45", icon: "fa-clock", color: errorColor },
-          { label: "In Review", value: "32", icon: "fa-eye", color: warningColor },
-          { label: "Resolved", value: "50", icon: "fa-check-circle", color: successColor },
+          { label: "Total Reports", value: totalReports.toString(), icon: "fa-flag", color: primaryGradientFrom },
+          { label: "Pending", value: pendingCount.toString(), icon: "fa-clock", color: errorColor },
+          { label: "In Review", value: reviewingCount.toString(), icon: "fa-eye", color: warningColor },
+          { label: "Resolved", value: resolvedCount.toString(), icon: "fa-check-circle", color: successColor },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -133,7 +134,10 @@ export default function QuestionReportsPage({ palette }) {
             <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Status</label>
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
               className="w-full px-4 py-2.5 rounded-xl border outline-none"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
@@ -151,7 +155,10 @@ export default function QuestionReportsPage({ palette }) {
             <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Priority</label>
             <select
               value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
+              onChange={(e) => {
+                setFilterPriority(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
               className="w-full px-4 py-2.5 rounded-xl border outline-none"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
@@ -169,97 +176,136 @@ export default function QuestionReportsPage({ palette }) {
       </div>
 
       {/* Reports List */}
-      <div className="space-y-4">
-        {filteredReports.map((report) => (
-          <motion.div
-            key={report.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 rounded-2xl"
-            style={{
-              backgroundColor: cardBg,
-              border: `1px solid ${borderColor}`,
-            }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      backgroundColor: `${getStatusColor(report.status)}20`,
-                      color: getStatusColor(report.status),
-                    }}
-                  >
-                    {report.status}
-                  </span>
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      backgroundColor: `${getPriorityColor(report.priority)}20`,
-                      color: getPriorityColor(report.priority),
-                    }}
-                  >
-                    {report.priority} Priority
-                  </span>
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      backgroundColor: `${primaryGradientFrom}20`,
-                      color: primaryGradientFrom,
-                    }}
-                  >
-                    {report.reportType}
-                  </span>
-                </div>
-                
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-semibold" style={{ color: secondaryText }}>Question ID:</span>
-                    <span className="font-bold" style={{ color: primaryGradientFrom }}>{report.questionId}</span>
-                    <span className="text-sm" style={{ color: secondaryText }}>•</span>
-                    <span className="text-sm" style={{ color: secondaryText }}>{report.category}</span>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <i className="fas fa-spinner fa-spin text-3xl" style={{ color: primaryGradientFrom }}></i>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-4">
+            {reports.map((report) => (
+              <motion.div
+                key={report.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-6 rounded-2xl"
+                style={{
+                  backgroundColor: cardBg,
+                  border: `1px solid ${borderColor}`,
+                }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${getStatusColor(report.status)}20`,
+                          color: getStatusColor(report.status),
+                        }}
+                      >
+                        {report.status}
+                      </span>
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${getPriorityColor(report.priority)}20`,
+                          color: getPriorityColor(report.priority),
+                        }}
+                      >
+                        {report.priority} Priority
+                      </span>
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{
+                          backgroundColor: `${primaryGradientFrom}20`,
+                          color: primaryGradientFrom,
+                        }}
+                      >
+                        {report.reportType}
+                      </span>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-semibold" style={{ color: secondaryText }}>Question ID:</span>
+                        <span className="font-bold" style={{ color: primaryGradientFrom }}>{report.questionId}</span>
+                        <span className="text-sm" style={{ color: secondaryText }}>•</span>
+                        <span className="text-sm" style={{ color: secondaryText }}>{report.category}</span>
+                      </div>
+                      <p className="font-semibold mb-2" style={{ color: textColor }}>"{report.questionText}"</p>
+                      <p className="text-sm mb-2" style={{ color: secondaryText }}>
+                        <strong>Issue:</strong> {report.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm" style={{ color: secondaryText }}>
+                      <span><i className="fas fa-user mr-1"></i>Reported by: {report.reportedBy}</span>
+                      <span><i className="fas fa-clock mr-1"></i>{report.submittedDate}</span>
+                    </div>
                   </div>
-                  <p className="font-semibold mb-2" style={{ color: textColor }}>"{report.questionText}"</p>
-                  <p className="text-sm mb-2" style={{ color: secondaryText }}>
-                    <strong>Issue:</strong> {report.description}
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-4 text-sm" style={{ color: secondaryText }}>
-                  <span><i className="fas fa-user mr-1"></i>Reported by: {report.reportedBy}</span>
-                  <span><i className="fas fa-clock mr-1"></i>{report.submittedDate}</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedReport(report)}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                      style={{
+                        backgroundColor: `${primaryGradientFrom}20`,
+                        color: primaryGradientFrom,
+                      }}
+                      title="View Details"
+                    >
+                      <i className="fas fa-eye"></i>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteReport(report.id)}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                      style={{
+                        backgroundColor: `${errorColor}20`,
+                        color: errorColor,
+                      }}
+                      title="Delete Report"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
+            ))}
+          </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedReport(report)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
-                  style={{
-                    backgroundColor: `${primaryGradientFrom}20`,
-                    color: primaryGradientFrom,
-                  }}
-                  title="View Details"
-                >
-                  <i className="fas fa-eye"></i>
-                </button>
-                <button
-                  onClick={() => handleDeleteReport(report.id)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110"
-                  style={{
-                    backgroundColor: `${errorColor}20`,
-                    color: errorColor,
-                  }}
-                  title="Delete Report"
-                >
-                  <i className="fas fa-trash"></i>
-                </button>
-              </div>
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                disabled={pagination.page === 1}
+                className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                style={{
+                  backgroundColor: `${primaryGradientFrom}20`,
+                  color: primaryGradientFrom
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ color: textColor }}>
+                Page {pagination.page} of {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
+                disabled={pagination.page === pagination.pages}
+                className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                style={{
+                  backgroundColor: `${primaryGradientFrom}20`,
+                  color: primaryGradientFrom
+                }}
+              >
+                Next
+              </button>
             </div>
-          </motion.div>
-        ))}
-      </div>
+          )}
+        </>
+      )}
 
       {/* Report Details Modal */}
       <AnimatePresence>
@@ -426,8 +472,7 @@ export default function QuestionReportsPage({ palette }) {
                       color: "#fff",
                     }}
                   >
-                    <i className="fas fa-edit mr-2"></i>
-                    Edit Question
+                    Close
                   </button>
                   <button
                     onClick={() => handleDeleteReport(selectedReport.id)}

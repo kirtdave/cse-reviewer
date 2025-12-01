@@ -10,6 +10,7 @@ const UserQuestionProgress = require('./UserQuestionProgress');
 const QuestionReport = require('./QuestionReport');
 const ContactMessage = require('./ContactMessage');
 const CustomTest = require('./CustomTest');
+const Notification = require('./Notification'); // ✅ Added
 
 // ==================== ASSOCIATIONS ====================
 
@@ -20,6 +21,7 @@ User.hasMany(UserQuestionProgress, { foreignKey: 'userId', as: 'questionProgress
 User.hasMany(QuestionReport, { foreignKey: 'userId', as: 'reportedQuestions' });
 User.hasMany(ContactMessage, { foreignKey: 'userId', as: 'contactMessages' });
 User.hasMany(CustomTest, { foreignKey: 'userId', as: 'customTests' });
+User.hasMany(Notification, { foreignKey: 'createdBy', as: 'notifications' }); // ✅ Added
 
 // TestAttempt associations
 TestAttempt.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -57,6 +59,12 @@ CustomTest.belongsTo(User, {
   as: 'creator' 
 });
 
+// Notification associations ✅ Added
+Notification.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator'
+});
+
 // ==================== EXPORTS ====================
 
 module.exports = {
@@ -68,5 +76,6 @@ module.exports = {
   UserQuestionProgress,
   QuestionReport,
   ContactMessage,
-  CustomTest
+  CustomTest,
+  Notification // ✅ Added
 };

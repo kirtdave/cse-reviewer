@@ -35,7 +35,6 @@ export const getAnalyticsData = async () => {
       analytical: sectionStats.data.find(s => s.category === 'Analytical Ability')?.averageScore || 0,
       generalInfo: sectionStats.data.find(s => s.category === 'General Knowledge')?.averageScore || 0,
       clerical: sectionStats.data.find(s => s.category === 'Clerical Ability')?.averageScore || 0,
-      numericalReasoning: sectionStats.data.find(s => s.category === 'Numerical Reasoning')?.averageScore || 0,
       constitution: sectionStats.data.find(s => s.category === 'Philippine Constitution')?.averageScore || 0
     };
 
@@ -62,7 +61,6 @@ export const getAnalyticsData = async () => {
         analytical: item.details?.sectionScores?.analytical || 0,
         generalInfo: item.details?.sectionScores?.generalInfo || 0,
         clerical: item.details?.sectionScores?.clerical || 0,
-        numericalReasoning: item.details?.sectionScores?.numericalReasoning || 0,
         constitution: item.details?.sectionScores?.constitution || 0
       })),
       
@@ -149,7 +147,6 @@ export const calculateStrengthsWeaknesses = (sectionStats) => {
     { label: 'Analytical Ability', value: sectionStats.analytical || 0 },
     { label: 'General Knowledge', value: sectionStats.generalInfo || 0 },
     { label: 'Clerical Ability', value: sectionStats.clerical || 0 },
-    { label: 'Numerical Reasoning', value: sectionStats.numericalReasoning || 0 },
     { label: 'Philippine Constitution', value: sectionStats.constitution || 0 }
   ];
 
@@ -179,7 +176,6 @@ export const generateRecommendations = (analyticsData) => {
     { name: 'Analytical Ability', score: sections.analytical, icon: 'fa-brain' },
     { name: 'General Knowledge', score: sections.generalInfo, icon: 'fa-book' },
     { name: 'Clerical Ability', score: sections.clerical, icon: 'fa-file-pen' },
-    { name: 'Numerical Reasoning', score: sections.numericalReasoning, icon: 'fa-chart-line' },
     { name: 'Philippine Constitution', score: sections.constitution, icon: 'fa-gavel' }
   ].filter(s => s.score > 0 && s.score < 75);
 

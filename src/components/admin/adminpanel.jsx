@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import Dashboard from "./Dashboard";
 import UserMonitoringPage from "./UserMonitoringPage";
 import QuestionBankPage from "./QuestionBankPage";
 import QuestionReportsPage from "./QuestionReportsPage";
 import MessagesPage from "./MessagesPage";
 import NotificationsPage from "./NotificationsPage";
-import ThemeToggleSwitch from "../aaGLOBAL/ThemeToggleSwitch"; // Import your actual component
+import ThemeToggleSwitch from "../aaGLOBAL/ThemeToggleSwitch";
 
 const getPalette = (theme = "dark") => {
   const isDark = theme === "dark";
@@ -26,112 +27,6 @@ const getPalette = (theme = "dark") => {
     errorColor: "#ef4444",
     hoverBg: isDark ? "#1f2937" : "#f3f4f6",
   };
-};
-
-// Dashboard Component
-const Dashboard = ({ palette }) => {
-  const { isDark, cardBg, textColor, secondaryText, borderColor, successColor, warningColor, primaryGradientFrom, primaryGradientTo } = palette;
-
-  const stats = [
-    { label: "Total Users", value: "2,847", change: "+12%", icon: "fa-users", color: primaryGradientFrom },
-    { label: "Active Today", value: "438", change: "+8%", icon: "fa-user-check", color: successColor },
-    { label: "Total Questions", value: "1,247", change: "+24", icon: "fa-clipboard-list", color: primaryGradientTo },
-    { label: "AI Requests", value: "15.2K", change: "+156", icon: "fa-brain", color: successColor },
-  ];
-
-  const recentActivity = [
-    { user: "John Doe", action: "Completed Mock Exam #12", time: "5 min ago", icon: "fa-check-circle", color: successColor },
-    { user: "Jane Smith", action: "Reported question error", time: "12 min ago", icon: "fa-exclamation-circle", color: warningColor },
-    { user: "Admin", action: "Added 50 new questions", time: "1 hour ago", icon: "fa-plus-circle", color: primaryGradientTo },
-    { user: "Mike Johnson", action: "Sent message to admin", time: "2 hours ago", icon: "fa-envelope", color: primaryGradientFrom },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="p-6 rounded-2xl"
-            style={{
-              backgroundColor: cardBg,
-              border: `1px solid ${borderColor}`,
-              boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${stat.color}20` }}>
-                <i className={`fas ${stat.icon} text-xl`} style={{ color: stat.color }}></i>
-              </div>
-              <span className="text-sm font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: `${successColor}20`, color: successColor }}>
-                {stat.change}
-              </span>
-            </div>
-            <h3 className="text-3xl font-bold mb-1" style={{ color: textColor }}>{stat.value}</h3>
-            <p className="text-sm" style={{ color: secondaryText }}>{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-6 rounded-2xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)" }}>
-          <h3 className="text-lg font-bold mb-4" style={{ color: textColor }}>User Activity (7 Days)</h3>
-          <div className="h-48 flex items-end justify-between gap-2">
-            {[65, 78, 82, 70, 88, 95, 90].map((height, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full rounded-t-lg transition-all hover:opacity-80" style={{ height: `${height}%`, background: `linear-gradient(to top, ${primaryGradientFrom}, ${primaryGradientTo})` }} />
-                <span className="text-xs" style={{ color: secondaryText }}>{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)" }}>
-          <h3 className="text-lg font-bold mb-4" style={{ color: textColor }}>Recent Activity</h3>
-          <div className="space-y-4">
-            {recentActivity.map((activity, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${activity.color}20` }}>
-                  <i className={`fas ${activity.icon} text-sm`} style={{ color: activity.color }}></i>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: textColor }}>{activity.user}</p>
-                  <p className="text-xs truncate" style={{ color: secondaryText }}>{activity.action}</p>
-                </div>
-                <span className="text-xs whitespace-nowrap" style={{ color: secondaryText }}>{activity.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="p-6 rounded-2xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)" }}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})` }}>
-            <i className="fas fa-brain text-white"></i>
-          </div>
-          <h3 className="text-lg font-bold" style={{ color: textColor }}>AI API Performance</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 rounded-xl" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}>
-            <div className="text-2xl font-bold mb-1" style={{ color: successColor }}>15,247</div>
-            <div className="text-sm" style={{ color: secondaryText }}>Total API Requests</div>
-          </div>
-          <div className="text-center p-4 rounded-xl" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}>
-            <div className="text-2xl font-bold mb-1" style={{ color: primaryGradientFrom }}>1,247</div>
-            <div className="text-sm" style={{ color: secondaryText }}>Questions Generated</div>
-          </div>
-          <div className="text-center p-4 rounded-xl" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}>
-            <div className="text-2xl font-bold mb-1" style={{ color: primaryGradientTo }}>98.5%</div>
-            <div className="text-sm" style={{ color: secondaryText }}>Success Rate</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const AdminPanel = ({ theme: initialTheme = "dark" }) => {
@@ -154,13 +49,13 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
-    localStorage.setItem("adminTheme", newTheme); // Save to localStorage
+    localStorage.setItem("adminTheme", newTheme);
   };
 
   const toggleSidebar = () => {
     const newCollapsed = !isSidebarCollapsed;
     setIsSidebarCollapsed(newCollapsed);
-    localStorage.setItem("adminSidebarCollapsed", newCollapsed.toString()); // Save to localStorage
+    localStorage.setItem("adminSidebarCollapsed", newCollapsed.toString());
   };
 
   const handleLogout = () => {
@@ -170,6 +65,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
       localStorage.removeItem("adminUser");
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
       
       // Close mobile menu if open
       setIsMobileMenuOpen(false);
@@ -187,10 +83,10 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
 
   const navItems = [
     { id: "dashboard", name: "Dashboard", icon: "fa-home", badge: null },
-    { id: "users", name: "User Monitoring", icon: "fa-users", badge: "2.8K" },
-    { id: "questions", name: "Question Bank", icon: "fa-clipboard-list", badge: "1.2K" },
-    { id: "reports", name: "Question Reports", icon: "fa-flag", badge: "12" },
-    { id: "messages", name: "Messages", icon: "fa-envelope", badge: "5" },
+    { id: "users", name: "User Monitoring", icon: "fa-users", badge: null },
+    { id: "questions", name: "Question Bank", icon: "fa-clipboard-list", badge: null },
+    { id: "reports", name: "Question Reports", icon: "fa-flag", badge: null },
+    { id: "messages", name: "Messages", icon: "fa-envelope", badge: null },
     { id: "notifications", name: "Notifications", icon: "fa-bell", badge: null },
   ];
 
@@ -293,7 +189,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
 
         {/* Bottom Actions - Theme Toggle & Logout */}
         <div className={`px-4 pb-6 space-y-2 border-t pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-          {/* Theme Toggle - Using your actual component */}
+          {/* Theme Toggle */}
           <ThemeToggleSwitch isDark={isDark} toggleTheme={toggleTheme} isCollapsed={isSidebarCollapsed} />
 
           {/* Logout */}
@@ -410,7 +306,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
 
                 {/* Mobile Bottom Actions */}
                 <div className={`px-4 pb-6 space-y-3 border-t pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-                  {/* Theme Toggle - Using your actual component */}
+                  {/* Theme Toggle */}
                   <ThemeToggleSwitch isDark={isDark} toggleTheme={toggleTheme} />
 
                   {/* Logout */}
@@ -429,12 +325,10 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0 lg:mt-0 mt-16">
-        <header className={`p-6 flex items-center justify-between backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 mt-16 lg:mt-0">
+        {/* Desktop Header - Hidden on Mobile, shown on desktop as sticky */}
+        <header className={`hidden lg:flex p-6 items-center justify-between backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg">
-              <i className="fas fa-bars"></i>
-            </button>
             <div>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 {navItems.find((item) => item.id === currentPage)?.name || "Dashboard"}
@@ -452,7 +346,32 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6">{renderPage()}</main>
+        <main className="flex-1 overflow-y-auto">
+          {/* Mobile Page Header - Scrolls with content */}
+          <div className={`lg:hidden p-4 backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {navItems.find((item) => item.id === currentPage)?.name || "Dashboard"}
+                </h2>
+                <p className="text-sm mt-1" style={{ color: secondaryText }}>Manage your Civil Service Reviewer system</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
+                  <i className="fas fa-bell"></i>
+                </button>
+                <button className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
+                  <i className="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Page Content */}
+          <div className="p-4 lg:p-6">
+            {renderPage()}
+          </div>
+        </main>
       </div>
     </div>
   );

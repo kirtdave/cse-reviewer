@@ -1,6 +1,6 @@
 // models/ContactMessage.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db'); // ✅ FIXED: Changed from '../config/database' to '../config/db'
+const { sequelize } = require('../config/db');
 
 const ContactMessage = sequelize.define('ContactMessage', {
   id: {
@@ -26,6 +26,16 @@ const ContactMessage = sequelize.define('ContactMessage', {
   status: {
     type: DataTypes.ENUM('pending', 'read', 'replied', 'archived'),
     defaultValue: 'pending'
+  },
+  reply: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Admin reply text'
+  },
+  repliedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Timestamp when admin replied'
   },
   userId: {
     type: DataTypes.INTEGER,

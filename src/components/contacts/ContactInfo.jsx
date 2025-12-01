@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getContactStats } from "../../services/adminApi";
 
 // Circular Ring Component for KPIs
 const CircularRing = ({ pct, size = 80, stroke = 8, gradient }) => {
@@ -48,11 +49,53 @@ const CircularRing = ({ pct, size = 80, stroke = 8, gradient }) => {
 
 export default function ContactInfo({ theme = "dark" }) {
   const isDark = theme === "dark";
+  const [stats, setStats] = useState({
+    messagesReceivedPct: 100,
+    activeInquiriesPct: 0,
+    avgResponseTimePct: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const result = await getContactStats();
+        if (result.success && result.stats) {
+          setStats(result.stats);
+        }
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+    
+    // Refresh stats every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const contactMetrics = [
-    { title: "Messages Received", pct: 100, icon: "fa-envelope", gradient: "from-blue-500 to-cyan-500" },
-    { title: "Active Inquiries", pct: 30, icon: "fa-ticket", gradient: "from-orange-500 to-red-500" },
-    { title: "Avg Response Time", pct: 60, icon: "fa-clock", gradient: "from-purple-500 to-pink-500" },
+    { 
+      title: "Messages Received", 
+      pct: stats.messagesReceivedPct, 
+      icon: "fa-envelope", 
+      gradient: "from-blue-500 to-cyan-500" 
+    },
+    { 
+      title: "Active Inquiries", 
+      pct: stats.activeInquiriesPct, 
+      icon: "fa-ticket", 
+      gradient: "from-orange-500 to-red-500" 
+    },
+    { 
+      title: "Avg Response Time", 
+      pct: stats.avgResponseTimePct, 
+      icon: "fa-clock", 
+      gradient: "from-purple-500 to-pink-500" 
+    },
   ];
 
   const teamMembers = [
@@ -95,7 +138,7 @@ export default function ContactInfo({ theme = "dark" }) {
         </div>
       </motion.div>
 
-      {/* Contact Metrics */}
+      {/* Contact Metrics - NOW PUBLIC FOR ALL VISITORS! */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {contactMetrics.map((metric, index) => (
           <motion.div
@@ -104,8 +147,13 @@ export default function ContactInfo({ theme = "dark" }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
             whileHover={{ y: -5 }}
-            className={`${isDark ? "bg-gray-900/60" : "bg-white/60"} backdrop-blur-xl p-5 rounded-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} shadow-xl flex flex-col items-center text-center`}
+            className={`${isDark ? "bg-gray-900/60" : "bg-white/60"} backdrop-blur-xl p-5 rounded-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} shadow-xl flex flex-col items-center text-center relative`}
           >
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/20 rounded-2xl backdrop-blur-sm">
+                <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+              </div>
+            )}
             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${metric.gradient} flex items-center justify-center mb-3`}>
               <i className={`fa-solid ${metric.icon} text-white text-xl`}></i>
             </div>

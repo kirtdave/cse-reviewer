@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { getTestAttemptForReview } from "../../services/testAttemptService";
-import { getAllBookmarks } from "../../services/bookmarkService"; // 1. IMPORT getAllBookmarks
+import { getAllBookmarks } from "../../services/bookmarkService";
 
 // Import sub-components
 import ReviewHeader from "./ReviewHeader";
-import PrintHeader from "./PrintHeader";
+// ✅ REMOVED: PrintHeader import - no longer needed
 import SummaryCard from "./SummaryCard";
 import FilterButton from "./FilterButton";
 import ReviewQuestionCard from "./ReviewQuestionCard";
@@ -21,13 +21,11 @@ export default function TestReview({ theme = "dark" }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterMode, setFilterMode] = useState("all");
-  const [isPrinting, setIsPrinting] = useState(false);
   
   // Study Mode State
   const [studyMode, setStudyMode] = useState(false);
   const [studyQuestions, setStudyQuestions] = useState([]);
   
-  // 2. NEW STATE to hold the indices of bookmarked questions
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState(new Set());
 
   useEffect(() => {
@@ -39,7 +37,6 @@ export default function TestReview({ theme = "dark" }) {
       setLoading(true);
       setError(null);
       
-      // 3. FETCH both test data and all bookmarks at the same time
       const [data, allBookmarks] = await Promise.all([
         getTestAttemptForReview(attemptId),
         getAllBookmarks() 
@@ -47,7 +44,6 @@ export default function TestReview({ theme = "dark" }) {
 
       setTestData(data);
 
-      // 4. PROCESS the bookmarks to find which ones belong to this test
       if (allBookmarks && Array.isArray(allBookmarks)) {
         const relevantBookmarks = allBookmarks.filter(
           (bookmark) => bookmark.attemptId === attemptId
@@ -65,27 +61,9 @@ export default function TestReview({ theme = "dark" }) {
     }
   };
 
-  const handlePrint = () => {
-    setIsPrinting(true);
-    const currentFilter = filterMode;
-    const currentStudyMode = studyMode;
-    
-    setFilterMode("all");
-    setStudyMode(false);
-
-    setTimeout(() => {
-      window.print();
-      setIsPrinting(false);
-      setFilterMode(currentFilter);
-      setStudyMode(currentStudyMode);
-    }, 500);
-  };
-
-  // NEW: Study Mode Handlers
   const handleStartStudyMode = () => {
     const { questions, userAnswers, correctAnswers } = testData;
     
-    // Get all wrong questions
     const wrongQuestions = questions
       .map((q, idx) => ({ question: q, index: idx }))
       .filter(({ index }) => 
@@ -93,12 +71,11 @@ export default function TestReview({ theme = "dark" }) {
         userAnswers[index] !== null
       );
 
-    // Shuffle questions for better learning
     const shuffled = wrongQuestions.sort(() => Math.random() - 0.5);
     
     setStudyQuestions(shuffled);
     setStudyMode(true);
-    setFilterMode("all"); // Reset filter when entering study mode
+    setFilterMode("all");
   };
 
   const handleExitStudyMode = () => {
@@ -108,16 +85,10 @@ export default function TestReview({ theme = "dark" }) {
 
   if (loading) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${
-          isDark ? "bg-gray-950" : "bg-gray-50"
-        }`}
-      >
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-50"}`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={isDark ? "text-gray-400" : "text-gray-600"}>
-            Loading test review...
-          </p>
+          <p className={isDark ? "text-gray-400" : "text-gray-600"}>Loading test review...</p>
         </div>
       </div>
     );
@@ -125,18 +96,10 @@ export default function TestReview({ theme = "dark" }) {
 
   if (error || !testData) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${
-          isDark ? "bg-gray-950" : "bg-gray-50"
-        }`}
-      >
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-50"}`}>
         <div className="text-center">
           <i className="fa-solid fa-circle-xmark text-red-500 text-6xl mb-4"></i>
-          <p
-            className={`text-xl mb-4 ${
-              isDark ? "text-white" : "text-gray-900"
-            }`}
-          >
+          <p className={`text-xl mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
             {error || "Test not found"}
           </p>
           <button
@@ -172,7 +135,6 @@ export default function TestReview({ theme = "dark" }) {
     (ans) => ans === null || ans === undefined
   ).length;
 
-  // Determine which questions to show
   const displayQuestions = studyMode 
     ? studyQuestions 
     : questions.filter((q, idx) => {
@@ -187,23 +149,9 @@ export default function TestReview({ theme = "dark" }) {
       }).map((q, idx) => ({ question: q, index: questions.indexOf(q) }));
 
   return (
-    <div
-      className={`min-h-screen ${
-        isDark ? "bg-gray-950" : "bg-gray-50"
-      } transition-colors duration-300`}
-    >
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          .print-break { page-break-inside: avoid; }
-          body { background: white !important; }
-          * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
-        }
-      `}</style>
-
+    <div className={`min-h-screen ${isDark ? "bg-gray-950" : "bg-gray-50"} transition-colors duration-300`}>
       {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none no-print">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
@@ -211,15 +159,13 @@ export default function TestReview({ theme = "dark" }) {
         />
       </div>
 
-      {/* Header */}
+      {/* Header - No longer needs handlePrint or isPrinting */}
       <ReviewHeader
         name={name}
         score={score}
         totalQuestions={totalQuestions}
         accuracy={accuracy}
         isDark={isDark}
-        isPrinting={isPrinting}
-        handlePrint={handlePrint}
         testData={testData}
         studyMode={studyMode}
         onStartStudyMode={handleStartStudyMode}
@@ -227,14 +173,7 @@ export default function TestReview({ theme = "dark" }) {
         wrongCount={wrongCount}
       />
 
-      {/* Print Header */}
-      <PrintHeader
-        name={name}
-        correctCount={correctCount}
-        wrongCount={wrongCount}
-        unansweredCount={unansweredCount}
-        accuracy={accuracy}
-      />
+      {/* ✅ REMOVED: PrintHeader component - no longer needed */}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
         {/* Study Mode Panel */}
@@ -246,9 +185,9 @@ export default function TestReview({ theme = "dark" }) {
           />
         )}
 
-        {/* Summary Cards - Hide in Study Mode */}
+        {/* Summary Cards */}
         {!studyMode && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 no-print">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <SummaryCard
               icon="fa-circle-check"
               label="Correct"
@@ -280,22 +219,18 @@ export default function TestReview({ theme = "dark" }) {
           </div>
         )}
 
-        {/* Filter Buttons - Hide in Study Mode */}
+        {/* Filter Buttons */}
         {!studyMode && (
           <div
             className={`flex flex-wrap gap-3 mb-6 p-4 rounded-xl ${
               isDark ? "bg-gray-900/60" : "bg-white/60"
             } backdrop-blur-xl border ${
               isDark ? "border-gray-800" : "border-gray-200"
-            } shadow-sm no-print`}
+            } shadow-sm`}
           >
             <div className="flex items-center gap-2 mr-4">
               <i className="fa-solid fa-filter text-blue-500"></i>
-              <span
-                className={`font-medium ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <span className={`font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 Filter Questions:
               </span>
             </div>
@@ -340,10 +275,8 @@ export default function TestReview({ theme = "dark" }) {
             {displayQuestions.map(({ question, index: originalIdx }, idx) => {
               const userAnswer = userAnswers[originalIdx];
               const correctAnswer = correctAnswers[originalIdx];
-              const isCorrect =
-                userAnswer === correctAnswer && userAnswer !== null;
-              const isUnanswered =
-                userAnswer === null || userAnswer === undefined;
+              const isCorrect = userAnswer === correctAnswer && userAnswer !== null;
+              const isUnanswered = userAnswer === null || userAnswer === undefined;
 
               return (
                 <ReviewQuestionCard
@@ -358,8 +291,8 @@ export default function TestReview({ theme = "dark" }) {
                   index={idx}
                   attemptId={attemptId}
                   questionIndex={originalIdx}
-                  // 5. PASS the initial bookmarked status to the card
                   initialBookmarked={bookmarkedQuestions.has(originalIdx)}
+                  theme={theme}
                 />
               );
             })}
@@ -370,29 +303,14 @@ export default function TestReview({ theme = "dark" }) {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-12 no-print"
+            className="text-center py-12"
           >
-            <i
-              className={`fa-solid fa-inbox text-6xl mb-4 ${
-                isDark ? "text-gray-700" : "text-gray-300"
-              }`}
-            ></i>
-            <p
-              className={`text-lg ${
-                isDark ? "text-gray-500" : "text-gray-600"
-              }`}
-            >
+            <i className={`fa-solid fa-inbox text-6xl mb-4 ${isDark ? "text-gray-700" : "text-gray-300"}`}></i>
+            <p className={`text-lg ${isDark ? "text-gray-500" : "text-gray-600"}`}>
               {studyMode ? "No wrong answers to study!" : "No questions match this filter"}
             </p>
           </motion.div>
         )}
-      </div>
-
-      {/* Print Footer */}
-      <div className="hidden print:block p-8 border-t-2 border-gray-300 mt-8">
-        <p className="text-center text-sm text-gray-600">
-          End of Test Review - {name} - Generated from CSE Reviewer App
-        </p>
       </div>
     </div>
   );

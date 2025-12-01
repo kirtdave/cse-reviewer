@@ -253,6 +253,253 @@ export function StudyGuideModal({ isOpen, onClose, theme = "light", category = "
         }
       ]
     },
+    // Add this to your StudyGuideModal guides object
+
+"Philippine Constitution": {
+  overview: {
+    title: "Philippine Constitution Overview",
+    description: "Master the 1987 Philippine Constitution, government structure, and constitutional law",
+    keyTopics: [
+      "Bill of Rights (Art. III)",
+      "Three Branches of Government",
+      "Suffrage & Elections",
+      "National Territory",
+      "Constitutional Amendments",
+      "Local Government Code"
+    ],
+    difficulty: "Medium-Hard",
+    studyTime: "45-60 min/day"
+  },
+  strategies: [
+    {
+      title: "Memorization Techniques",
+      icon: "📜",
+      tips: [
+        "Learn the Preamble by heart - it's frequently tested",
+        "Create acronyms for the Bill of Rights articles",
+        "Use flashcards for important constitutional provisions",
+        "Study Article numbers with their main topics",
+        "Focus on amendments and their ratification dates"
+      ]
+    },
+    {
+      title: "Constitutional Structure",
+      icon: "🏛️",
+      tips: [
+        "Understand the three branches: Executive, Legislative, Judicial",
+        "Learn the system of checks and balances",
+        "Study qualifications for public offices",
+        "Know the impeachment process step-by-step",
+        "Memorize term limits for each position"
+      ]
+    },
+    {
+      title: "Bill of Rights Focus",
+      icon: "⚖️",
+      tips: [
+        "Article III contains 22 sections - know them all",
+        "Understand rights vs. privileges distinctions",
+        "Study landmark Supreme Court cases",
+        "Know exceptions to rights (e.g., warrantless arrests)",
+        "Learn the writ of habeas corpus and amparo"
+      ]
+    }
+  ],
+  resources: [
+    { 
+      name: "Constitution Basics", 
+      time: 20, 
+      difficulty: "Easy", 
+      description: "Preamble, National Territory, Declaration of Principles",
+      subTopic: "Philippine Constitution preamble, national territory, and basic principles"
+    },
+    { 
+      name: "Bill of Rights", 
+      time: 30, 
+      difficulty: "Normal", 
+      description: "Article III - All 22 sections",
+      subTopic: "Bill of Rights (Article III) - civil and political rights"
+    },
+    { 
+      name: "Government Structure", 
+      time: 35, 
+      difficulty: "Normal", 
+      description: "Executive, Legislative, Judicial branches",
+      subTopic: "three branches of government, powers, and functions"
+    },
+    { 
+      name: "Advanced Topics", 
+      time: 40, 
+      difficulty: "Hard", 
+      description: "Amendments, Local Gov't, Constitutional Bodies",
+      subTopic: "constitutional amendments, local government code, and constitutional commissions"
+    }
+  ]
+},
+
+"Clerical Ability": {
+  overview: {
+    title: "Clerical Ability Overview",
+    description: "Master filing systems, office procedures, data organization, and clerical tasks",
+    keyTopics: [
+      "Alphabetical Filing",
+      "Numerical Filing",
+      "Name & Address Sorting",
+      "Data Coding",
+      "Office Procedures",
+      "Document Management"
+    ],
+    difficulty: "Easy-Medium",
+    studyTime: "30-40 min/day"
+  },
+  strategies: [
+    {
+      title: "Filing Systems",
+      icon: "📁",
+      tips: [
+        "Master alphabetical order rules (surname first)",
+        "Learn numerical filing: straight, terminal, middle digit",
+        "Practice with Filipino names (de, del, dela, etc.)",
+        "Understand chronological filing principles",
+        "Study geographic filing by province/city"
+      ]
+    },
+    {
+      title: "Speed & Accuracy",
+      icon: "⚡",
+      tips: [
+        "Practice timed exercises daily",
+        "Use finger to track items quickly",
+        "Check answer twice before moving on",
+        "Eliminate obviously wrong options first",
+        "Don't rush - accuracy is more important"
+      ]
+    },
+    {
+      title: "Office Procedures",
+      icon: "🏢",
+      tips: [
+        "Learn basic office correspondence formats",
+        "Understand document routing procedures",
+        "Study common office forms and their uses",
+        "Know proper telephone etiquette",
+        "Memorize standard filing codes"
+      ]
+    }
+  ],
+  resources: [
+    { 
+      name: "Filing Basics", 
+      time: 15, 
+      difficulty: "Easy", 
+      description: "Alphabetical and numerical sorting",
+      subTopic: "alphabetical filing and basic sorting techniques"
+    },
+    { 
+      name: "Name Sorting", 
+      time: 25, 
+      difficulty: "Normal", 
+      description: "Filipino names, prefixes, suffixes",
+      subTopic: "sorting Filipino names with prefixes like de, del, dela, san, etc."
+    },
+    { 
+      name: "Data Coding", 
+      time: 30, 
+      difficulty: "Normal", 
+      description: "Code matching and error spotting",
+      subTopic: "data coding, code matching, and error detection"
+    },
+    { 
+      name: "Speed Test", 
+      time: 20, 
+      difficulty: "Hard", 
+      description: "Rapid filing under time pressure",
+      subTopic: "speed filing and rapid data organization"
+    }
+  ]
+},
+
+"Numerical Reasoning": {
+  overview: {
+    title: "Numerical Reasoning Overview",
+    description: "Advanced numerical problem-solving, data analysis, and quantitative reasoning",
+    keyTopics: [
+      "Number Sequences",
+      "Ratio & Proportion",
+      "Data Sufficiency",
+      "Logical Deduction",
+      "Quantitative Comparisons",
+      "Problem Solving"
+    ],
+    difficulty: "Hard",
+    studyTime: "50-60 min/day"
+  },
+  strategies: [
+    {
+      title: "Pattern Recognition",
+      icon: "🔢",
+      tips: [
+        "Look for arithmetic progressions (+, -, ×, ÷)",
+        "Check for geometric sequences (powers, squares)",
+        "Identify alternating patterns",
+        "Look for Fibonacci-type sequences",
+        "Test with simple numbers first"
+      ]
+    },
+    {
+      title: "Data Analysis",
+      icon: "📊",
+      tips: [
+        "Read all given information carefully",
+        "Identify what's asked vs what's given",
+        "Determine if data is sufficient",
+        "Look for relationships between numbers",
+        "Eliminate impossible answer choices"
+      ]
+    },
+    {
+      title: "Problem-Solving",
+      icon: "🧮",
+      tips: [
+        "Break complex problems into steps",
+        "Use logical reasoning, not just formulas",
+        "Check if answer makes logical sense",
+        "Practice mental math shortcuts",
+        "Work backwards from answer choices"
+      ]
+    }
+  ],
+  resources: [
+    { 
+      name: "Sequences", 
+      time: 20, 
+      difficulty: "Easy", 
+      description: "Number and pattern sequences",
+      subTopic: "number sequences and pattern recognition"
+    },
+    { 
+      name: "Ratios & Proportions", 
+      time: 30, 
+      difficulty: "Normal", 
+      description: "Ratio problems and proportional reasoning",
+      subTopic: "ratios, proportions, and comparative analysis"
+    },
+    { 
+      name: "Data Sufficiency", 
+      time: 35, 
+      difficulty: "Hard", 
+      description: "Logical deduction from data",
+      subTopic: "data sufficiency and logical reasoning"
+    },
+    { 
+      name: "Advanced Problems", 
+      time: 40, 
+      difficulty: "Hard", 
+      description: "Complex quantitative reasoning",
+      subTopic: "advanced numerical reasoning and quantitative comparisons"
+    }
+  ]
+},
     "General Knowledge": {
       overview: {
         title: "General Knowledge Overview",

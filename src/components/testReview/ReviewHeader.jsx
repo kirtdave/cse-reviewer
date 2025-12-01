@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { downloadTestPaper, printTestPaper, copyTestPaperToClipboard } from "../../services/exportService";
@@ -9,8 +10,6 @@ export default function ReviewHeader({
   totalQuestions,
   accuracy,
   isDark,
-  isPrinting,
-  handlePrint,
   testData,
   studyMode,
   onStartStudyMode,
@@ -19,6 +18,13 @@ export default function ReviewHeader({
 }) {
   const navigate = useNavigate();
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [buttonRect, setButtonRect] = useState(null);
+
+  const handleExportButtonClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setButtonRect(rect);
+    setShowExportMenu(!showExportMenu);
+  };
 
   const handleExportTestPaper = async (format) => {
     setShowExportMenu(false);
@@ -115,35 +121,12 @@ export default function ReviewHeader({
                 </motion.button>
               )}
 
-              {/* Print Button */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handlePrint}
-                disabled={isPrinting}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  isDark
-                    ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30"
-                    : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                title="Print or Save as PDF"
-              >
-                <i
-                  className={`fa-solid ${
-                    isPrinting ? "fa-spinner fa-spin" : "fa-print"
-                  }`}
-                ></i>
-                <span className="hidden sm:inline">
-                  {isPrinting ? "Preparing..." : "Print"}
-                </span>
-              </motion.button>
-
-              {/* Export Menu - ✅ FIXED z-index */}
-              <div className="relative z-50">
+              {/* Export Button with Dropdown */}
+              <div className="relative">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  onClick={handleExportButtonClick}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
                     isDark
                       ? "bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30"
@@ -155,23 +138,30 @@ export default function ReviewHeader({
                   <i className="fa-solid fa-chevron-down text-xs"></i>
                 </motion.button>
 
-                <AnimatePresence>
-                  {showExportMenu && (
-                    <>
-                      {/* Backdrop - ✅ FIXED z-index */}
-                      <div
-                        className="fixed inset-0 z-[60]"
-                        onClick={() => setShowExportMenu(false)}
-                      />
-                      
-                      {/* Menu - ✅ FIXED z-index */}
+                {/* Portal - Renders dropdown outside component tree */}
+                {showExportMenu && buttonRect && createPortal(
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-[9998]"
+                      onClick={() => setShowExportMenu(false)}
+                    />
+                    
+                    {/* Dropdown Menu */}
+                    <AnimatePresence>
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl ${
+                        style={{
+                          position: 'fixed',
+                          top: buttonRect.bottom + 8,
+                          left: buttonRect.left,
+                          minWidth: buttonRect.width,
+                        }}
+                        className={`w-56 rounded-xl shadow-2xl ${
                           isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
-                        } overflow-hidden z-[70]`}
+                        } overflow-hidden z-[9999]`}
                       >
                         <button
                           onClick={() => handleExportTestPaper('download')}
@@ -210,9 +200,10 @@ export default function ReviewHeader({
                           </div>
                         </button>
                       </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
+                    </AnimatePresence>
+                  </>,
+                  document.body
+                )}
               </div>
             </div>
 
