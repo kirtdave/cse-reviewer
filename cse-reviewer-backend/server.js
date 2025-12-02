@@ -16,6 +16,7 @@ const profileRoutes = require('./routes/profile');
 const customTestRoutes = require('./routes/customTests');
 const contactRoutes = require('./routes/contactRoutes');
 const questionReportRoutes = require('./routes/questionReportRoutes'); // ✅ ADD THIS
+const adminTestRoutes = require('./routes/adminTests');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/custom-tests', customTestRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/question-reports', questionReportRoutes); 
+app.use('/api/admin-tests', adminTestRoutes);
 
 // Health check
 app.get('/', (req, res) => {

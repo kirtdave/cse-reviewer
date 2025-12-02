@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createCustomTest } from '../../services/customTestService'; // ✅ ADDED
 
 const getPalette = (theme = "dark") => {
   const isDark = theme === "dark";
@@ -71,6 +72,7 @@ const ManageModal = ({
     return option.replace(/^[A-D]\)\s*/, '');
   };
 
+  // ✅ FIXED: Properly create test and get real ID from backend
   const handleCreateTest = async () => {
     if (!newTestName.trim()) {
       alert("Please enter a test name");
@@ -79,19 +81,36 @@ const ManageModal = ({
 
     try {
       setCreatingTest(true);
-      // Simulated API call
-      const newTest = {
-        id: Date.now(),
+      
+      // Create test data
+      const newTestData = {
         title: newTestName.trim(),
-        sets: [{ id: 1, title: "Set 1", questions: [] }]
+        description: "",
+        sets: [{ id: 1, title: "Set 1", questions: [] }],
+        category: "Custom",
+        difficulty: "Mixed",
+        timeLimit: null,
+        isPublic: false
       };
       
-      setSavedTests([...savedTests, newTest]);
-      onLoadTest(newTest);
+      // Call backend API to create test and get REAL ID
+      const createdTest = await createCustomTest(newTestData);
+      
+      console.log('✅ Test created with ID:', createdTest.id);
+      
+      // Update saved tests list with the real test from backend
+      setSavedTests([...savedTests, createdTest]);
+      
+      // Load the newly created test (with real ID from backend)
+      onLoadTest(createdTest);
+      
+      // Clear form and close modal
       setNewTestName('');
       onClose();
+      
     } catch (error) {
-      alert("Failed to create test");
+      console.error('Failed to create test:', error);
+      alert(error.message || "Failed to create test");
     } finally {
       setCreatingTest(false);
     }

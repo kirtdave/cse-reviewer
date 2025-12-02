@@ -1,4 +1,4 @@
-// Customtest.jsx - WORKING BACKEND + CLEAN UI
+// Customtest.jsx - FIXED VERSION
 import React, { useState, useContext, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -80,17 +80,39 @@ const Customtest = () => {
     }
   }, [error, successMessage]);
 
+  // ✅ FIXED: Add validation to prevent auto-save with invalid IDs
   useEffect(() => {
-    if (currentTestId && testTitle) {
-      const timer = setTimeout(() => {
-        autoSaveTest();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [questions, sets, currentTestId]);
-
-  const autoSaveTest = async () => {
+    // Only auto-save if we have a VALID test ID (not a timestamp)
+    // Database IDs are typically small integers (1, 2, 3, etc.)
+    // Timestamps are 13 digits (e.g., 1764641666076)
     if (!currentTestId || !testTitle) return;
+    
+    // Skip auto-save if ID looks like a timestamp (probably not saved to DB yet)
+    if (currentTestId > 999999) {
+      console.warn('⚠️ Skipping auto-save: Test ID looks invalid or not yet saved to database');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      autoSaveTest();
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [questions, sets, currentTestId, testTitle]);
+
+  // ✅ FIXED: Add validation in autoSaveTest function
+  const autoSaveTest = async () => {
+    // Safety checks
+    if (!currentTestId || !testTitle) {
+      console.log('Auto-save skipped: No test ID or title');
+      return;
+    }
+    
+    // Validate ID format
+    if (currentTestId > 999999) {
+      console.warn('Auto-save skipped: Invalid test ID format');
+      return;
+    }
 
     const transformedSets = sets.map(set => ({
       id: set.id,
@@ -99,7 +121,10 @@ const Customtest = () => {
     }));
 
     const allQuestions = transformedSets.flatMap(set => set.questions);
-    if (allQuestions.length === 0) return;
+    if (allQuestions.length === 0) {
+      console.log('Auto-save skipped: No questions to save');
+      return;
+    }
 
     const categoryCounts = {};
     allQuestions.forEach(q => {
@@ -110,6 +135,8 @@ const Customtest = () => {
     );
 
     try {
+      console.log('🔄 Auto-saving test ID:', currentTestId);
+      
       await updateCustomTest(currentTestId, {
         title: testTitle,
         description: "",
@@ -119,9 +146,12 @@ const Customtest = () => {
         timeLimit: null,
         isPublic: false
       });
-      console.log('✅ Auto-saved');
+      
+      console.log('✅ Auto-saved successfully');
     } catch (error) {
-      console.error('Auto-save failed:', error);
+      console.error('❌ Auto-save failed:', error.message);
+      // Don't show error to user for auto-save failures
+      // They'll see errors when manually saving
     }
   };
 

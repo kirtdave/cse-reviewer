@@ -75,8 +75,10 @@ export default function MessagesPage({ palette }) {
         await replyToMessage(selectedMessage.id, replyText);
         alert(`Reply sent successfully to ${selectedMessage.sender}`);
         setReplyText("");
-        handleMarkAsRead(selectedMessage.id);
+        // ✅ REMOVED: handleMarkAsRead(selectedMessage.id);
+        // The backend already sets status to 'replied', no need to overwrite it
         setSelectedMessage(null);
+        fetchMessages(); // Refresh the message list to show updated status
       } catch (error) {
         console.error('Error sending reply:', error);
         alert('Failed to send reply');

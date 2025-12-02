@@ -1,6 +1,7 @@
 // routes/contactRoutes.js
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize'); // ✅ ADD THIS
 const { protect, adminOnly } = require('../middleware/auth');
 const { ContactMessage } = require('../models');
 
@@ -38,10 +39,12 @@ router.get('/stats', async (req, res) => {
     // Total messages received
     const totalMessages = await ContactMessage.count();
 
-    // Active inquiries (pending + read status)
+    // Active inquiries (pending + read status) - ✅ FIXED with Op.in
     const activeInquiries = await ContactMessage.count({
       where: {
-        status: ['pending', 'read']
+        status: {
+          [Op.in]: ['pending', 'read']
+        }
       }
     });
 
