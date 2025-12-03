@@ -9,6 +9,7 @@ const {
   TestAttempt, 
   QuestionReport, 
   ContactMessage,
+  Activity,
   sequelize 
 } = require('../models');
 const Notification = require('../models/Notification');
@@ -17,119 +18,233 @@ const Notification = require('../models/Notification');
 router.use(protect);
 router.use(adminOnly);
 
-// ==================== DASHBOARD STATS ====================
+// routes/admin.js - Updated /stats endpoint
+// Add this to your existing admin.js file, replace the existing /stats route
+
 router.get('/stats', async (req, res) => {
   try {
-    // Total users
+    const now = new Date();
+    const todayStart = new Date(now.setHours(0, 0, 0, 0));
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    // ==================== STATISTICS ====================
+    
+    // 1. Total Users
     const totalUsers = await User.count();
+
+    // 2. Active Users Today (based on lastActive field)
     const activeUsers = await User.count({
       where: {
         lastActive: {
-          [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000)
+          [Op.gte]: todayStart
         }
       }
     });
 
-    // Total questions
-    const totalQuestions = await Question.count({ where: { isActive: true } });
-
-    // AI Requests
-    const aiRequests = await Question.sum('usageCount', {
-      where: { source: 'AI', isActive: true }
-    }) || 0;
-
-    // Recent activity - with timestamps for proper sorting
-    const recentTests = await TestAttempt.findAll({
-      limit: 4,
-      order: [['completedAt', 'DESC']],
-      include: [{
-        model: User,
-        as: 'user',
-        attributes: ['name']
-      }]
+    // 3. Total Questions
+    const totalQuestions = await Question.count({ 
+      where: { isActive: true } 
     });
 
-    const recentReports = await QuestionReport.findAll({
-      limit: 2,
+    // 4. AI Requests (from User model tracking)
+    const aiRequestsResult = await User.findOne({
+      attributes: [
+        [sequelize.fn('SUM', sequelize.col('aiRequestCount')), 'total']
+      ],
+      raw: true
+    });
+    const aiRequests = parseInt(aiRequestsResult?.total || 0);
+
+    // 5. Questions Generated (from User model tracking)
+    const questionsGeneratedResult = await User.findOne({
+      attributes: [
+        [sequelize.fn('SUM', sequelize.col('questionsGeneratedCount')), 'total']
+      ],
+      raw: true
+    });
+    const questionsGenerated = parseInt(questionsGeneratedResult?.total || 0);
+
+    // 6. AI Success Rate
+    const aiStatsResult = await User.findOne({
+      attributes: [
+        [sequelize.fn('SUM', sequelize.col('apiSuccessCount')), 'totalSuccess'],
+        [sequelize.fn('SUM', sequelize.col('apiFailureCount')), 'totalFailure']
+      ],
+      raw: true
+    });
+    
+    const totalSuccess = parseInt(aiStatsResult?.totalSuccess || 0);
+    const totalFailure = parseInt(aiStatsResult?.totalFailure || 0);
+    const totalApiCalls = totalSuccess + totalFailure;
+    const successRate = totalApiCalls > 0 
+      ? ((totalSuccess / totalApiCalls) * 100).toFixed(1)
+      : '0';
+
+    // 7. Growth Calculations
+    const lastWeekUsers = await User.count({
+      where: {
+        createdAt: { [Op.gte]: sevenDaysAgo }
+      }
+    });
+    const userGrowth = totalUsers > 0 
+      ? `+${Math.round((lastWeekUsers / totalUsers) * 100)}%`
+      : '+0%';
+
+    const lastWeekQuestions = await Question.count({
+      where: {
+        createdAt: { [Op.gte]: sevenDaysAgo },
+        isActive: true
+      }
+    });
+    const questionGrowth = `+${lastWeekQuestions}`;
+
+    const lastWeekAiRequests = await Activity.count({
+      where: {
+        type: 'question_generated',
+        createdAt: { [Op.gte]: sevenDaysAgo }
+      }
+    });
+    const aiGrowth = `+${lastWeekAiRequests}`;
+
+// ==================== DAILY ACTIVITY ====================
+
+// Get all activities per day for the last 7 days
+const dailyActivityRaw = await Activity.findAll({
+  where: {
+    createdAt: {
+      [Op.gte]: sevenDaysAgo
+    }
+  },
+  attributes: [
+    [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
+    [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+  ],
+  group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
+  order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
+  raw: true
+});
+
+console.log('📊 Daily Activity Raw:', dailyActivityRaw); // ✅ Debug log
+
+    // Fill in missing days with 0 count
+    const dailyActivity = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const existing = dailyActivityRaw.find(d => d.date === dateStr);
+      dailyActivity.push({
+        date: dateStr,
+        count: existing ? parseInt(existing.count) : 0
+      });
+    }
+
+    // ==================== RECENT ACTIVITY ====================
+    
+    // Fetch from Activity model
+    const recentActivitiesRaw = await Activity.findAll({
+      limit: 10,
       order: [['createdAt', 'DESC']],
       include: [{
         model: User,
-        as: 'reporter',
-        attributes: ['name']
+        as: 'user',
+        attributes: ['name', 'email', 'avatar']
       }]
     });
 
-    const recentMessages = await ContactMessage.findAll({
-      limit: 2,
-      order: [['createdAt', 'DESC']]
-    });
+    const recentActivity = recentActivitiesRaw.map(activity => ({
+      user: activity.user?.name || 'Unknown User',
+      action: activity.action,
+      icon: getActivityIcon(activity.type),
+      color: getActivityColor(activity.type),
+      time: getTimeAgo(activity.createdAt),
+      timestamp: new Date(activity.createdAt).getTime()
+    }));
 
-    // Combine all activities with timestamps
-    const allActivities = [
-      ...recentTests.map(test => ({
-        user: test.user?.name || 'Unknown User',
-        action: `Completed ${test.name}`,
-        time: getTimeAgo(test.completedAt),
-        timestamp: new Date(test.completedAt).getTime(),
-        icon: 'fa-check-circle',
-        color: '#10b981'
-      })),
-      ...recentReports.map(report => ({
-        user: report.reporter?.name || 'Unknown User',
-        action: 'Reported question error',
-        time: getTimeAgo(report.createdAt),
-        timestamp: new Date(report.createdAt).getTime(),
-        icon: 'fa-exclamation-circle',
-        color: '#f59e0b'
-      })),
-      ...recentMessages.map(msg => ({
-        user: msg.name,
-        action: 'Sent message to admin',
-        time: getTimeAgo(msg.createdAt),
-        timestamp: new Date(msg.createdAt).getTime(),
-        icon: 'fa-envelope',
-        color: '#3b82f6'
-      }))
-    ];
-
-    // ✅ Sort by timestamp (most recent first) and take top 4
-    const recentActivity = allActivities
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 4)
-      .map(({ timestamp, ...rest }) => rest);
-
-    // User activity for last 7 days
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const dailyActivity = await TestAttempt.findAll({
-      where: {
-        completedAt: { [Op.gte]: sevenDaysAgo }
-      },
-      attributes: [
-        [sequelize.fn('DATE', sequelize.col('completedAt')), 'date'],
-        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
-      ],
-      group: [sequelize.fn('DATE', sequelize.col('completedAt'))],
-      order: [[sequelize.fn('DATE', sequelize.col('completedAt')), 'ASC']]
-    });
-
+    // ==================== RESPONSE ====================
+    
     res.json({
       stats: {
         totalUsers,
         activeUsers,
         totalQuestions,
-        aiRequests
+        aiRequests,
+        questionsGenerated,
+        successRate,
+        userGrowth,
+        questionGrowth,
+        aiGrowth
       },
-      recentActivity,
-      dailyActivity: dailyActivity.map(day => ({
-        date: day.get('date'),
-        count: parseInt(day.get('count'))
-      }))
+      dailyActivity,
+      recentActivity
     });
+
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({ message: 'Error fetching dashboard stats', error: error.message });
+    console.error('❌ Error fetching dashboard stats:', error);
+    res.status(500).json({ 
+      message: 'Error fetching dashboard statistics',
+      error: error.message 
+    });
   }
 });
+
+// ==================== HELPER FUNCTIONS ====================
+
+function getActivityIcon(type) {
+  const icons = {
+    'user_login': 'fa-sign-in-alt',
+    'user_register': 'fa-user-plus',
+    'test_started': 'fa-play-circle',
+    'test_completed': 'fa-check-circle',
+    'question_generated': 'fa-brain',
+    'question_answered': 'fa-clipboard-check',
+    'achievement_earned': 'fa-trophy',
+    'profile_updated': 'fa-user-edit',
+    'question_reported': 'fa-flag',
+    'custom_test_created': 'fa-plus-circle'
+  };
+  return icons[type] || 'fa-circle';
+}
+
+function getActivityColor(type) {
+  const colors = {
+    'user_login': '#3b82f6',
+    'user_register': '#10b981',
+    'test_started': '#f59e0b',
+    'test_completed': '#10b981',
+    'question_generated': '#8b5cf6',
+    'question_answered': '#3b82f6',
+    'achievement_earned': '#fbbf24',
+    'profile_updated': '#6366f1',
+    'question_reported': '#ef4444',
+    'custom_test_created': '#8b5cf6'
+  };
+  return colors[type] || '#6b7280';
+}
+
+function getTimeAgo(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
+
+  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+    const interval = Math.floor(seconds / secondsInUnit);
+    if (interval >= 1) {
+      return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+    }
+  }
+  
+  return 'Just now';
+}
 
 // ==================== USER MONITORING ====================
 router.get('/users', async (req, res) => {

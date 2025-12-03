@@ -77,7 +77,7 @@ const NotificationModal = ({
         >
           {/* Enhanced Backdrop */}
           <motion.div
-            className="absolute inset-0 backdrop-blur-md"
+            className="absolute inset-0 backdrop-blur-sm"
             style={{
               background: isDark 
                 ? 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0.8))' 

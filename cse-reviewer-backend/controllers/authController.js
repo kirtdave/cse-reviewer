@@ -1,6 +1,7 @@
 // controllers/authController.js
 const { User } = require('../models'); // ✅ Import from models/index.js
 const jwt = require('jsonwebtoken');
+const { logActivity } = require('../middleware/activityTracker'); // ✅ ADD THIS
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -28,6 +29,15 @@ exports.signup = async (req, res) => {
       email,
       password,
     });
+
+    // ✅ ADD THIS - Log registration activity
+    await logActivity(
+      user.id,
+      'user_register',
+      `${user.name} created an account`,
+      { email: user.email },
+      req
+    );
 
     // Generate token
     const token = generateToken(user.id);
@@ -74,6 +84,15 @@ exports.login = async (req, res) => {
         });
       }
 
+      // ✅ ADD THIS - Log admin login
+      await logActivity(
+        admin.id,
+        'user_login',
+        `${admin.name} (Admin) logged in`,
+        { email: admin.email, isAdmin: true },
+        req
+      );
+
       const token = generateToken(admin.id);
 
       return res.status(200).json({
@@ -106,6 +125,15 @@ exports.login = async (req, res) => {
     // Update last active
     user.lastActive = new Date();
     await user.save();
+
+    // ✅ ADD THIS - Log user login
+    await logActivity(
+      user.id,
+      'user_login',
+      `${user.name} logged in`,
+      { email: user.email },
+      req
+    );
 
     // Generate token
     const token = generateToken(user.id);
@@ -169,6 +197,15 @@ exports.updateProfile = async (req, res) => {
     user.email = email || user.email;
 
     await user.save();
+
+    // ✅ ADD THIS - Log profile update
+    await logActivity(
+      req.user.id,
+      'profile_updated',
+      `${user.name} updated their profile`,
+      { fields: Object.keys(req.body) },
+      req
+    );
 
     res.status(200).json({
       success: true,
