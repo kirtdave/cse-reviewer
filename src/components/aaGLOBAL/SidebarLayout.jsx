@@ -9,6 +9,7 @@ import MobileMenu from './sidebar/MobileMenu';
 import DesktopSidebar from './sidebar/DesktopSidebar';
 import AuthModal from './sidebar/AuthModal';
 import LoadingScreen from './sidebar/LoadingScreen';
+import NotificationModal from './notifification/NotificationModal';
 
 const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -21,6 +22,51 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // 🔔 NEW: Notification states
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications] = useState([
+    {
+      id: 1,
+      type: 'success',
+      title: 'Test Completed!',
+      message: 'You scored 95% on CSE Practice Test #5',
+      time: '2 minutes ago',
+      unread: true
+    },
+    {
+      id: 2,
+      type: 'info',
+      title: 'New Study Material',
+      message: 'Data Structures chapter has been updated',
+      time: '1 hour ago',
+      unread: true
+    },
+    {
+      id: 3,
+      type: 'warning',
+      title: 'Upcoming Test',
+      message: 'Your scheduled test starts in 30 minutes',
+      time: '2 hours ago',
+      unread: false
+    },
+    {
+      id: 4,
+      type: 'success',
+      title: 'Achievement Unlocked',
+      message: 'Completed 10 tests in a row!',
+      time: '1 day ago',
+      unread: false
+    },
+    {
+      id: 5,
+      type: 'info',
+      title: 'New Bookmark',
+      message: 'Question #42 added to your bookmarks',
+      time: '2 days ago',
+      unread: true
+    }
+  ]);
 
   const navItems = [
     { name: "Dashboard", path: "/", icon: "fa-house", gradient: "from-blue-500 to-purple-500" },
@@ -94,6 +140,11 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
     setIsMobileMenuOpen(false);
   };
 
+  // 🔔 NEW: Notification handler
+  const handleNotificationClick = () => {
+    setShowNotifications(true);
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -120,6 +171,8 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
         openSignup={openSignup}
         handleLogout={handleLogout}
         goToProfile={goToProfile}
+        notificationCount={notifications.filter(n => n.unread).length}
+        onNotificationClick={handleNotificationClick}
       />
 
       <DesktopSidebar
@@ -135,6 +188,8 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
         openSignup={openSignup}
         handleLogout={handleLogout}
         goToProfile={goToProfile}
+        notificationCount={notifications.filter(n => n.unread).length}
+        onNotificationClick={handleNotificationClick}
       />
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 lg:mt-0 mt-16">
@@ -149,6 +204,14 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
           <AuthModal title="Create Account" onClose={closeModals} theme={theme} type="signup" onSubmit={handleLogin} />
         )}
       </AnimatePresence>
+
+      {/* 🔔 NEW: Notification Modal */}
+      <NotificationModal
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        isDark={isDark}
+        notifications={notifications}
+      />
     </div>
   );
 };

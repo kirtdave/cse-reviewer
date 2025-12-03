@@ -1,3 +1,4 @@
+// components/TestSetup/Testsetup.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
@@ -7,6 +8,8 @@ import StepSelector from "./StepSelector";
 import CategoryAndSettings from "./CategoryAndSettings";
 import SummaryPanel from "./SummaryPanel";
 import CustomTestSelector from "./CustomTestSelector";
+import AdminTestTypeModal from "./AdminTestTypeModal"; // ✅ NEW
+import AdminTestSelector from "./AdminTestSelector"; // ✅ NEW
 
 import { generateNewTest } from "../../services/testAttemptService"; 
 import { getAnalyticsData, calculateStrengthsWeaknesses } from "../../services/analyticsService";
@@ -237,6 +240,11 @@ const Testsetup = ({ theme = "dark" }) => {
   
   const [showCustomTestSelector, setShowCustomTestSelector] = useState(false);
   
+  // ✅ NEW: Admin test modals
+  const [showAdminTestTypeModal, setShowAdminTestTypeModal] = useState(false);
+  const [showAdminTestSelector, setShowAdminTestSelector] = useState(false);
+  const [selectedAdminTestType, setSelectedAdminTestType] = useState(null);
+  
   const [error, setError] = useState("");
   const [categories, setCategories] = useState({
     "Verbal Ability": { checked: false, difficulty: "Easy" },
@@ -395,7 +403,6 @@ const Testsetup = ({ theme = "dark" }) => {
     });
   };
 
-  // ✅ SINGLE handleStartMockExam FUNCTION (25% weak / 75% others)
   const handleStartMockExam = async () => {
     const TOTAL_MOCK_QUESTIONS = 180;
     let categoriesToGenerate = [];
@@ -432,8 +439,8 @@ const Testsetup = ({ theme = "dark" }) => {
     if (weakestSection && weakestSection.value > 0 && weakestSection.value < 75 && ALL_CATEGORIES.includes(weakestSection.label)) {
       console.log(`📊 Weakest section: ${weakestSection.label} (${weakestSection.value}%)`);
       
-      const numWeakQuestions = Math.round(TOTAL_MOCK_QUESTIONS * 0.25); // 45 questions (25%)
-      const numOtherQuestions = TOTAL_MOCK_QUESTIONS - numWeakQuestions; // 135 questions (75%)
+      const numWeakQuestions = Math.round(TOTAL_MOCK_QUESTIONS * 0.25);
+      const numOtherQuestions = TOTAL_MOCK_QUESTIONS - numWeakQuestions;
 
       categoriesToGenerate.push({
         topic: weakestSection.label,
@@ -470,7 +477,7 @@ const Testsetup = ({ theme = "dark" }) => {
       });
     }
 
-    console.log('📝 Generating 180-question mock exam (25% weak / 75% others):', categoriesToGenerate);
+    console.log('📝 Generating 180-question mock exam:', categoriesToGenerate);
 
     await generateQuestionsAndNavigate(categoriesToGenerate, "AI-Mock Exam", setIsMockExamGenerating);
   };
@@ -520,6 +527,61 @@ const Testsetup = ({ theme = "dark" }) => {
       }
     });
   };
+
+  // ✅ NEW: Handle admin test selection
+  const handleAdminTestTypeSelect = (testType) => {
+    console.log('🎯 Selected admin test type:', testType);
+    setSelectedAdminTestType(testType);
+    setShowAdminTestSelector(true);
+  };
+
+  // ✅ NEW: Handle admin test selection
+  const handleAdminTestSelect = (adminTest) => {
+    console.log('🎯 Loading admin test:', adminTest);
+    
+    const allQuestions = [];
+    const categories = new Set();
+    
+    if (adminTest.sets && Array.isArray(adminTest.sets)) {
+      adminTest.sets.forEach(set => {
+        if (set.questions && Array.isArray(set.questions)) {
+          set.questions.forEach(q => {
+            const convertedQuestion = {
+              question: q.question,
+              options: q.options,
+              answer: convertLetterToIndex(q.correctAnswer),
+              category: q.category || "Admin",
+              explanation: q.explanation || "No explanation provided",
+              _id: q._id || `admin_${Date.now()}_${Math.random()}`
+            };
+            
+            allQuestions.push(convertedQuestion);
+            categories.add(q.category || "Admin");
+          });
+        }
+      });
+    }
+    
+    console.log(`✅ Loaded ${allQuestions.length} questions from admin test`);
+    
+    if (allQuestions.length === 0) {
+      setError("This admin test has no questions.");
+      return;
+    }
+    
+    navigate("/actualtest", {
+      state: {
+        selectedType: "Admin",
+        timeLimit: adminTest.timeLimit || parseInt(timeLimit),
+        categories: Array.from(categories),
+        questions: allQuestions,
+        theme,
+        isMockExam: adminTest.testType === 'Mock',
+        adminTestTitle: adminTest.title,
+        adminTestType: adminTest.testType
+      }
+    });
+  };
   
   const convertLetterToIndex = (letter) => {
     if (typeof letter === 'number') return letter;
@@ -545,7 +607,8 @@ const Testsetup = ({ theme = "dark" }) => {
     } else if (selectedType === "Custom") {
       setShowCustomTestSelector(true);
     } else if (selectedType === "Admin") {
-      setError("Admin questionnaires feature coming soon!");
+      // ✅ NEW: Show admin test type modal
+      setShowAdminTestTypeModal(true);
     }
   };
 
@@ -644,11 +707,32 @@ const Testsetup = ({ theme = "dark" }) => {
         </div>
       </div>
 
+      {/* ✅ Existing Custom Test Selector */}
       <CustomTestSelector
         theme={theme}
         isOpen={showCustomTestSelector}
         onClose={() => setShowCustomTestSelector(false)}
         onSelectTest={handleCustomTestSelect}
+      />
+
+      {/* ✅ NEW: Admin Test Type Modal */}
+      <AdminTestTypeModal
+        theme={theme}
+        isOpen={showAdminTestTypeModal}
+        onClose={() => setShowAdminTestTypeModal(false)}
+        onSelectType={handleAdminTestTypeSelect}
+      />
+
+      {/* ✅ NEW: Admin Test Selector */}
+      <AdminTestSelector
+        theme={theme}
+        isOpen={showAdminTestSelector}
+        onClose={() => {
+          setShowAdminTestSelector(false);
+          setSelectedAdminTestType(null);
+        }}
+        onSelectTest={handleAdminTestSelect}
+        testType={selectedAdminTestType}
       />
     </main>
   );

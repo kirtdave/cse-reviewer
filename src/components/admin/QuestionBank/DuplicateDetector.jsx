@@ -1,5 +1,5 @@
 // QuestionBank/DuplicateDetector.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { deleteQuestion } from "../../../services/adminApi";
 
@@ -11,27 +11,30 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
   const [selectedForDeletion, setSelectedForDeletion] = useState([]);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.85);
 
+  // ✅ FIX 1: Added questions to dependency array
   useEffect(() => {
-    if (show) {
+    if (show && questions.length > 0) {
       findDuplicates();
     }
-  }, [show, similarityThreshold]);
+  }, [show, similarityThreshold, questions]);
 
-  // Calculate similarity between two strings (Levenshtein distance-based)
-  const calculateSimilarity = (str1, str2) => {
-    const s1 = str1.toLowerCase().trim();
-    const s2 = str2.toLowerCase().trim();
-    
-    if (s1 === s2) return 1.0;
-    
-    const longer = s1.length > s2.length ? s1 : s2;
-    const shorter = s1.length > s2.length ? s2 : s1;
-    
-    if (longer.length === 0) return 1.0;
-    
-    const editDistance = getEditDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
-  };
+  // ✅ FIX 2: Memoized similarity calculation for better performance
+  const calculateSimilarity = useMemo(() => {
+    return (str1, str2) => {
+      const s1 = str1.toLowerCase().trim();
+      const s2 = str2.toLowerCase().trim();
+      
+      if (s1 === s2) return 1.0;
+      
+      const longer = s1.length > s2.length ? s1 : s2;
+      const shorter = s1.length > s2.length ? s2 : s1;
+      
+      if (longer.length === 0) return 1.0;
+      
+      const editDistance = getEditDistance(longer, shorter);
+      return (longer.length - editDistance) / longer.length;
+    };
+  }, []);
 
   const getEditDistance = (s1, s2) => {
     const costs = [];
@@ -56,37 +59,51 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
 
   const findDuplicates = () => {
     setScanning(true);
-    const duplicateGroups = [];
-    const processed = new Set();
+    
+    // ✅ FIX 3: Added delay to show scanning animation
+    setTimeout(() => {
+      const duplicateGroups = [];
+      const processed = new Set();
 
-    questions.forEach((q1, i) => {
-      if (processed.has(q1.id)) return;
+      questions.forEach((q1, i) => {
+        if (processed.has(q1.id)) return;
 
-      const group = [q1];
-      
-      questions.forEach((q2, j) => {
-        if (i !== j && !processed.has(q2.id)) {
-          const similarity = calculateSimilarity(q1.questionText, q2.questionText);
-          
-          if (similarity >= similarityThreshold) {
-            group.push(q2);
-            processed.add(q2.id);
+        const group = {
+          original: q1,
+          duplicates: [],
+          similarities: []
+        };
+        
+        questions.forEach((q2, j) => {
+          if (i !== j && !processed.has(q2.id)) {
+            const similarity = calculateSimilarity(q1.questionText, q2.questionText);
+            
+            if (similarity >= similarityThreshold) {
+              group.duplicates.push(q2);
+              group.similarities.push(similarity);
+              processed.add(q2.id);
+            }
           }
+        });
+
+        if (group.duplicates.length > 0) {
+          processed.add(q1.id);
+          
+          // ✅ FIX 4: Calculate actual average similarity
+          const avgSimilarity = group.similarities.reduce((a, b) => a + b, 0) / group.similarities.length;
+          
+          duplicateGroups.push({
+            id: `group-${i}`,
+            questions: [group.original, ...group.duplicates],
+            similarity: Math.round(avgSimilarity * 100), // ✅ FIXED: Use actual similarity
+            maxSimilarity: Math.round(Math.max(...group.similarities) * 100)
+          });
         }
       });
 
-      if (group.length > 1) {
-        processed.add(q1.id);
-        duplicateGroups.push({
-          id: `group-${i}`,
-          questions: group,
-          similarity: Math.round(group.length > 2 ? 0.9 * 100 : 1.0 * 100)
-        });
-      }
-    });
-
-    setDuplicates(duplicateGroups);
-    setScanning(false);
+      setDuplicates(duplicateGroups);
+      setScanning(false);
+    }, 800);
   };
 
   const handleDeleteSelected = async () => {
@@ -122,6 +139,15 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
     }
   };
 
+  // ✅ FIX 5: Added stats calculation
+  const stats = useMemo(() => ({
+    totalGroups: duplicates.length,
+    totalDuplicates: duplicates.reduce((sum, g) => sum + g.questions.length - 1, 0),
+    averageSimilarity: duplicates.length > 0
+      ? Math.round(duplicates.reduce((sum, g) => sum + g.similarity, 0) / duplicates.length)
+      : 0
+  }), [duplicates]);
+
   return (
     <AnimatePresence>
       {show && (
@@ -148,7 +174,15 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                   Duplicate Question Detector
                 </h3>
                 <p style={{ color: secondaryText }}>
-                  {scanning ? "Scanning for duplicates..." : `Found ${duplicates.length} duplicate groups`}
+                  {scanning 
+                    ? "Scanning for duplicates..." 
+                    : `Found ${stats.totalGroups} duplicate groups with ${stats.totalDuplicates} duplicates`
+                  }
+                  {!scanning && duplicates.length > 0 && (
+                    <span className="ml-2">
+                      • Avg similarity: {stats.averageSimilarity}%
+                    </span>
+                  )}
                 </p>
               </div>
               <button
@@ -264,7 +298,10 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                             Duplicate Group {groupIndex + 1}
                           </h4>
                           <p className="text-sm" style={{ color: secondaryText }}>
-                            {group.questions.length} similar questions • {group.similarity}% match
+                            {group.questions.length} similar questions • {group.similarity}% avg match
+                            {group.maxSimilarity > group.similarity && (
+                              <span className="ml-1">• {group.maxSimilarity}% max</span>
+                            )}
                           </p>
                         </div>
                       </div>

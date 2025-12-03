@@ -7,6 +7,8 @@ import QuestionBankPage from "./QuestionBankPage";
 import QuestionReportsPage from "./QuestionReportsPage";
 import MessagesPage from "./MessagesPage";
 import NotificationsPage from "./NotificationsPage";
+import AdminTestListPage from './AdminTestBuilder/AdminTestListPage';
+import AdminTestBuilderPage from './AdminTestBuilder/AdminTestBuilderPage';
 import ThemeToggleSwitch from "../aaGLOBAL/ThemeToggleSwitch";
 
 const getPalette = (theme = "dark") => {
@@ -43,6 +45,10 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("adminTheme") || initialTheme;
   });
+
+  // ✅ NEW: State for editing test
+const [testBuilderView, setTestBuilderView] = useState('list'); // 'list' or 'builder'
+const [editingTest, setEditingTest] = useState(null);
   
   const navigate = useNavigate();
 
@@ -60,20 +66,13 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
-      // Clear admin session
       localStorage.removeItem("isAdmin");
       localStorage.removeItem("adminUser");
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("user");
       localStorage.removeItem("token");
-      
-      // Close mobile menu if open
       setIsMobileMenuOpen(false);
-      
-      // Navigate to home page
       navigate("/", { replace: true });
-      
-      // Reload to clear all state
       window.location.reload();
     }
   };
@@ -84,21 +83,67 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
   const navItems = [
     { id: "dashboard", name: "Dashboard", icon: "fa-home", badge: null },
     { id: "users", name: "User Monitoring", icon: "fa-users", badge: null },
+    { id: "test-builder", name: "Test Builder", icon: "fa-hammer", badge: null }, // ✅ NEW
     { id: "questions", name: "Question Bank", icon: "fa-clipboard-list", badge: null },
     { id: "reports", name: "Question Reports", icon: "fa-flag", badge: null },
     { id: "messages", name: "Messages", icon: "fa-envelope", badge: null },
     { id: "notifications", name: "Notifications", icon: "fa-bell", badge: null },
   ];
 
+  // ✅ NEW: Handler for navigating to test builder
+  const handleNavigateToTestBuilder = (test = null) => {
+    setEditingTest(test);
+    setCurrentPage("test-builder");
+  };
+
   const renderPage = () => {
     switch (currentPage) {
-      case "dashboard": return <Dashboard palette={palette} />;
-      case "users": return <UserMonitoringPage palette={palette} />;
-      case "questions": return <QuestionBankPage palette={palette} />;
-      case "reports": return <QuestionReportsPage palette={palette} />;
-      case "messages": return <MessagesPage palette={palette} />;
-      case "notifications": return <NotificationsPage palette={palette} />;
-      default: return <Dashboard palette={palette} />;
+      case "dashboard": 
+        return <Dashboard palette={palette} />;
+      case "users": 
+        return <UserMonitoringPage palette={palette} />;
+      case 'test-builder':
+  if (testBuilderView === 'list') {
+    return (
+      <AdminTestListPage
+        palette={palette}
+        onCreateNew={() => {
+          setEditingTest(null);
+          setTestBuilderView('builder');
+        }}
+        onEdit={(test) => {
+          setEditingTest(test);
+          setTestBuilderView('builder');
+        }}
+      />
+    );
+  } else {
+    return (
+      <AdminTestBuilderPage
+        palette={palette}
+        onBack={() => {
+          setTestBuilderView('list');
+          setEditingTest(null);
+        }}
+        editingTest={editingTest}
+      />
+    );
+  }
+      case "questions": 
+        return (
+          <QuestionBankPage 
+            palette={palette} 
+            onNavigateToTestBuilder={handleNavigateToTestBuilder} // ✅ Pass callback
+          />
+        );
+      case "reports": 
+        return <QuestionReportsPage palette={palette} />;
+      case "messages": 
+        return <MessagesPage palette={palette} />;
+      case "notifications": 
+        return <NotificationsPage palette={palette} />;
+      default: 
+        return <Dashboard palette={palette} />;
     }
   };
 
@@ -152,7 +197,12 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentPage(item.id)}
+                onClick={() => {
+                  setCurrentPage(item.id);
+                  if (item.id !== "test-builder") {
+                    setEditingTest(null);
+                  }
+                }}
                 className={`group relative w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200
                   ${isSidebarCollapsed ? "justify-center" : ""}
                   ${active 
@@ -189,10 +239,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
 
         {/* Bottom Actions - Theme Toggle & Logout */}
         <div className={`px-4 pb-6 space-y-2 border-t pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-          {/* Theme Toggle */}
           <ThemeToggleSwitch isDark={isDark} toggleTheme={toggleTheme} isCollapsed={isSidebarCollapsed} />
-
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isSidebarCollapsed ? "justify-center" : ""} ${isDark ? "bg-red-900/20 text-red-400 hover:bg-red-900/30" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
@@ -239,9 +286,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
               exit={{ x: "100%" }} 
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
-              {/* Mobile Menu Content */}
               <div className="flex flex-col h-full">
-                {/* Mobile Header */}
                 <div className={`px-6 py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -253,7 +298,6 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
                   </div>
                 </div>
 
-                {/* Mobile Profile */}
                 <div className={`px-6 py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
                   <div className="flex items-center gap-4">
                     <div className="relative">
@@ -269,7 +313,6 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
                   </div>
                 </div>
 
-                {/* Mobile Navigation */}
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                   {navItems.map((item) => {
                     const active = currentPage === item.id;
@@ -277,7 +320,10 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
                       <button
                         key={item.id}
                         onClick={() => { 
-                          setCurrentPage(item.id); 
+                          setCurrentPage(item.id);
+                          if (item.id !== "test-builder") {
+                            setEditingTest(null);
+                          }
                           setIsMobileMenuOpen(false); 
                         }}
                         className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200
@@ -304,12 +350,8 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
                   })}
                 </nav>
 
-                {/* Mobile Bottom Actions */}
                 <div className={`px-4 pb-6 space-y-3 border-t pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-                  {/* Theme Toggle */}
                   <ThemeToggleSwitch isDark={isDark} toggleTheme={toggleTheme} />
-
-                  {/* Logout */}
                   <button
                     onClick={handleLogout}
                     className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isDark ? "bg-red-900/20 text-red-400 hover:bg-red-900/30" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
@@ -326,7 +368,6 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 mt-16 lg:mt-0">
-        {/* Desktop Header - Hidden on Mobile, shown on desktop as sticky */}
         <header className={`hidden lg:flex p-6 items-center justify-between backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
           <div className="flex items-center gap-4">
             <div>
@@ -347,7 +388,6 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          {/* Mobile Page Header - Scrolls with content */}
           <div className={`lg:hidden p-4 backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
             <div className="flex items-center justify-between">
               <div>
@@ -367,7 +407,6 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
             </div>
           </div>
           
-          {/* Page Content */}
           <div className="p-4 lg:p-6">
             {renderPage()}
           </div>

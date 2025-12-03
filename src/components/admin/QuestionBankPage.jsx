@@ -5,10 +5,9 @@ import { getQuestions, deleteQuestion } from "../../services/adminApi";
 import QuestionFilters from "./QuestionBank/QuestionFilters";
 import QuestionStats from "./QuestionBank/QuestionStats";
 import QuestionList from "./QuestionBank/QuestionList";
-import QuestionModal from "./QuestionBank/QuestionModal";
 import DuplicateDetector from "./QuestionBank/DuplicateDetector";
 
-export default function QuestionBankPage({ palette }) {
+export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
 
   // States
@@ -65,11 +64,6 @@ export default function QuestionBankPage({ palette }) {
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  const handleAddQuestion = () => {
-    setEditingQuestion(null);
-    setShowModal(true);
   };
 
   const handleEditQuestion = (question) => {
@@ -144,18 +138,6 @@ export default function QuestionBankPage({ palette }) {
           >
             <i className="fas fa-copy"></i>
             Find Duplicates
-          </button>
-          <button
-            onClick={handleAddQuestion}
-            className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
-            style={{
-              background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
-              color: "#fff",
-              boxShadow: isDark ? "0 4px 12px rgba(59,130,246,0.3)" : "0 4px 12px rgba(59,130,246,0.2)",
-            }}
-          >
-            <i className="fas fa-plus"></i>
-            Add Question
           </button>
         </div>
       </div>
@@ -254,15 +236,6 @@ export default function QuestionBankPage({ palette }) {
           </button>
         </div>
       )}
-
-      {/* Modals */}
-      <QuestionModal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        editingQuestion={editingQuestion}
-        onSave={fetchQuestions}
-        palette={palette}
-      />
 
       <DuplicateDetector
         show={showDuplicates}

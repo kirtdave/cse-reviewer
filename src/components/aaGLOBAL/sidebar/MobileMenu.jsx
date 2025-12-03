@@ -1,6 +1,4 @@
-// ============================================================================
-// components/MobileMenu.jsx
-// ============================================================================
+// MobileMenu.jsx
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProfileSection from './ProfileSection';
@@ -19,7 +17,9 @@ const MobileMenu = ({
   openLogin,
   openSignup,
   handleLogout,
-  goToProfile
+  goToProfile,
+  notificationCount,      // Add this
+  onNotificationClick     // Add this
 }) => (
   <AnimatePresence>
     {isOpen && (
@@ -55,6 +55,8 @@ const MobileMenu = ({
             isDark={isDark}
             goToProfile={goToProfile}
             isMobile={true}
+            notificationCount={notificationCount}        // Add this
+            onNotificationClick={onNotificationClick}    // Add this
           />
 
           <Navigation

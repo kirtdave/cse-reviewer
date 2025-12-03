@@ -183,9 +183,31 @@ export const recordAdminTestAttempt = async (testId, score) => {
   }
 };
 
-// Generate AI answer choices (admin only)
-export const generateAIAnswerChoices = async (questionText, category) => {
+// ==================== AI FUNCTIONS ====================
+
+// Generate multiple AI questions (batch generation for AIQuestionGenerator)
+export const generateAIQuestions = async (params) => {
   try {
+    const response = await axios.post(
+      `${API_URL}/ai/generate-questions`,
+      params,  // { topic, difficulty, count }
+      { headers: getAuthHeader() }
+    );
+    
+    return response.data;
+  } catch (error) {
+    handleApiError(error, 'Failed to generate questions');
+  }
+};
+
+// Generate AI answer choices for a SINGLE question (for QuestionEditor)
+export const generateAIAnswerChoicesForQuestion = async (questionText, category) => {
+  try {
+    console.log('Generating answer choices for question:', { 
+      questionText: questionText.substring(0, 50), 
+      category 
+    });
+    
     const response = await axios.post(
       `${API_URL}/ai/generate-answer-choices`,
       { questionText, category },
