@@ -10,6 +10,7 @@ export default function NotificationsPage({ palette }) {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingNotification, setEditingNotification] = useState(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
     message: "",
@@ -24,15 +25,26 @@ export default function NotificationsPage({ palette }) {
     fetchNotifications();
   }, []);
 
-  const fetchNotifications = async () => {
+  // Auto-refresh every 5 seconds when enabled
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchNotifications(true); // Silent refresh (no loading state)
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
+  const fetchNotifications = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await getNotifications();
       setNotifications(data.notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -177,24 +189,44 @@ export default function NotificationsPage({ palette }) {
         ))}
       </div>
 
-      {/* Create Button */}
+      {/* Create Button & Auto-refresh Toggle */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold mb-1" style={{ color: textColor }}>Manage Notifications</h2>
           <p style={{ color: secondaryText }}>Send announcements and reminders to all users</p>
         </div>
-        <button
-          onClick={handleCreateNotification}
-          className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
-          style={{
-            background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
-            color: "#fff",
-            boxShadow: isDark ? "0 4px 12px rgba(59,130,246,0.3)" : "0 4px 12px rgba(59,130,246,0.2)",
-          }}
-        >
-          <i className="fas fa-plus"></i>
-          Create Notification
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Auto-refresh Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${
+                autoRefresh ? 'opacity-100' : 'opacity-50'
+              }`}
+              style={{
+                backgroundColor: autoRefresh ? `${successColor}20` : `${secondaryText}20`,
+                color: autoRefresh ? successColor : secondaryText,
+                border: `1px solid ${autoRefresh ? successColor : borderColor}30`
+              }}
+            >
+              <i className={`fas fa-${autoRefresh ? 'check-circle' : 'pause-circle'}`}></i>
+              Auto-refresh {autoRefresh ? 'ON' : 'OFF'}
+            </button>
+          </div>
+
+          <button
+            onClick={handleCreateNotification}
+            className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
+            style={{
+              background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
+              color: "#fff",
+              boxShadow: isDark ? "0 4px 12px rgba(59,130,246,0.3)" : "0 4px 12px rgba(59,130,246,0.2)",
+            }}
+          >
+            <i className="fas fa-plus"></i>
+            Create Notification
+          </button>
+        </div>
       </div>
 
       {/* Notifications List */}
@@ -261,7 +293,10 @@ export default function NotificationsPage({ palette }) {
                       <span><i className="fas fa-users mr-1"></i>{notification.recipients}</span>
                       <span><i className="fas fa-clock mr-1"></i>{formatDate(notification.publishedDate)}</span>
                       {notification.status === "Published" && (
-                        <span><i className="fas fa-eye mr-1"></i>{notification.views || 0} views</span>
+                        <span>
+                          <i className="fas fa-eye mr-1"></i>
+                          <span className="font-semibold">{notification.views || 0}</span> views
+                        </span>
                       )}
                     </div>
                   </div>

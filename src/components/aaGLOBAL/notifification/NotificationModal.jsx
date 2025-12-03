@@ -1,16 +1,69 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationItem from './NotificationItem';
 
-const NotificationModal = ({ isOpen, onClose, isDark, notifications = [] }) => {
+const NotificationModal = ({ 
+  isOpen, 
+  onClose, 
+  isDark, 
+  notifications = [], 
+  loading = false,
+  onRefresh 
+}) => {
   const [markingRead, setMarkingRead] = useState(false);
+  const [viewingNotification, setViewingNotification] = useState(null);
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setMarkingRead(true);
-    setTimeout(() => {
-      setMarkingRead(false);
-    }, 600);
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/read-all`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    } finally {
+      setTimeout(() => setMarkingRead(false), 600);
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
+  const handleViewNotification = (notification) => {
+    setViewingNotification(notification);
+  };
+
+  const handleCloseView = () => {
+    setViewingNotification(null);
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${notificationId}/dismiss`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
   };
 
   return (
@@ -24,7 +77,7 @@ const NotificationModal = ({ isOpen, onClose, isDark, notifications = [] }) => {
         >
           {/* Enhanced Backdrop */}
           <motion.div
-            className="absolute inset-0 backdrop-blur-sm"
+            className="absolute inset-0 backdrop-blur-md"
             style={{
               background: isDark 
                 ? 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0.8))' 
@@ -171,7 +224,20 @@ const NotificationModal = ({ isOpen, onClose, isDark, notifications = [] }) => {
 
             {/* Notifications List */}
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-              {notifications.length === 0 ? (
+              {loading ? (
+                <motion.div
+                  className="flex flex-col items-center justify-center py-20"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <i className={`fa-solid fa-spinner fa-spin text-3xl mb-3 ${
+                    isDark ? "text-blue-400" : "text-blue-600"
+                  }`}></i>
+                  <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    Loading notifications...
+                  </p>
+                </motion.div>
+              ) : notifications.length === 0 ? (
                 <motion.div
                   className="flex flex-col items-center justify-center py-20"
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -212,12 +278,93 @@ const NotificationModal = ({ isOpen, onClose, isDark, notifications = [] }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <NotificationItem notification={notif} isDark={isDark} />
+                    <NotificationItem 
+                      notification={notif} 
+                      isDark={isDark}
+                      onRead={handleMarkAsRead}
+                      onView={handleViewNotification}
+                      onDelete={handleDeleteNotification}
+                    />
                   </motion.div>
                 ))
               )}
             </div>
           </motion.div>
+
+          {/* View Notification Detail Modal */}
+          <AnimatePresence>
+            {viewingNotification && (
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center z-10 px-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                  onClick={handleCloseView}
+                />
+                
+                <motion.div
+                  className={`relative rounded-2xl shadow-2xl w-full max-w-md p-6 ${
+                    isDark 
+                      ? "bg-gray-900 border border-gray-700/50" 
+                      : "bg-white border border-gray-200"
+                  }`}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Close button */}
+                  <button
+                    onClick={handleCloseView}
+                    className={`absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                      isDark 
+                        ? "hover:bg-red-500/10 text-gray-400 hover:text-red-400 border border-gray-700/50 hover:border-red-500/30" 
+                        : "hover:bg-red-50 text-gray-600 hover:text-red-500 border border-gray-200 hover:border-red-200"
+                    }`}
+                  >
+                    <i className="fa-solid fa-xmark text-lg"></i>
+                  </button>
+
+                  {/* Notification Type Badge */}
+                  <div className="mb-4">
+                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                      isDark 
+                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" 
+                        : "bg-blue-100 text-blue-600 border border-blue-200"
+                    }`}>
+                      <i className="fa-solid fa-bell"></i>
+                      {viewingNotification.type}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className={`text-xl font-bold mb-3 pr-8 ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}>
+                    {viewingNotification.title}
+                  </h3>
+
+                  {/* Message */}
+                  <p className={`text-sm leading-relaxed mb-4 ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}>
+                    {viewingNotification.message}
+                  </p>
+
+                  {/* Timestamp */}
+                  <div className={`flex items-center gap-2 text-xs pt-4 border-t ${
+                    isDark ? "text-gray-500 border-gray-800" : "text-gray-500 border-gray-200"
+                  }`}>
+                    <i className="fa-solid fa-clock"></i>
+                    <span>{viewingNotification.time}</span>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

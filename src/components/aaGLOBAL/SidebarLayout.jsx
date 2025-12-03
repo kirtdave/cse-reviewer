@@ -1,3 +1,5 @@
+// SidebarLayout.jsx - REPLACE YOUR ENTIRE FILE WITH THIS
+
 import React, { useState, useEffect, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
@@ -10,6 +12,7 @@ import DesktopSidebar from './sidebar/DesktopSidebar';
 import AuthModal from './sidebar/AuthModal';
 import LoadingScreen from './sidebar/LoadingScreen';
 import NotificationModal from './notifification/NotificationModal';
+import axios from 'axios';
 
 const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
   const { theme, toggleTheme } = useContext(ThemeContext);
@@ -23,50 +26,10 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // 🔔 NEW: Notification states
+  // 🔔 Notification states
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications] = useState([
-    {
-      id: 1,
-      type: 'success',
-      title: 'Test Completed!',
-      message: 'You scored 95% on CSE Practice Test #5',
-      time: '2 minutes ago',
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'info',
-      title: 'New Study Material',
-      message: 'Data Structures chapter has been updated',
-      time: '1 hour ago',
-      unread: true
-    },
-    {
-      id: 3,
-      type: 'warning',
-      title: 'Upcoming Test',
-      message: 'Your scheduled test starts in 30 minutes',
-      time: '2 hours ago',
-      unread: false
-    },
-    {
-      id: 4,
-      type: 'success',
-      title: 'Achievement Unlocked',
-      message: 'Completed 10 tests in a row!',
-      time: '1 day ago',
-      unread: false
-    },
-    {
-      id: 5,
-      type: 'info',
-      title: 'New Bookmark',
-      message: 'Question #42 added to your bookmarks',
-      time: '2 days ago',
-      unread: true
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const navItems = [
     { name: "Dashboard", path: "/", icon: "fa-house", gradient: "from-blue-500 to-purple-500" },
@@ -89,6 +52,34 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
     }
   };
 
+  // ✅ Fetch notifications from API
+  const fetchNotifications = async () => {
+    if (!isLoggedIn) return;
+    
+    try {
+      setLoadingNotifications(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setNotifications(response.data.notifications);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
   useEffect(() => {
     loadUserData();
     setIsLoading(false);
@@ -101,6 +92,19 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
     window.addEventListener('userUpdated', handleUserUpdate);
     return () => window.removeEventListener('userUpdated', handleUserUpdate);
   }, []);
+
+  // ✅ Fetch notifications when user logs in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchNotifications();
+      
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    } else {
+      setNotifications([]); // Clear notifications when logged out
+    }
+  }, [isLoggedIn]);
 
   const openLogin = () => {
     setShowSignup(false);
@@ -124,11 +128,15 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
     localStorage.setItem("isLoggedIn", "true");
     closeModals();
     setIsMobileMenuOpen(false);
+    
+    // Fetch notifications after login
+    setTimeout(fetchNotifications, 500);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUser(null);
+    setNotifications([]); // Clear notifications on logout
     logout();
     setIsMobileMenuOpen(false);
     navigate("/", { replace: true });
@@ -140,7 +148,7 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
     setIsMobileMenuOpen(false);
   };
 
-  // 🔔 NEW: Notification handler
+  // 🔔 Notification handler
   const handleNotificationClick = () => {
     setShowNotifications(true);
   };
@@ -205,12 +213,14 @@ const SidebarLayout = ({ children, isCollapsed, setIsCollapsed }) => {
         )}
       </AnimatePresence>
 
-      {/* 🔔 NEW: Notification Modal */}
+      {/* 🔔 Notification Modal */}
       <NotificationModal
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
         isDark={isDark}
         notifications={notifications}
+        loading={loadingNotifications}
+        onRefresh={fetchNotifications}
       />
     </div>
   );
