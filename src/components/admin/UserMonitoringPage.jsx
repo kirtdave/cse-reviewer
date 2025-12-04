@@ -1,4 +1,5 @@
-// components/admin/UserMonitoringPage.jsx
+// Replace the entire UserMonitoringPage.jsx with this:
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { getUsers, getUserById } from "../../services/adminApi";
@@ -60,6 +61,17 @@ export default function UserMonitoringPage({ palette }) {
     if (rate >= 98) return successColor;
     if (rate >= 95) return warningColor;
     return errorColor;
+  };
+
+  // ✅ NEW: Format last active with "Online" status
+  const formatLastActive = (lastActive, status) => {
+    if (status === 'Active') {
+      // Check if it's very recent (less than 5 minutes)
+      if (lastActive.includes('minute') || lastActive.includes('Just now') || lastActive.includes('second')) {
+        return { text: 'Online', color: successColor, dot: true };
+      }
+    }
+    return { text: lastActive, color: secondaryText, dot: false };
   };
 
   const totalUsers = users.length;
@@ -180,68 +192,93 @@ export default function UserMonitoringPage({ palette }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} style={{ borderBottom: `1px solid ${borderColor}` }}>
-                    <td className="px-6 py-4">
-  <div className="flex items-center gap-3">
-    <img 
-      src={user.avatar || 'https://i.pravatar.cc/200?img=1'} 
-      alt={user.name}
-      className="w-10 h-10 rounded-full object-cover border-2 border-blue-500/20"
-      onError={(e) => {
-        e.target.onerror = null;
-        e.target.src = 'https://i.pravatar.cc/200?img=1';
-      }}
-    />
-    <div>
-      <p className="font-semibold" style={{ color: textColor }}>{user.name}</p>
-      <p className="text-sm" style={{ color: secondaryText }}>{user.email}</p>
-    </div>
-  </div>
-</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className="px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{
-                          backgroundColor: `${getStatusColor(user.status)}20`,
-                          color: getStatusColor(user.status),
-                        }}
-                      >
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <i className="fas fa-brain text-sm" style={{ color: primaryGradientFrom }}></i>
-                        <span className="font-semibold" style={{ color: textColor }}>{user.aiRequests || 0}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className="font-bold"
-                        style={{ color: getApiRateColor(user.apiSuccessRate || 0) }}
-                      >
-                        {user.apiSuccessRate || 0}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-sm" style={{ color: secondaryText }}>{user.lastActive}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleViewUser(user)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                        style={{
-                          backgroundColor: `${primaryGradientFrom}20`,
-                          color: primaryGradientFrom,
-                        }}
-                        title="View Details"
-                      >
-                        <i className="fas fa-eye"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {users.map((user) => {
+                  const lastActiveInfo = formatLastActive(user.lastActive, user.status);
+                  return (
+                    <tr key={user.id} style={{ borderBottom: `1px solid ${borderColor}` }}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <img 
+                              src={user.avatar || 'https://i.pravatar.cc/200?img=1'} 
+                              alt={user.name}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-blue-500/20"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://i.pravatar.cc/200?img=1';
+                              }}
+                            />
+                            {/* Online indicator dot */}
+                            {lastActiveInfo.dot && (
+                              <span 
+                                className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
+                                style={{ 
+                                  backgroundColor: successColor,
+                                  borderColor: cardBg
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold" style={{ color: textColor }}>{user.name}</p>
+                            <p className="text-sm" style={{ color: secondaryText }}>{user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className="px-3 py-1 rounded-full text-xs font-semibold"
+                          style={{
+                            backgroundColor: `${getStatusColor(user.status)}20`,
+                            color: getStatusColor(user.status),
+                          }}
+                        >
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <i className="fas fa-brain text-sm" style={{ color: primaryGradientFrom }}></i>
+                          <span className="font-semibold" style={{ color: textColor }}>{user.aiRequests || 0}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className="font-bold"
+                          style={{ color: getApiRateColor(user.apiSuccessRate || 0) }}
+                        >
+                          {user.apiSuccessRate || 0}%
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {lastActiveInfo.dot && (
+                            <span 
+                              className="w-2 h-2 rounded-full animate-pulse"
+                              style={{ backgroundColor: successColor }}
+                            />
+                          )}
+                          <p className="text-sm font-medium" style={{ color: lastActiveInfo.color }}>
+                            {lastActiveInfo.text}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleViewUser(user)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                          style={{
+                            backgroundColor: `${primaryGradientFrom}20`,
+                            color: primaryGradientFrom,
+                          }}
+                          title="View Details"
+                        >
+                          <i className="fas fa-eye"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -306,30 +343,46 @@ export default function UserMonitoringPage({ palette }) {
             </div>
 
             <div className="space-y-6">
-<div className="flex items-center gap-4">
-  <img 
-    src={selectedUser.avatar || 'https://i.pravatar.cc/200?img=1'} 
-    alt={selectedUser.name}
-    className="w-20 h-20 rounded-full object-cover border-4 border-blue-500/20"
-    onError={(e) => {
-      e.target.onerror = null;
-      e.target.src = 'https://i.pravatar.cc/200?img=1';
-    }}
-  />
-  <div>
-    <h4 className="text-xl font-bold" style={{ color: textColor }}>{selectedUser.name}</h4>
-    <p style={{ color: secondaryText }}>{selectedUser.email}</p>
-    <span
-      className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold"
-      style={{
-        backgroundColor: `${getStatusColor(selectedUser.status)}20`,
-        color: getStatusColor(selectedUser.status),
-      }}
-    >
-      {selectedUser.status}
-    </span>
-  </div>
-</div>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <img 
+                    src={selectedUser.avatar || 'https://i.pravatar.cc/200?img=1'} 
+                    alt={selectedUser.name}
+                    className="w-20 h-20 rounded-full object-cover border-4 border-blue-500/20"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://i.pravatar.cc/200?img=1';
+                    }}
+                  />
+                  {formatLastActive(selectedUser.lastActive, selectedUser.status).dot && (
+                    <span 
+                      className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-4 animate-pulse"
+                      style={{ 
+                        backgroundColor: successColor,
+                        borderColor: cardBg
+                      }}
+                    />
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold" style={{ color: textColor }}>{selectedUser.name}</h4>
+                  <p style={{ color: secondaryText }}>{selectedUser.email}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        backgroundColor: `${getStatusColor(selectedUser.status)}20`,
+                        color: getStatusColor(selectedUser.status),
+                      }}
+                    >
+                      {selectedUser.status}
+                    </span>
+                    {formatLastActive(selectedUser.lastActive, selectedUser.status).dot && (
+                      <span className="text-xs font-bold" style={{ color: successColor }}>● Online</span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <h4 className="text-lg font-bold mb-3" style={{ color: textColor }}>

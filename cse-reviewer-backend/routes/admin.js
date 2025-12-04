@@ -106,7 +106,6 @@ router.get('/stats', async (req, res) => {
 
     // ==================== DAILY ACTIVITY ====================
 
-    // Get all activities per day for the last 7 days
     const dailyActivityRaw = await Activity.findAll({
       where: {
         createdAt: {
@@ -114,15 +113,15 @@ router.get('/stats', async (req, res) => {
         }
       },
       attributes: [
-        [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
-        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        [sequelize.fn('DATE', sequelize.col('Activity.createdAt')), 'date'],
+        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('userId'))), 'count'] // ✅ Count unique users
       ],
-      group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
-      order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
+      group: [sequelize.fn('DATE', sequelize.col('Activity.createdAt'))],
+      order: [[sequelize.fn('DATE', sequelize.col('Activity.createdAt')), 'ASC']],
       raw: true
     });
 
-    console.log('📊 Daily Activity Raw:', dailyActivityRaw);
+    console.log('📊 Daily Activity Raw (Unique Users):', dailyActivityRaw);
 
     // Fill in missing days with 0 count
     const dailyActivity = [];
@@ -138,31 +137,62 @@ router.get('/stats', async (req, res) => {
       });
     }
 
-    console.log('📊 Daily Activity Processed:', dailyActivity); // ✅ Added debug log
+    console.log('📊 Daily Activity Processed (Unique Users per Day):', dailyActivity);
 
-    // ==================== RECENT ACTIVITY ====================
-    
-    // Fetch from Activity model (exclude admin activities)
-    const recentActivitiesRaw = await Activity.findAll({
-      limit: 10,
-      order: [['createdAt', 'DESC']],
-      include: [{
-        model: User,
-        as: 'user',
-        attributes: ['name', 'email', 'avatar', 'role'],
-        where: { role: 'user' }, // ✅ Only show non-admin activities
-        required: true
-      }]
-    });
+// ==================== RECENT ACTIVITY ====================
 
-    const recentActivity = recentActivitiesRaw.map(activity => ({
-      user: activity.user?.name || 'Unknown User',
-      action: activity.action,
-      icon: getActivityIcon(activity.type),
-      color: getActivityColor(activity.type),
-      time: getTimeAgo(activity.createdAt),
-      timestamp: new Date(activity.createdAt).getTime()
-    }));
+// Fetch recent activities with smart deduplication
+const recentActivitiesRaw = await Activity.findAll({
+  limit: 50, // Fetch more to filter duplicates
+  order: [['createdAt', 'DESC']],
+  include: [{
+    model: User,
+    as: 'user',
+    attributes: ['name', 'email', 'avatar', 'role'],
+    where: { role: 'user' },
+    required: true
+  }]
+});
+
+// Smart deduplication with priority for diverse activities
+const seenActivities = new Map();
+const deduplicatedActivities = [];
+
+// Priority order: More interesting activities first
+const activityPriority = {
+  'user_register': 1,
+  'achievement_earned': 2,
+  'test_completed': 3,
+  'question_generated': 4,
+  'test_started': 5,
+  'user_login': 6, // Login is least interesting
+};
+
+for (const activity of recentActivitiesRaw) {
+  // For login activities: Only show most recent per user
+  if (activity.type === 'user_login') {
+    const key = `${activity.userId}-user_login`;
+    if (!seenActivities.has(key)) {
+      seenActivities.set(key, true);
+      deduplicatedActivities.push(activity);
+    }
+  } else {
+    // For other activities: Show all, they're more interesting
+    deduplicatedActivities.push(activity);
+  }
+  
+  // Stop once we have 10 activities
+  if (deduplicatedActivities.length >= 10) break;
+}
+
+const recentActivity = deduplicatedActivities.map(activity => ({
+  user: activity.user?.name || 'Unknown User',
+  action: activity.action,
+  icon: getActivityIcon(activity.type),
+  color: getActivityColor(activity.type),
+  time: getTimeAgo(activity.createdAt),
+  timestamp: new Date(activity.createdAt).getTime()
+}));
 
     // ==================== RESPONSE ====================
     

@@ -295,36 +295,67 @@ const Dashboard = ({ palette }) => {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="p-6 rounded-2xl" style={{ 
+        {/* Recent Activity - Compact & Scrollable */}
+        <div className="p-5 rounded-2xl flex flex-col" style={{ 
           backgroundColor: cardBg, 
           border: `1px solid ${borderColor}`, 
-          boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.06)" 
+          boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.06)",
+          height: '400px' // Fixed height to match chart
         }}>
-          <h3 className="text-xl font-bold mb-6" style={{ color: textColor }}>Recent Activity</h3>
-          <div className="space-y-4">
+          <h3 className="text-base font-bold mb-4" style={{ color: textColor }}>Recent Activity</h3>
+          
+          {/* Scrollable container */}
+          <div 
+            className="flex-1 overflow-y-auto space-y-2 pr-2"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: `${isDark ? '#374151' : '#e5e7eb'} transparent`
+            }}
+          >
             {recentActivity.length === 0 ? (
-              <div className="text-center py-12">
-                <i className="fas fa-inbox text-4xl mb-3" style={{ color: secondaryText, opacity: 0.3 }}></i>
-                <p style={{ color: secondaryText }}>No recent activity</p>
+              <div className="text-center py-8">
+                <i className="fas fa-inbox text-3xl mb-2" style={{ color: secondaryText, opacity: 0.3 }}></i>
+                <p className="text-sm" style={{ color: secondaryText }}>No recent activity</p>
               </div>
             ) : (
               recentActivity.map((activity, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-xl transition-all hover:bg-opacity-50" 
-                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" 
-                    style={{ backgroundColor: `${activity.color}20` }}>
-                    <i className={`fas ${activity.icon}`} style={{ color: activity.color }}></i>
+                <div 
+                  key={i} 
+                  className="flex items-start gap-2 p-2 rounded-lg transition-all hover:bg-opacity-50" 
+                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}
+                >
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" 
+                    style={{ backgroundColor: `${activity.color}20` }}
+                  >
+                    <i className={`fas ${activity.icon} text-xs`} style={{ color: activity.color }}></i>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: textColor }}>{activity.user}</p>
-                    <p className="text-xs truncate mt-0.5" style={{ color: secondaryText }}>{activity.action}</p>
+                    <p className="text-xs font-semibold truncate" style={{ color: textColor }}>{activity.user}</p>
+                    <p className="text-xs truncate" style={{ color: secondaryText, opacity: 0.8 }}>{activity.action}</p>
                   </div>
-                  <span className="text-xs whitespace-nowrap font-medium" style={{ color: secondaryText }}>{activity.time}</span>
+                  <span className="text-xs whitespace-nowrap" style={{ color: secondaryText }}>{activity.time}</span>
                 </div>
               ))
             )}
           </div>
+          
+          {/* Custom scrollbar styles */}
+          <style>{`
+            .overflow-y-auto::-webkit-scrollbar {
+              width: 6px;
+            }
+            .overflow-y-auto::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .overflow-y-auto::-webkit-scrollbar-thumb {
+              background: ${isDark ? '#374151' : '#e5e7eb'};
+              border-radius: 3px;
+            }
+            .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+              background: ${isDark ? '#4b5563' : '#d1d5db'};
+            }
+          `}</style>
         </div>
       </div>
 
