@@ -1,3 +1,4 @@
+// services/aiService.js - FIXED PDF GENERATION
 const axios = require('axios');
 
 // ==================== RETRY LOGIC WITH EXPONENTIAL BACKOFF ====================
@@ -130,6 +131,114 @@ function parseJsonFromAiResponse(text) {
   }
 }
 
+// ==================== ✅ FIXED: GENERATE QUESTIONS FROM PDF CONTENT ====================
+exports.generateQuestionsFromPDF = async (pdfText, category, count = 10, userCommand = '') => {
+  try {
+    console.log(`📚 Generating ${count} questions from PDF (${pdfText.length} chars)`);
+    
+    // ✅ FIXED: Use the SAME format as generateQuestions() to ensure options are included
+    let prompt = `You are a system that generates exam questions. Your ONLY output must be a raw JSON array of objects.
+
+Each object must have these exact keys: "question", "options", "correctAnswer", "explanation", "category", "difficulty".
+- "question" must be based on the PDF content below
+- "options" must be an array of exactly 4 strings, starting with "A)", "B)", "C)", or "D)"
+- "correctAnswer" must be one of: "A", "B", "C", or "D"
+- "explanation" MUST be a concise, single-line string explaining why the answer is correct
+- "category" must be "${category}"
+- "difficulty" can be "Easy", "Normal", or "Hard"
+- DO NOT add trailing commas after the last item in arrays or objects
+- Ensure the JSON is complete and properly closed
+
+Generate ${count} multiple-choice questions based on the following PDF content:
+
+PDF CONTENT:
+"""
+${pdfText}
+"""
+
+CRITICAL REQUIREMENTS:
+✅ Base ALL questions on concepts, facts, and information from the PDF content above
+✅ Each question MUST have exactly 4 options (A, B, C, D)
+✅ One option must be correct, three must be plausible but incorrect
+✅ Extract key concepts from the text to create meaningful questions
+✅ Test understanding, not just memorization
+
+${userCommand ? `\nADDITIONAL INSTRUCTIONS: ${userCommand}\n` : ''}
+
+EXAMPLE FORMAT (YOU MUST FOLLOW THIS EXACTLY):
+[
+  {
+    "question": "What is the main topic discussed in the first section?",
+    "options": [
+      "A) Topic 1 from the PDF",
+      "B) Topic 2 from the PDF", 
+      "C) Topic 3 from the PDF",
+      "D) Topic 4 from the PDF"
+    ],
+    "correctAnswer": "B",
+    "explanation": "The PDF clearly states that Topic 2 is the main focus of the first section.",
+    "category": "${category}",
+    "difficulty": "Normal"
+  }
+]
+
+CRITICAL: Return ONLY the JSON array. No extra text before or after. No markdown code blocks.`;
+
+    const rawTextResponse = await callGeminiAPI(prompt, true);
+    console.log('🔍 Raw AI Response (first 500 chars):', rawTextResponse.substring(0, 500));
+    
+    const questions = parseJsonFromAiResponse(rawTextResponse);
+    
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error('AI generated no valid questions from PDF');
+    }
+    
+    // ✅ VALIDATE: Ensure every question has proper structure
+    const validatedQuestions = questions.map((q, idx) => {
+      // Check if options exist and are an array
+      if (!Array.isArray(q.options) || q.options.length !== 4) {
+        console.warn(`⚠️ Question ${idx + 1} has invalid options, fixing...`);
+        return {
+          question: q.question || `Question ${idx + 1}`,
+          options: ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'],
+          correctAnswer: 'A',
+          explanation: q.explanation || 'No explanation provided',
+          category: category,
+          difficulty: q.difficulty || 'Normal'
+        };
+      }
+
+      // Ensure options have proper A), B), C), D) prefixes
+      const formattedOptions = q.options.map((opt, i) => {
+        const prefix = ['A)', 'B)', 'C)', 'D)'][i];
+        if (!opt.startsWith(prefix)) {
+          return `${prefix} ${opt}`;
+        }
+        return opt;
+      });
+
+      return {
+        question: q.question || `Question ${idx + 1}`,
+        options: formattedOptions,
+        correctAnswer: q.correctAnswer || 'A',
+        explanation: q.explanation || 'No explanation provided',
+        category: q.category || category,
+        difficulty: q.difficulty || 'Normal'
+      };
+    });
+    
+    console.log(`✅ Successfully generated and validated ${validatedQuestions.length} questions from PDF`);
+    console.log('📋 Sample question:', JSON.stringify(validatedQuestions[0], null, 2));
+    
+    return validatedQuestions;
+
+  } catch (error) {
+    console.error('❌ Error in generateQuestionsFromPDF:', error.message);
+    if (error.message.startsWith('AI_')) throw error;
+    throw new Error(`Failed to generate questions from PDF: ${error.message}`);
+  }
+};
+
 // ==================== 1. GENERATE CSE PRACTICE QUESTIONS (WITH SUB-TOPIC & DUPLICATE PREVENTION) ====================
 exports.generateQuestions = async (topic, difficulty, count = 5, avoidQuestions = [], subTopic = "") => {
   try {
@@ -140,7 +249,6 @@ exports.generateQuestions = async (topic, difficulty, count = 5, avoidQuestions 
     for (let i = 0; i < batches; i++) {
       const questionsInBatch = i === batches - 1 ? count - (i * batchSize) : batchSize;
       
-      // ✅ BUILD PROMPT WITH SUB-TOPIC FOCUS
       let prompt = `You are a system that generates exam questions. Your ONLY output must be a raw JSON array of objects.
 
 Each object must have these exact keys: "question", "options", "correctAnswer", "explanation".
@@ -152,20 +260,13 @@ Each object must have these exact keys: "question", "options", "correctAnswer", 
 
 Generate ${questionsInBatch} Civil Service Exam multiple-choice questions for the topic "${topic}" at "${difficulty}" difficulty.`;
 
-      // ✅ ADD SUB-TOPIC FOCUS IF PROVIDED
       if (subTopic && subTopic.trim() !== "") {
         prompt += `\n\n🎯 SPECIFIC FOCUS: Your questions MUST be about "${subTopic}".
 Focus ONLY on this specific sub-topic within ${topic}. Do NOT generate general ${topic} questions.
 
-Examples of what to generate:
-- If sub-topic is "basic logical reasoning and simple syllogisms", generate questions specifically about syllogisms and basic logic
-- If sub-topic is "number series, letter series, and pattern recognition", generate ONLY pattern and sequence questions
-- If sub-topic is "reading comprehension passages with context clues", include short passages with comprehension questions
-
 Make sure every question directly relates to: ${subTopic}`;
       }
 
-      // ✅ ADD CRITICAL AVOID SECTION IF THERE ARE PREVIOUS QUESTIONS
       if (avoidQuestions && avoidQuestions.length > 0) {
         prompt += `\n\n🚫 CRITICAL INSTRUCTION - DO NOT REPEAT THESE QUESTIONS:
 The user has already answered these questions. You MUST generate COMPLETELY DIFFERENT questions:
@@ -228,7 +329,6 @@ Provide a clear, friendly explanation of why the correct answer is right and any
   }
 };
 
-
 // ==================== 3. PERSONALIZED STUDY RECOMMENDATIONS ====================
 exports.getStudyRecommendations = async (weakTopics, strongTopics, recentScores) => {
   try {
@@ -257,7 +357,6 @@ IMPORTANT STYLE RULE: You must write your entire response in short but concise s
 
 Answer questions about exam topics, study tips, and exam procedures. Be clear and educational.`;
 
-    // ✅ ADD USER PERFORMANCE DATA IF PROVIDED
     if (userData && userData.avgScore !== undefined) {
       systemContext += `\n\n📊 STUDENT PERFORMANCE DATA (Use this to provide personalized insights):
 - Average Score: ${userData.avgScore}%

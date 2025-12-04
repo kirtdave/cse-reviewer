@@ -18,9 +18,6 @@ const Notification = require('../models/Notification');
 router.use(protect);
 router.use(adminOnly);
 
-// routes/admin.js - Updated /stats endpoint
-// Add this to your existing admin.js file, replace the existing /stats route
-
 router.get('/stats', async (req, res) => {
   try {
     const now = new Date();
@@ -107,25 +104,25 @@ router.get('/stats', async (req, res) => {
     });
     const aiGrowth = `+${lastWeekAiRequests}`;
 
-// ==================== DAILY ACTIVITY ====================
+    // ==================== DAILY ACTIVITY ====================
 
-// Get all activities per day for the last 7 days
-const dailyActivityRaw = await Activity.findAll({
-  where: {
-    createdAt: {
-      [Op.gte]: sevenDaysAgo
-    }
-  },
-  attributes: [
-    [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
-    [sequelize.fn('COUNT', sequelize.col('id')), 'count']
-  ],
-  group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
-  order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
-  raw: true
-});
+    // Get all activities per day for the last 7 days
+    const dailyActivityRaw = await Activity.findAll({
+      where: {
+        createdAt: {
+          [Op.gte]: sevenDaysAgo
+        }
+      },
+      attributes: [
+        [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
+      order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
+      raw: true
+    });
 
-console.log('📊 Daily Activity Raw:', dailyActivityRaw); // ✅ Debug log
+    console.log('📊 Daily Activity Raw:', dailyActivityRaw);
 
     // Fill in missing days with 0 count
     const dailyActivity = [];
@@ -141,16 +138,20 @@ console.log('📊 Daily Activity Raw:', dailyActivityRaw); // ✅ Debug log
       });
     }
 
+    console.log('📊 Daily Activity Processed:', dailyActivity); // ✅ Added debug log
+
     // ==================== RECENT ACTIVITY ====================
     
-    // Fetch from Activity model
+    // Fetch from Activity model (exclude admin activities)
     const recentActivitiesRaw = await Activity.findAll({
       limit: 10,
       order: [['createdAt', 'DESC']],
       include: [{
         model: User,
         as: 'user',
-        attributes: ['name', 'email', 'avatar']
+        attributes: ['name', 'email', 'avatar', 'role'],
+        where: { role: 'user' }, // ✅ Only show non-admin activities
+        required: true
       }]
     });
 
@@ -283,7 +284,6 @@ router.get('/users', async (req, res) => {
       attributes: { exclude: ['password'] }
     });
 
-    // ✅ Calculate accurate per-user stats with avatar
     const usersWithStats = users.map(user => {
       const totalRequests = (user.apiSuccessCount || 0) + (user.apiFailureCount || 0);
       const successRate = totalRequests > 0 
@@ -294,7 +294,7 @@ router.get('/users', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar, // ✅ Include avatar
+        avatar: user.avatar,
         role: user.role,
         status: isUserActive(user.lastActive) ? 'Active' : 'Inactive',
         testsCompleted: user.testsCompleted || 0,
@@ -322,7 +322,6 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// ✅ GET SINGLE USER WITH AVATAR
 router.get('/users/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, {
@@ -339,7 +338,6 @@ router.get('/users/:id', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Calculate AI stats
     const totalRequests = (user.apiSuccessCount || 0) + (user.apiFailureCount || 0);
     const successRate = totalRequests > 0 
       ? ((user.apiSuccessCount / totalRequests) * 100).toFixed(1)
@@ -349,7 +347,7 @@ router.get('/users/:id', async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      avatar: user.avatar, // ✅ Include avatar
+      avatar: user.avatar,
       role: user.role,
       status: isUserActive(user.lastActive) ? 'Active' : 'Inactive',
       testsCompleted: user.testsCompleted || 0,
@@ -368,7 +366,8 @@ router.get('/users/:id', async (req, res) => {
   }
 });
 
-// ==================== QUESTION BANK ====================
+// ... (rest of the routes remain the same - questions, reports, messages, notifications)
+
 router.get('/questions', async (req, res) => {
   try {
     const {
@@ -494,7 +493,6 @@ router.delete('/questions/:id', async (req, res) => {
   }
 });
 
-// ==================== QUESTION REPORTS ====================
 router.get('/reports', async (req, res) => {
   try {
     const {
@@ -555,7 +553,7 @@ router.put('/reports/:id', async (req, res) => {
   try {
     const report = await QuestionReport.findByPk(req.params.id);
 
-    if (!report) {
+    if (!question) {
       return res.status(404).json({ message: 'Report not found' });
     }
 
@@ -592,7 +590,6 @@ router.delete('/reports/:id', async (req, res) => {
   }
 });
 
-// ==================== MESSAGES ====================
 router.get('/messages', async (req, res) => {
   try {
     const {
@@ -702,7 +699,6 @@ router.post('/messages/:id/reply', async (req, res) => {
   }
 });
 
-// ==================== NOTIFICATIONS ====================
 router.get('/notifications', async (req, res) => {
   try {
     const { status = 'All', type = 'All' } = req.query;
@@ -806,27 +802,6 @@ router.post('/notifications/:id/publish', async (req, res) => {
     res.status(500).json({ message: 'Error publishing notification', error: error.message });
   }
 });
-
-// ==================== HELPER FUNCTIONS ====================
-function getTimeAgo(date) {
-  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    week: 604800,
-    day: 86400,
-    hour: 3600,
-    minute: 60
-  };
-
-  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-    const interval = Math.floor(seconds / secondsInUnit);
-    if (interval >= 1) {
-      return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
-    }
-  }
-  return 'Just now';
-}
 
 function isUserActive(lastActive) {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

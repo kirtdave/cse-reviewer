@@ -1,11 +1,12 @@
 // controllers/customTestController.js
 const { CustomTest, User } = require('../models');
 const { Op } = require('sequelize');
-const pdfParse = require('pdf-parse');
 const aiService = require('../services/aiService');
+const { PDFParse } = require('pdf-parse');
+
+console.log('✅ pdf-parse loaded successfully');
 
 // ==================== HELPER FUNCTION ====================
-// Parse JSON fields if they're strings (safety measure)
 const parseTestData = (test) => {
   const testData = test.toJSON ? test.toJSON() : test;
   
@@ -32,7 +33,6 @@ exports.createCustomTest = async (req, res) => {
       });
     }
 
-    // Validate sets structure
     for (const set of sets) {
       if (!set.title || !Array.isArray(set.questions)) {
         return res.status(400).json({ 
@@ -54,7 +54,6 @@ exports.createCustomTest = async (req, res) => {
       tags: tags || []
     });
 
-    // ✅ Parse and return
     const parsedTest = parseTestData(customTest);
 
     res.status(201).json({ 
@@ -84,18 +83,7 @@ exports.getUserTests = async (req, res) => {
       difficulty
     });
 
-    // ✅ Parse all tests
     const parsedTests = result.tests.map(parseTestData);
-
-    // ✅ DEBUG LOGGING (remove after testing)
-    if (parsedTests.length > 0) {
-      console.log('✅ First test sets type:', typeof parsedTests[0].sets);
-      console.log('✅ Is Array?:', Array.isArray(parsedTests[0].sets));
-      console.log('✅ Sets length:', parsedTests[0].sets.length);
-      if (parsedTests[0].sets.length > 0) {
-        console.log('✅ First set has questions:', parsedTests[0].sets[0].questions?.length || 0);
-      }
-    }
 
     res.json({
       success: true,
@@ -132,7 +120,6 @@ exports.getTestById = async (req, res) => {
       });
     }
 
-    // ✅ Parse and return
     const parsedTest = parseTestData(test);
 
     res.json({
@@ -168,7 +155,6 @@ exports.updateCustomTest = async (req, res) => {
       });
     }
 
-    // Update fields
     if (title !== undefined) test.title = title;
     if (description !== undefined) test.description = description;
     if (sets !== undefined) test.sets = sets;
@@ -180,7 +166,6 @@ exports.updateCustomTest = async (req, res) => {
 
     await test.save();
 
-    // ✅ Parse and return
     const parsedTest = parseTestData(test);
 
     res.json({ 
@@ -232,64 +217,168 @@ exports.deleteCustomTest = async (req, res) => {
 // ==================== GENERATE QUESTIONS FROM PDF ====================
 exports.generateQuestionsFromPDF = async (req, res) => {
   try {
+    console.log('📄 ========== PDF GENERATION REQUEST START ==========');
+    console.log('Request Headers:', {
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length']
+    });
+    console.log('Request Body:', req.body);
+    console.log('File Info:', {
+      hasFile: !!req.file,
+      fileName: req.file?.originalname,
+      fileSize: req.file?.size,
+      mimeType: req.file?.mimetype,
+      bufferLength: req.file?.buffer?.length
+    });
+
     if (!req.file) {
+      console.error('❌ No file uploaded');
       return res.status(400).json({ 
         success: false,
-        error: 'PDF file is required' 
+        error: 'PDF file is required. Please upload a PDF file.' 
+      });
+    }
+
+    if (!req.file.buffer || req.file.buffer.length === 0) {
+      console.error('❌ File buffer is empty');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Uploaded file is empty or corrupted.' 
       });
     }
 
     const { type, count, command } = req.body;
+    console.log('PDF Generation Parameters:', { type, count, command });
     
-    // Parse PDF
-    const pdfData = await pdfParse(req.file.buffer);
-    const pdfText = pdfData.text;
-
-    if (!pdfText || pdfText.trim().length === 0) {
+    let pdfText = '';
+    try {
+      console.log('📖 Starting PDF parsing...');
+      
+      const pdfParser = new PDFParse({ data: req.file.buffer });
+      const pdfData = await pdfParser.getText();
+      pdfText = pdfData.text;
+      
+      console.log('✅ PDF Parsed Successfully:');
+      console.log('  - Text Length:', pdfText.length);
+      console.log('  - First 200 chars:', pdfText.substring(0, 200));
+      
+    } catch (pdfError) {
+      console.error('❌ PDF Parsing Error Details:');
+      console.error('  - Error Type:', pdfError.constructor.name);
+      console.error('  - Error Message:', pdfError.message);
+      console.error('  - Error Stack:', pdfError.stack);
+      
       return res.status(400).json({ 
         success: false,
-        error: 'Could not extract text from PDF' 
+        error: 'Could not read PDF file. Make sure it contains readable text (not scanned images).',
+        details: pdfError.message,
+        helpText: 'If your PDF is a scanned document or contains only images, it needs to be OCR-processed first.'
       });
     }
 
-    console.log(`📄 Extracted ${pdfText.length} characters from PDF`);
+    if (!pdfText || pdfText.trim().length === 0) {
+      console.error('❌ PDF contains no text');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Could not extract text from PDF. The PDF might be empty or contain only images.',
+        helpText: 'Make sure your PDF contains actual text (not just scanned images). You can test by trying to select/copy text from the PDF.'
+      });
+    }
+
+    if (pdfText.trim().length < 50) {
+      console.warn('⚠️ PDF contains very little text:', pdfText.length, 'characters');
+      return res.status(400).json({ 
+        success: false,
+        error: `PDF contains too little text (${pdfText.trim().length} characters). Need at least 50 characters to generate questions.`,
+        extractedText: pdfText.substring(0, 100)
+      });
+    }
+
+    const MAX_PDF_LENGTH = 8000;
+    if (pdfText.length > MAX_PDF_LENGTH) {
+      console.log(`⚠️ PDF text truncated from ${pdfText.length} to ${MAX_PDF_LENGTH} characters`);
+      pdfText = pdfText.substring(0, MAX_PDF_LENGTH) + '...';
+    }
 
     const questionCount = parseInt(count) || 10;
     const questionType = type || 'Verbal Ability';
+    const userCommand = command || '';
+    
+    console.log(`🤖 Calling AI to generate ${questionCount} questions for ${questionType}`);
     
     let questions = [];
     
     try {
-      // Generate questions using AI with PDF context
-      questions = await aiService.generateQuestions(questionType, 'Normal', questionCount);
+      questions = await aiService.generateQuestionsFromPDF(
+        pdfText,
+        questionType,
+        questionCount,
+        userCommand
+      );
       
-      console.log(`✅ Generated ${questions.length} questions from PDF`);
+      console.log(`✅ AI Generated ${questions.length} questions`);
+
+      if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error('AI generated no valid questions');
+      }
+
+      questions = questions.map((q, idx) => ({
+        question: q.question || `Question ${idx + 1}`,
+        options: q.options || ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'],
+        correctAnswer: q.correctAnswer || 'A',
+        explanation: q.explanation || 'No explanation provided',
+        category: q.category || questionType,
+        difficulty: q.difficulty || 'Normal'
+      }));
+
+      console.log('✅ Questions validated and formatted');
 
     } catch (aiError) {
-      console.error('AI generation error:', aiError);
+      console.error('❌ AI Generation Error:');
+      console.error('  - Error Type:', aiError.constructor.name);
+      console.error('  - Error Message:', aiError.message);
       
-      // Fallback: create sample questions
-      questions = Array(Math.min(questionCount, 5)).fill(null).map((_, i) => ({
-        question: `Question ${i + 1} based on PDF content`,
-        options: ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'],
-        correctAnswer: 'A',
-        explanation: 'This is a sample question generated from your PDF.',
-        category: questionType,
-        difficulty: 'Normal'
-      }));
+      if (aiError.message.includes('AI_OVERLOAD')) {
+        return res.status(503).json({
+          success: false,
+          error: 'AI service is currently overloaded. Please try again in a few moments.',
+          details: aiError.message
+        });
+      }
+
+      if (aiError.message.includes('AI_INVALID_JSON')) {
+        return res.status(500).json({
+          success: false,
+          error: 'AI generated invalid response. Please try again.',
+          details: aiError.message
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to generate questions from PDF. The AI service may be temporarily unavailable.',
+        details: aiError.message,
+        suggestion: 'Try again with a shorter PDF or fewer questions, or create questions manually.'
+      });
     }
 
+    console.log('✅ ========== PDF GENERATION SUCCESS ==========');
     res.json({ 
       success: true,
       questions,
-      extractedTextLength: pdfText.length
+      extractedTextLength: pdfText.length,
+      message: `Successfully generated ${questions.length} questions from PDF`
     });
 
   } catch (error) {
-    console.error('Error processing PDF:', error);
+    console.error('❌ ========== UNEXPECTED ERROR ==========');
+    console.error('Error Type:', error.constructor.name);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    
     res.status(500).json({ 
       success: false,
-      error: 'Error processing PDF', 
+      error: 'Unexpected error processing PDF', 
       details: error.message 
     });
   }
@@ -344,7 +433,6 @@ exports.browsePublicTests = async (req, res) => {
       search
     });
 
-    // ✅ Parse all tests
     const parsedTests = result.tests.map(parseTestData);
 
     res.json({

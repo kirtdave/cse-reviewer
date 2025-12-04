@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createCustomTest } from '../../services/customTestService'; // ✅ ADDED
+import { createCustomTest } from '../../services/customTestService';
 
 const getPalette = (theme = "dark") => {
   const isDark = theme === "dark";
@@ -82,35 +82,50 @@ const ManageModal = ({
     try {
       setCreatingTest(true);
       
-      // Create test data
+      // Create test data with proper structure
       const newTestData = {
         title: newTestName.trim(),
         description: "",
-        sets: [{ id: 1, title: "Set 1", questions: [] }],
+        sets: [
+          { 
+            id: 1, 
+            title: "Set 1", 
+            questions: [] 
+          }
+        ],
         category: "Custom",
         difficulty: "Mixed",
         timeLimit: null,
-        isPublic: false
+        isPublic: false,
+        tags: []
       };
+      
+      console.log('📤 Creating test:', newTestData);
       
       // Call backend API to create test and get REAL ID
       const createdTest = await createCustomTest(newTestData);
       
       console.log('✅ Test created with ID:', createdTest.id);
       
+      // Ensure the test object is properly structured
+      const testToLoad = {
+        ...createdTest,
+        sets: Array.isArray(createdTest.sets) ? createdTest.sets : [{ id: 1, title: "Set 1", questions: [] }]
+      };
+      
       // Update saved tests list with the real test from backend
-      setSavedTests([...savedTests, createdTest]);
+      setSavedTests([...savedTests, testToLoad]);
       
       // Load the newly created test (with real ID from backend)
-      onLoadTest(createdTest);
+      onLoadTest(testToLoad);
       
       // Clear form and close modal
       setNewTestName('');
       onClose();
       
     } catch (error) {
-      console.error('Failed to create test:', error);
-      alert(error.message || "Failed to create test");
+      console.error('❌ Failed to create test:', error);
+      alert(error.message || "Failed to create test. Please try again.");
     } finally {
       setCreatingTest(false);
     }
@@ -560,7 +575,7 @@ const ManageModal = ({
                                               </button>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-11">
-                                              {q.options.map((opt, i) => {
+                                              {q.options && q.options.map((opt, i) => {
                                                 const isCorrect = q.correctAnswer === String.fromCharCode(65 + i);
                                                 return (
                                                   <div 

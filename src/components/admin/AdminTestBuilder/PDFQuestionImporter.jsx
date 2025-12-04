@@ -41,45 +41,88 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
   };
 
   const handleUpload = async () => {
-  if (!file) {
-    setError('Please select a PDF file');
-    return;
-  }
-
-  setUploading(true);
-  setError('');
-
-  try {
-    // ✅ Fixed: Match service function signature
-    const result = await generateQuestionsFromPDF(
-      file, 
-      category,  // type parameter
-      count,
-      'extract'  // command parameter (or make it optional in service)
-    );
-
-    if (!result.success || !result.questions) {
-      throw new Error(result.error || 'Failed to extract questions from PDF');
+    if (!file) {
+      setError('Please select a PDF file');
+      return;
     }
 
-    // Format questions
-    const formattedQuestions = result.questions.map(q => ({
-      question: q.question,
-      options: Array.isArray(q.options) ? q.options : [q.options.A, q.options.B, q.options.C, q.options.D],
-      correctAnswer: q.correctAnswer,
-      explanation: q.explanation || 'No explanation provided',
-      category: q.category || category,
-      difficulty: q.difficulty || 'Normal'
-    }));
+    setUploading(true);
+    setError('');
 
-    onImported(formattedQuestions);
+    try {
+      console.log('📤 Uploading PDF:', {
+        fileName: file.name,
+        fileSize: file.size,
+        category,
+        count
+      });
 
-  } catch (err) {
-    setError(err.message || 'Failed to process PDF');
-  } finally {
-    setUploading(false);
-  }
-};
+      // ✅ Call service with correct parameters
+      const result = await generateQuestionsFromPDF(
+        file,        // file object
+        category,    // type parameter
+        count,       // count parameter
+        ''           // command parameter (optional)
+      );
+
+      console.log('✅ PDF Generation Result:', result);
+
+      if (!result.success || !result.questions) {
+        throw new Error(result.error || 'Failed to extract questions from PDF');
+      }
+
+      // ✅ Format questions to ensure proper structure
+      const formattedQuestions = result.questions.map((q, idx) => {
+        // Handle options - ensure it's always an array with 4 items
+        let options = [];
+        
+        if (Array.isArray(q.options) && q.options.length === 4) {
+          options = q.options;
+        } else if (q.options && typeof q.options === 'object') {
+          // If options come as {A: "...", B: "...", C: "...", D: "..."}
+          options = [
+            q.options.A || q.options['A)'] || 'A) Option 1',
+            q.options.B || q.options['B)'] || 'B) Option 2',
+            q.options.C || q.options['C)'] || 'C) Option 3',
+            q.options.D || q.options['D)'] || 'D) Option 4'
+          ];
+        } else {
+          // Fallback options
+          options = [
+            'A) Option 1',
+            'B) Option 2',
+            'C) Option 3',
+            'D) Option 4'
+          ];
+        }
+
+        return {
+          question: q.question || `Question ${idx + 1}`,
+          options: options,
+          correctAnswer: q.correctAnswer || 'A',
+          explanation: q.explanation || 'No explanation provided',
+          category: q.category || category,
+          difficulty: q.difficulty || 'Normal'
+        };
+      });
+
+      console.log('✅ Formatted questions:', formattedQuestions.length);
+      console.log('📋 Sample question:', formattedQuestions[0]);
+
+      // Pass formatted questions to parent
+      onImported(formattedQuestions);
+      
+      // Close modal and reset
+      setFile(null);
+      onClose();
+
+    } catch (err) {
+      console.error('❌ PDF Import Error:', err);
+      setError(err.message || 'Failed to process PDF. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -121,10 +164,15 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
           </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-lg flex items-center gap-2" style={{ backgroundColor: `${errorColor}20` }}>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-lg flex items-center gap-2"
+              style={{ backgroundColor: `${errorColor}20`, border: `1px solid ${errorColor}` }}
+            >
               <AlertCircle style={{ color: errorColor }} />
               <p style={{ color: errorColor }}>{error}</p>
-            </div>
+            </motion.div>
           )}
 
           {/* File Upload */}
@@ -187,7 +235,9 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
               }}
             >
               {CSE_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat} style={{ backgroundColor: cardBg }}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -221,7 +271,8 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
             style={{
               background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
               color: '#fff',
-              opacity: uploading || !file ? 0.6 : 1
+              opacity: uploading || !file ? 0.6 : 1,
+              cursor: uploading || !file ? 'not-allowed' : 'pointer'
             }}
           >
             {uploading ? (
@@ -247,7 +298,7 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
           >
             <p className="text-sm" style={{ color: secondaryText }}>
               <i className="fas fa-exclamation-triangle mr-2" style={{ color: warningColor }}></i>
-              AI will attempt to extract and generate questions based on PDF content. Results may vary.
+              AI will extract and generate questions based on PDF content. Results may vary.
             </p>
           </div>
         </motion.div>

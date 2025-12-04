@@ -1,9 +1,10 @@
-// routes/customTests.js
+// routes/customTests.js - FIXED
 const express = require('express');
 const router = express.Router();
 const customTestController = require('../controllers/customTestController');
 const { protect } = require('../middleware/auth');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
 
 // Configure multer for PDF uploads
 const upload = multer({
@@ -20,44 +21,62 @@ const upload = multer({
   }
 });
 
-// ==================== PUBLIC ROUTES ====================
+// Rate limiting middleware
+const publicBrowseLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: 'Too many requests to browse tests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// Browse public tests
-router.get('/public/browse', customTestController.browsePublicTests);
+// ✅ FIXED: PDF generation rate limit with proper key generator
+const pdfGenerationLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  keyGenerator: (req) => {
+    // Use user ID if authenticated, otherwise use 'anonymous'
+    return req.user?.id?.toString() || 'anonymous';
+  },
+  message: 'Too many PDF generation requests. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ==================== PUBLIC ROUTES ====================
+router.get('/public/browse', publicBrowseLimit, customTestController.browsePublicTests);
 
 // ==================== PROTECTED ROUTES ====================
-
-// Get all user's custom tests
 router.get('/', protect, customTestController.getUserTests);
-
-// Get specific test by ID
-router.get('/:id', protect, customTestController.getTestById);
-
-// Create new custom test
 router.post('/', protect, customTestController.createCustomTest);
 
-// Update custom test
-router.put('/:id', protect, customTestController.updateCustomTest);
-
-// Delete custom test
-router.delete('/:id', protect, customTestController.deleteCustomTest);
-
-// Generate questions from PDF
+// PDF generation - MUST BE BEFORE /:id routes
 router.post(
   '/generate-from-pdf', 
-  protect, 
+  protect,
+  pdfGenerationLimit,
   upload.single('file'), 
   customTestController.generateQuestionsFromPDF
 );
 
-// Get test statistics
+router.get('/:id', protect, customTestController.getTestById);
+router.put('/:id', protect, customTestController.updateCustomTest);
+router.delete('/:id', protect, customTestController.deleteCustomTest);
 router.get('/:id/stats', protect, customTestController.getTestStats);
-
-// Record test attempt
 router.post('/:id/attempt', protect, customTestController.recordTestAttempt);
 
 // ==================== ERROR HANDLER ====================
 router.use((err, req, res, next) => {
+  // Handle rate limit errors
+  if (err.status === 429) {
+    return res.status(429).json({ 
+      success: false,
+      error: err.message,
+      retryAfter: err.retryAfter
+    });
+  }
+
+  // Handle multer errors
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ 
@@ -71,6 +90,7 @@ router.use((err, req, res, next) => {
     });
   }
   
+  // Handle file type validation errors
   if (err.message === 'Only PDF files are allowed') {
     return res.status(400).json({ 
       success: false,
