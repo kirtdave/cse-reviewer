@@ -26,12 +26,10 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
     },
   ];
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // Initialize with question context if provided
   useEffect(() => {
     if (initialQuestion) {
       setShowQuestionHelp(true);
@@ -53,7 +51,7 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
       const body = {
         message: userInput,
         conversationHistory: chatMessages,
-        questionData: initialQuestion // Only include for question-specific help
+        questionData: initialQuestion
       };
 
       const response = await fetch('http://localhost:5000/api/ai/chat', {
@@ -126,7 +124,6 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
     if (onClose) onClose();
   };
 
-  // If used as question helper modal (the main purpose of this component)
   if (initialQuestion && onClose) {
     return (
       <AnimatePresence>
@@ -135,7 +132,7 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 lg:p-4"
             onClick={handleClose}
           >
             <motion.div
@@ -143,44 +140,44 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className={`w-full max-w-2xl ${isDark ? "bg-gray-900" : "bg-white"} rounded-2xl shadow-2xl overflow-hidden`}
+              className={`w-full max-w-sm sm:max-w-2xl max-h-[92vh] sm:max-h-[90vh] flex flex-col ${isDark ? "bg-gray-900" : "bg-white"} rounded-xl lg:rounded-2xl shadow-2xl overflow-hidden`}
             >
-              {/* Header */}
-              <div className={`${isDark ? "bg-gradient-to-r from-blue-600 to-purple-600" : "bg-gradient-to-r from-blue-500 to-purple-500"} p-4 flex items-center justify-between`}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Bot className="w-6 h-6 text-white" />
+              {/* Header - Mobile Optimized */}
+              <div className={`${isDark ? "bg-gradient-to-r from-blue-600 to-purple-600" : "bg-gradient-to-r from-blue-500 to-purple-500"} p-3 sm:p-4 flex items-center justify-between flex-shrink-0`}>
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-white font-bold">Question Help</h3>
-                    <p className="text-white/80 text-xs">Let me help you understand this question</p>
+                  <div className="min-w-0">
+                    <h3 className="text-white font-bold text-sm sm:text-base truncate">Question Help</h3>
+                    <p className="text-white/80 text-[10px] sm:text-xs truncate">Let me help you</p>
                   </div>
                 </div>
                 <button
                   onClick={handleClose}
-                  className="text-white/80 hover:text-white p-2"
+                  className="text-white/80 hover:text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
-              {/* Question Context Banner */}
-              <div className={`p-4 border-b ${isDark ? "bg-gray-800/50 border-gray-800" : "bg-gray-50 border-gray-200"}`}>
-                <p className={`text-xs font-semibold mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              {/* Question Context Banner - Mobile Optimized */}
+              <div className={`p-3 sm:p-4 border-b ${isDark ? "bg-gray-800/50 border-gray-800" : "bg-gray-50 border-gray-200"} flex-shrink-0`}>
+                <p className={`text-[10px] sm:text-xs font-semibold mb-1 uppercase ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                   Question:
                 </p>
-                <p className={`text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-xs sm:text-sm line-clamp-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                   {initialQuestion.questionText}
                 </p>
-                <div className="flex gap-2 mt-2">
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                <div className="flex gap-1.5 sm:gap-2 mt-2 flex-wrap">
+                  <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold ${
                     initialQuestion.isCorrect
                       ? "bg-green-500/20 text-green-500"
                       : "bg-red-500/20 text-red-500"
                   }`}>
-                    {initialQuestion.isCorrect ? "✓ Correct" : "✗ Wrong"}
+                    {initialQuestion.isCorrect ? "✓" : "✗"} {initialQuestion.isCorrect ? "Correct" : "Wrong"}
                   </span>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                  <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold truncate ${
                     isDark ? "bg-blue-500/20 text-blue-400" : "bg-blue-100 text-blue-700"
                   }`}>
                     {initialQuestion.category}
@@ -188,13 +185,13 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className={`h-96 overflow-y-auto p-4 space-y-4 ${isDark ? "bg-gray-800" : "bg-gray-50"}`}>
+              {/* Messages - Scrollable, Flexible Height */}
+              <div className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 ${isDark ? "bg-gray-800" : "bg-gray-50"} min-h-0`}>
                 {chatMessages.length === 0 && !isLoading && (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Bot className={`w-16 h-16 mx-auto mb-4 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    <div className="text-center px-4">
+                      <Bot className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
+                      <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         Ask me anything about this question!
                       </p>
                     </div>
@@ -209,7 +206,7 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] p-3 rounded-2xl ${
+                      className={`max-w-[85%] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl ${
                         msg.role === "user"
                           ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
                           : isDark
@@ -217,7 +214,7 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                           : "bg-white text-gray-900 shadow-md"
                       }`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -228,14 +225,14 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                     animate={{ opacity: 1 }}
                     className="flex justify-start"
                   >
-                    <div className={`p-3 rounded-2xl ${isDark ? "bg-gray-700" : "bg-white shadow-md"}`}>
-                      <div className="flex gap-2">
+                    <div className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl ${isDark ? "bg-gray-700" : "bg-white shadow-md"}`}>
+                      <div className="flex gap-1.5 sm:gap-2">
                         {[0, 1, 2].map((i) => (
                           <motion.div
                             key={i}
                             animate={{ opacity: [0.5, 1, 0.5] }}
                             transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                            className="w-2 h-2 bg-blue-500 rounded-full"
+                            className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"
                           />
                         ))}
                       </div>
@@ -246,9 +243,9 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
-              <div className={`${isDark ? "bg-gray-900 border-t border-gray-800" : "bg-white border-t border-gray-200"} p-4`}>
-                <div className="flex gap-2">
+              {/* Input - Fixed at bottom, Mobile Optimized */}
+              <div className={`${isDark ? "bg-gray-900 border-t border-gray-800" : "bg-white border-t border-gray-200"} p-2.5 sm:p-4 flex-shrink-0`}>
+                <div className="flex gap-1.5 sm:gap-2">
                   <input
                     type="text"
                     value={userInput}
@@ -256,7 +253,7 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                     onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleAskAI()}
                     placeholder="Ask about this question..."
                     disabled={isLoading}
-                    className={`flex-1 px-4 py-3 rounded-xl border outline-none ${
+                    className={`flex-1 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm rounded-lg sm:rounded-xl border outline-none ${
                       isDark
                         ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500"
                         : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
@@ -265,12 +262,12 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
                   <button
                     onClick={handleAskAI}
                     disabled={isLoading || !userInput.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg sm:rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
-                <p className={`text-xs mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                <p className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                   Press Enter to send
                 </p>
               </div>
@@ -281,6 +278,5 @@ export function AICoachWidget({ theme = "light", initialQuestion = null, onClose
     );
   }
 
-  // If not used as question helper, return null (no dashboard widget)
   return null;
 }

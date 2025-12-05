@@ -11,7 +11,7 @@ export default function HistorySummary({
   setSortBy,
   filterResult,
   setFilterResult,
-  onReset, // Add this prop
+  onReset,
 }) {
   const isDark = theme === "dark";
 
@@ -44,9 +44,8 @@ export default function HistorySummary({
 
   return (
     <>
-      
       {/* Summary Cards - Mobile 2x2 Grid */}
-      <section className="grid grid-cols-2 gap-3 mb-6 lg:hidden">
+      <section className="grid grid-cols-2 gap-3 mb-4 sm:mb-6 lg:hidden">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.title}
@@ -59,7 +58,7 @@ export default function HistorySummary({
               <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-md`}>
                 <i className={`fa-solid ${stat.icon} text-white text-sm`}></i>
               </div>
-              <h3 className={`font-semibold text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              <h3 className={`font-semibold text-xs ${isDark ? "text-gray-300" : "text-gray-700"} truncate flex-1`}>
                 {stat.title}
               </h3>
             </div>
@@ -98,14 +97,64 @@ export default function HistorySummary({
         ))}
       </section>
 
-      {/* Filters */}
+      {/* Filters - MOBILE RESPONSIVE */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className={`${isDark ? "bg-gray-900/60" : "bg-white/60"} backdrop-blur-xl p-4 rounded-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} shadow-xl mb-6`}
+        className={`${isDark ? "bg-gray-900/60" : "bg-white/60"} backdrop-blur-xl p-3 sm:p-4 rounded-xl sm:rounded-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} shadow-xl mb-4 sm:mb-6`}
       >
-        <div className="flex flex-wrap gap-4 items-center">
+        {/* MOBILE: Stack vertically */}
+        <div className="flex flex-col gap-3 lg:hidden">
+          <div className="flex items-center gap-2">
+            <i className="fa-solid fa-filter text-blue-500 text-sm"></i>
+            <span className={`font-medium text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              Filters
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={`text-xs font-medium mb-1 block ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                Sort By
+              </label>
+              <select
+                className={`w-full px-3 py-2 text-sm rounded-lg border ${isDark ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="date">Date (Latest)</option>
+                <option value="score">Score (Highest)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={`text-xs font-medium mb-1 block ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                Result
+              </label>
+              <select
+                className={`w-full px-3 py-2 text-sm rounded-lg border ${isDark ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"} focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                value={filterResult}
+                onChange={(e) => setFilterResult(e.target.value)}
+              >
+                <option value="All">All</option>
+                <option value="Passed">Passed</option>
+                <option value="Failed">Failed</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            onClick={onReset}
+            className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-all ${isDark ? "bg-gray-800 text-gray-300 hover:bg-gray-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+          >
+            <i className="fa-solid fa-rotate-right mr-2"></i>
+            Reset Filters
+          </button>
+        </div>
+
+        {/* DESKTOP: Horizontal layout */}
+        <div className="hidden lg:flex lg:flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
             <i className="fa-solid fa-filter text-blue-500"></i>
             <span className={`font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>

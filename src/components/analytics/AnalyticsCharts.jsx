@@ -26,7 +26,7 @@ export default function AnalyticsCharts({ theme = "light", data }) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className={`relative overflow-hidden ${isDark ? "bg-gradient-to-br from-gray-900/80 to-purple-900/20" : "bg-gradient-to-br from-white/80 to-purple-50/80"} backdrop-blur-xl p-8 rounded-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} shadow-2xl`}
+      className={`relative overflow-hidden ${isDark ? "bg-gradient-to-br from-gray-900/80 to-purple-900/20" : "bg-gradient-to-br from-white/80 to-purple-50/80"} backdrop-blur-xl p-4 sm:p-8 rounded-xl sm:rounded-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} shadow-2xl`}
     >
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -53,27 +53,27 @@ export default function AnalyticsCharts({ theme = "light", data }) {
       </div>
 
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <motion.div
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg"
           >
-            <i className="fa-solid fa-brain-circuit text-white text-xl"></i>
+            <i className="fa-solid fa-brain-circuit text-white text-lg sm:text-xl"></i>
           </motion.div>
           <div>
-            <h3 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h3 className={`text-base sm:text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
               AI Insight Matrix
             </h3>
-            <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
               Comprehensive neural performance analysis
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 items-center">
           {/* Radar Chart */}
-          <div className={`p-6 rounded-xl ${isDark ? "bg-gray-800/30" : "bg-white/50"}`}>
+          <div className={`p-4 sm:p-6 rounded-lg sm:rounded-xl ${isDark ? "bg-gray-800/30" : "bg-white/50"}`}>
             <ResponsiveContainer width="100%" height={300}>
               <RadarChart data={radarData}>
                 <PolarGrid stroke={isDark ? "#374151" : "#E5E7EB"} />
@@ -99,11 +99,11 @@ export default function AnalyticsCharts({ theme = "light", data }) {
           </div>
 
           {/* AI Evaluation Text */}
-          <div className="space-y-4">
-            <h4 className={`text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
+          <div className="space-y-3 sm:space-y-4">
+            <h4 className={`text-base sm:text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
               Predictive AI Evaluation
             </h4>
-            <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"} leading-relaxed`}>
+            <p className={`text-xs sm:text-sm ${isDark ? "text-gray-300" : "text-gray-700"} leading-relaxed`}>
               {data?.totalExams >= 3 ? (
                 <>
                   Neural models indicate a <span className="font-bold text-blue-500">
@@ -127,11 +127,11 @@ export default function AnalyticsCharts({ theme = "light", data }) {
             <motion.div
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 3, repeat: Infinity }}
-              className={`p-4 rounded-xl ${isDark ? "bg-purple-500/10" : "bg-purple-50"} border ${isDark ? "border-purple-500/20" : "border-purple-200"}`}
+              className={`p-3 sm:p-4 rounded-lg sm:rounded-xl ${isDark ? "bg-purple-500/10" : "bg-purple-50"} border ${isDark ? "border-purple-500/20" : "border-purple-200"}`}
             >
-              <div className="flex items-start gap-3">
-                <i className="fa-solid fa-robot text-purple-500 text-2xl mt-1"></i>
-                <p className={`text-sm italic ${isDark ? "text-purple-300" : "text-purple-700"}`}>
+              <div className="flex items-start gap-2 sm:gap-3">
+                <i className="fa-solid fa-robot text-purple-500 text-xl sm:text-2xl mt-0.5 sm:mt-1"></i>
+                <p className={`text-xs sm:text-sm italic ${isDark ? "text-purple-300" : "text-purple-700"}`}>
                   {data?.readiness >= 85 ? (
                     `"Confidence curve trending upward. Expected mastery in ${Math.max(1, Math.round((100 - data.readiness) / 2))} days."`
                   ) : data?.readiness >= 70 ? (

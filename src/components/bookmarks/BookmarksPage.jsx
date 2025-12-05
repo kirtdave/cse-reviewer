@@ -1,5 +1,3 @@
-// src/components/Bookmarks/BookmarksPage.jsx
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bookmark } from "lucide-react";
@@ -91,8 +89,8 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-50"}`}>
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={isDark ? "text-gray-400" : "text-gray-600"}>Loading bookmarks...</p>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={`text-sm sm:text-base ${isDark ? "text-gray-400" : "text-gray-600"}`}>Loading...</p>
         </div>
       </div>
     );
@@ -109,31 +107,30 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
         />
       </div>
 
-              {/* Header - Mount animation */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className={`mb-8 ${isDark ? "bg-gray-900/60" : "bg-white/60"} backdrop-blur-xl rounded-2xl p-6 shadow-xl border ${isDark ? "border-gray-800" : "border-gray-200"}`}
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-lg">
-              <Bookmark className="text-white" size={24} />
-            </div>
-            <div>
-              <h1 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                My Bookmarks
-              </h1>
-              <p className="text-sm bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent font-medium">
-                Questions you've saved for later review
-              </p>
-            </div>
+      {/* Header - Mobile Optimized */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className={`mb-4 sm:mb-8 ${isDark ? "bg-gray-900/60" : "bg-white/60"} backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl border ${isDark ? "border-gray-800" : "border-gray-200"}`}
+      >
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center shadow-lg flex-shrink-0">
+            <Bookmark className="text-white" size={20} />
           </div>
-        </motion.header>
+          <div className="min-w-0">
+            <h1 className={`text-lg sm:text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"} truncate`}>
+              My Bookmarks
+            </h1>
+            <p className="text-xs sm:text-sm bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent font-medium truncate">
+              Saved questions
+            </p>
+          </div>
+        </div>
+      </motion.header>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6">
-
-        {/* Stats - Staggered animation */}
+      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-6">
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -147,7 +144,7 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
           />
         </motion.div>
 
-        {/* Filters - Staggered animation */}
+        {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -165,7 +162,7 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
           />
         </motion.div>
 
-        {/* Bookmark List - Staggered animation */}
+        {/* Bookmark List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

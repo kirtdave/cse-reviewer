@@ -636,7 +636,7 @@ const Testsetup = ({ theme = "dark" }) => {
         />
       </motion.div>
       
-      <div className="relative z-10 p-6 lg:p-10">
+      <div className="relative z-10 p-6 lg:p-10 pb-32 lg:pb-10">
         <div className="max-w-[1600px] mx-auto flex flex-col gap-6">
 
           {error && (
