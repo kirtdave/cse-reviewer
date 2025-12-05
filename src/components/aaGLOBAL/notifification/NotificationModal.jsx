@@ -70,7 +70,7 @@ const NotificationModal = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center z-50 px-4"
+          className="fixed inset-0 flex items-center justify-center z-50 p-3 lg:px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -89,9 +89,9 @@ const NotificationModal = ({
             onClick={onClose}
           />
 
-          {/* Modal Container - Narrower width */}
+          {/* Modal Container - Responsive width */}
           <motion.div
-            className={`relative rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden ${
+            className={`relative rounded-2xl shadow-2xl w-full max-w-sm lg:max-w-lg max-h-[90vh] lg:max-h-[85vh] flex flex-col overflow-hidden ${
               isDark 
                 ? "bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-gray-700/50" 
                 : "bg-white/95 backdrop-blur-xl border border-gray-200"
@@ -121,12 +121,12 @@ const NotificationModal = ({
               style={{ backgroundSize: '200% 100%' }}
             />
 
-            {/* Header */}
-            <div className={`px-6 py-4 border-b ${isDark ? "border-gray-800/50" : "border-gray-200"}`}>
+            {/* Header - Mobile Optimized */}
+            <div className={`px-4 lg:px-6 py-3 lg:py-4 border-b ${isDark ? "border-gray-800/50" : "border-gray-200"}`}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 lg:gap-3">
                   <motion.div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    className={`w-8 h-8 lg:w-10 lg:h-10 rounded-xl flex items-center justify-center ${
                       isDark 
                         ? "bg-gradient-to-br from-blue-500/20 to-purple-500/20" 
                         : "bg-gradient-to-br from-blue-50 to-purple-50"
@@ -143,13 +143,13 @@ const NotificationModal = ({
                       ease: "easeInOut"
                     }}
                   >
-                    <i className={`fa-solid fa-bell text-lg ${
+                    <i className={`fa-solid fa-bell text-sm lg:text-lg ${
                       isDark ? "text-blue-400" : "text-blue-600"
                     }`}></i>
                   </motion.div>
                   
                   <div>
-                    <h2 className={`font-bold text-xl ${
+                    <h2 className={`font-bold text-base lg:text-xl ${
                       isDark ? "text-white" : "text-gray-900"
                     }`}>
                       Notifications
@@ -158,14 +158,14 @@ const NotificationModal = ({
                       <motion.span
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1 ${
+                        className={`inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-2.5 py-0.5 rounded-full text-[10px] lg:text-xs font-semibold mt-0.5 lg:mt-1 ${
                           isDark 
                             ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30" 
                             : "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-600 border border-blue-200"
                         }`}
                       >
                         <motion.span
-                          className="w-1.5 h-1.5 rounded-full bg-blue-500"
+                          className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-blue-500"
                           animate={{
                             scale: [1, 1.3, 1],
                             opacity: [1, 0.5, 1],
@@ -182,11 +182,11 @@ const NotificationModal = ({
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 lg:gap-2">
                   {notifications.length > 0 && (
                     <motion.button
                       onClick={handleMarkAllRead}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[10px] lg:text-sm font-medium transition-all ${
                         isDark 
                           ? "text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-700/50" 
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200"
@@ -202,13 +202,14 @@ const NotificationModal = ({
                           animate={{ scale: 1 }}
                         />
                       ) : (
-                        "Mark all read"
+                        <span className="hidden lg:inline">Mark all read</span>
                       )}
+                      <i className="fa-solid fa-check lg:hidden"></i>
                     </motion.button>
                   )}
                   <motion.button
                     onClick={onClose}
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                    className={`w-7 h-7 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center transition-colors ${
                       isDark 
                         ? "hover:bg-red-500/10 text-gray-400 hover:text-red-400 border border-gray-700/50 hover:border-red-500/30" 
                         : "hover:bg-red-50 text-gray-600 hover:text-red-500 border border-gray-200 hover:border-red-200"
@@ -216,36 +217,36 @@ const NotificationModal = ({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <i className="fa-solid fa-xmark text-lg"></i>
+                    <i className="fa-solid fa-xmark text-base lg:text-lg"></i>
                   </motion.button>
                 </div>
               </div>
             </div>
 
-            {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+            {/* Notifications List - Mobile Optimized */}
+            <div className="flex-1 overflow-y-auto px-3 lg:px-6 py-3 lg:py-4 space-y-2 lg:space-y-3">
               {loading ? (
                 <motion.div
-                  className="flex flex-col items-center justify-center py-20"
+                  className="flex flex-col items-center justify-center py-16 lg:py-20"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <i className={`fa-solid fa-spinner fa-spin text-3xl mb-3 ${
+                  <i className={`fa-solid fa-spinner fa-spin text-2xl lg:text-3xl mb-3 ${
                     isDark ? "text-blue-400" : "text-blue-600"
                   }`}></i>
-                  <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                    Loading notifications...
+                  <p className={`text-xs lg:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    Loading...
                   </p>
                 </motion.div>
               ) : notifications.length === 0 ? (
                 <motion.div
-                  className="flex flex-col items-center justify-center py-20"
+                  className="flex flex-col items-center justify-center py-16 lg:py-20"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.2 }}
                 >
                   <motion.div
-                    className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 ${
+                    className={`w-16 h-16 lg:w-20 lg:h-20 rounded-2xl flex items-center justify-center mb-3 lg:mb-4 ${
                       isDark 
                         ? "bg-gradient-to-br from-gray-800 to-gray-700/50" 
                         : "bg-gradient-to-br from-gray-100 to-gray-50"
@@ -259,15 +260,15 @@ const NotificationModal = ({
                       ease: "easeInOut"
                     }}
                   >
-                    <i className={`fa-solid fa-bell-slash text-3xl ${
+                    <i className={`fa-solid fa-bell-slash text-2xl lg:text-3xl ${
                       isDark ? "text-gray-600" : "text-gray-400"
                     }`}></i>
                   </motion.div>
-                  <p className={`font-semibold text-lg ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                  <p className={`font-semibold text-base lg:text-lg ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                     All Clear!
                   </p>
-                  <p className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
-                    No new notifications at the moment
+                  <p className={`text-xs lg:text-sm mt-1 lg:mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                    No notifications
                   </p>
                 </motion.div>
               ) : (
@@ -291,11 +292,11 @@ const NotificationModal = ({
             </div>
           </motion.div>
 
-          {/* View Notification Detail Modal */}
+          {/* View Notification Detail Modal - Mobile Optimized */}
           <AnimatePresence>
             {viewingNotification && (
               <motion.div
-                className="absolute inset-0 flex items-center justify-center z-10 px-4"
+                className="absolute inset-0 flex items-center justify-center z-10 p-3 lg:px-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -306,7 +307,7 @@ const NotificationModal = ({
                 />
                 
                 <motion.div
-                  className={`relative rounded-2xl shadow-2xl w-full max-w-md p-6 ${
+                  className={`relative rounded-2xl shadow-2xl w-full max-w-sm lg:max-w-md p-4 lg:p-6 ${
                     isDark 
                       ? "bg-gray-900 border border-gray-700/50" 
                       : "bg-white border border-gray-200"
@@ -316,46 +317,41 @@ const NotificationModal = ({
                   exit={{ scale: 0.9, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Close button */}
                   <button
                     onClick={handleCloseView}
-                    className={`absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                    className={`absolute top-3 right-3 lg:top-4 lg:right-4 w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center transition-colors ${
                       isDark 
                         ? "hover:bg-red-500/10 text-gray-400 hover:text-red-400 border border-gray-700/50 hover:border-red-500/30" 
                         : "hover:bg-red-50 text-gray-600 hover:text-red-500 border border-gray-200 hover:border-red-200"
                     }`}
                   >
-                    <i className="fa-solid fa-xmark text-lg"></i>
+                    <i className="fa-solid fa-xmark text-base lg:text-lg"></i>
                   </button>
 
-                  {/* Notification Type Badge */}
-                  <div className="mb-4">
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                  <div className="mb-3 lg:mb-4">
+                    <span className={`inline-flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-3 py-1 rounded-full text-[10px] lg:text-xs font-semibold ${
                       isDark 
                         ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" 
                         : "bg-blue-100 text-blue-600 border border-blue-200"
                     }`}>
-                      <i className="fa-solid fa-bell"></i>
+                      <i className="fa-solid fa-bell text-[10px]"></i>
                       {viewingNotification.type}
                     </span>
                   </div>
 
-                  {/* Title */}
-                  <h3 className={`text-xl font-bold mb-3 pr-8 ${
+                  <h3 className={`text-base lg:text-xl font-bold mb-2 lg:mb-3 pr-6 lg:pr-8 ${
                     isDark ? "text-white" : "text-gray-900"
                   }`}>
                     {viewingNotification.title}
                   </h3>
 
-                  {/* Message */}
-                  <p className={`text-sm leading-relaxed mb-4 ${
+                  <p className={`text-xs lg:text-sm leading-relaxed mb-3 lg:mb-4 ${
                     isDark ? "text-gray-300" : "text-gray-700"
                   }`}>
                     {viewingNotification.message}
                   </p>
 
-                  {/* Timestamp */}
-                  <div className={`flex items-center gap-2 text-xs pt-4 border-t ${
+                  <div className={`flex items-center gap-2 text-[10px] lg:text-xs pt-3 lg:pt-4 border-t ${
                     isDark ? "text-gray-500 border-gray-800" : "text-gray-500 border-gray-200"
                   }`}>
                     <i className="fa-solid fa-clock"></i>

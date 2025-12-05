@@ -1,15 +1,14 @@
-// UserAvatar.jsx
 import React from 'react';
 
 const UserAvatar = ({ isLoggedIn, user, size = "md" }) => {
   const sizeClasses = {
-    md: "w-12 h-12",
-    lg: "w-14 h-14"
+    md: "w-10 h-10 sm:w-12 sm:h-12",
+    lg: "w-12 h-12 sm:w-14 sm:h-14"
   };
 
   const textSizeClasses = {
-    md: "text-lg",
-    lg: "text-xl"
+    md: "text-base sm:text-lg",
+    lg: "text-lg sm:text-xl"
   };
 
   return (
@@ -26,7 +25,7 @@ const UserAvatar = ({ isLoggedIn, user, size = "md" }) => {
         </div>
       )}
       {isLoggedIn && (
-        <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 shadow-lg"></span>
+        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 shadow-lg"></span>
       )}
     </div>
   );

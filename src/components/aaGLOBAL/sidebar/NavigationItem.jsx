@@ -1,6 +1,3 @@
-// ============================================================================
-// components/NavigationItem.jsx
-// ============================================================================
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,7 +5,7 @@ const NavigationItem = ({ item, isActive, isDark, isCollapsed, onClick }) => (
   <Link
     to={item.path}
     onClick={onClick}
-    className={`group relative flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200
+    className={`group relative flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl transition-all duration-200 text-sm lg:text-base
       ${isCollapsed ? "justify-center" : ""}
       ${
         isActive
@@ -17,7 +14,7 @@ const NavigationItem = ({ item, isActive, isDark, isCollapsed, onClick }) => (
       }
     `}
   >
-    <i className={`fa-solid ${item.icon} text-lg ${isActive ? "" : "group-hover:scale-110 transition-transform"}`}></i>
+    <i className={`fa-solid ${item.icon} text-base lg:text-lg ${isActive ? "" : "group-hover:scale-110 transition-transform"}`}></i>
     {!isCollapsed && <span className="font-medium">{item.name}</span>}
     {isCollapsed && (
       <span

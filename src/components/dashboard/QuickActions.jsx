@@ -136,11 +136,11 @@ const QuickActions = ({ theme = "light", data }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className={`${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} p-3 rounded-lg shadow-lg border`}>
-          <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+        <div className={`${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} p-2 lg:p-3 rounded-lg shadow-lg border`}>
+          <p className={`text-xs lg:text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
             {payload[0].payload.date}
           </p>
-          <p className="text-sm text-blue-500 font-bold">
+          <p className="text-xs lg:text-sm text-blue-500 font-bold">
             Score: {payload[0].value}%
           </p>
         </div>
@@ -150,12 +150,12 @@ const QuickActions = ({ theme = "light", data }) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Study Streak Card - Gamified Design with THEME SUPPORT */}
+    <div className="space-y-3 lg:space-y-4">
+      {/* Study Streak Card - Mobile Optimized */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`bg-gradient-to-br ${getStreakColor()} rounded-2xl shadow-2xl p-5 py-2 ${
+        className={`bg-gradient-to-br ${getStreakColor()} rounded-xl lg:rounded-2xl shadow-lg lg:shadow-2xl p-4 lg:p-5 py-3 lg:py-2 ${
           isDark ? 'text-gray-100' : 'text-white'
         } relative overflow-hidden border-2 ${isDark ? 'border-gray-700/50' : 'border-white/20'}`}
       >
@@ -167,11 +167,11 @@ const QuickActions = ({ theme = "light", data }) => {
           }}></div>
         </div>
 
-        {/* Floating Particles */}
+        {/* Floating Particles - Hidden on mobile for performance */}
         {studyStreak > 0 && (
           <>
             <motion.div
-              className={`absolute top-3 right-6 text-xl ${isDark ? 'opacity-40' : 'opacity-60'}`}
+              className={`absolute top-2 lg:top-3 right-4 lg:right-6 text-base lg:text-xl ${isDark ? 'opacity-40' : 'opacity-60'} hidden sm:block`}
               animate={{ 
                 y: [-15, -30, -15],
                 opacity: isDark ? [0.4, 0.2, 0.4] : [0.6, 0.3, 0.6],
@@ -180,7 +180,7 @@ const QuickActions = ({ theme = "light", data }) => {
               transition={{ duration: 3, repeat: Infinity, delay: 0 }}
             >✨</motion.div>
             <motion.div
-              className={`absolute top-10 right-16 text-lg ${isDark ? 'opacity-40' : 'opacity-60'}`}
+              className={`absolute top-8 lg:top-10 right-12 lg:right-16 text-sm lg:text-lg ${isDark ? 'opacity-40' : 'opacity-60'} hidden sm:block`}
               animate={{ 
                 y: [-12, -28, -12],
                 opacity: isDark ? [0.3, 0.15, 0.3] : [0.5, 0.2, 0.5],
@@ -189,7 +189,7 @@ const QuickActions = ({ theme = "light", data }) => {
               transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
             >⭐</motion.div>
             <motion.div
-              className={`absolute top-16 right-8 text-xl ${isDark ? 'opacity-40' : 'opacity-60'}`}
+              className={`absolute top-12 lg:top-16 right-6 lg:right-8 text-base lg:text-xl ${isDark ? 'opacity-40' : 'opacity-60'} hidden sm:block`}
               animate={{ 
                 y: [-8, -24, -8],
                 opacity: isDark ? [0.4, 0.2, 0.4] : [0.6, 0.3, 0.6],
@@ -200,9 +200,9 @@ const QuickActions = ({ theme = "light", data }) => {
           </>
         )}
 
-        {/* Large Flame Icon with Glow */}
+{/* Large Flame Icon with Glow */}
         <motion.div 
-          className={`absolute -top-2 -right-2 text-8xl ${isDark ? 'opacity-15' : 'opacity-20'}`}
+          className={`absolute -top-2 -right-2 text-6xl sm:text-7xl lg:text-8xl ${isDark ? 'opacity-15' : 'opacity-20'}`}
           animate={{ 
             scale: studyStreak >= 7 ? [1, 1.1, 1] : 1,
             rotate: studyStreak >= 14 ? [0, 5, -5, 0] : 0
@@ -214,7 +214,7 @@ const QuickActions = ({ theme = "light", data }) => {
         
         <div className="relative z-10 flex flex-col">
           {/* Header with Animated Icon */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2 lg:mb-0">
             <div className="flex items-center gap-2">
               <motion.div
                 className="relative"
@@ -224,7 +224,7 @@ const QuickActions = ({ theme = "light", data }) => {
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <i className="fa-solid fa-fire text-2xl drop-shadow-lg"></i>
+                <i className="fa-solid fa-fire text-xl lg:text-2xl drop-shadow-lg"></i>
                 {studyStreak >= 7 && (
                   <motion.div
                     className={`absolute -inset-2 ${
@@ -236,9 +236,9 @@ const QuickActions = ({ theme = "light", data }) => {
                 )}
               </motion.div>
               <div>
-                <h3 className="text-lg font-bold drop-shadow-md">Study Streak</h3>
+                <h3 className="text-base lg:text-lg font-bold drop-shadow-md">Study Streak</h3>
                 {studyStreak >= 7 && (
-                  <p className="text-[10px] font-semibold opacity-90">🔥 ON FIRE!</p>
+                  <p className="text-[9px] lg:text-[10px] font-semibold opacity-90">🔥 ON FIRE!</p>
                 )}
               </div>
             </div>
@@ -251,9 +251,9 @@ const QuickActions = ({ theme = "light", data }) => {
                 transition={{ duration: 0.5, rotate: { duration: 2, repeat: Infinity } }}
                 className={`${
                   isDark ? 'bg-gray-700/50 border-gray-600' : 'bg-white/30 border-white/40'
-                } backdrop-blur-sm px-3 py-1 rounded-full border-2 shadow-lg`}
+                } backdrop-blur-sm px-2 lg:px-3 py-0.5 lg:py-1 rounded-full border-2 shadow-lg`}
               >
-                <span className="text-xs font-bold">
+                <span className="text-[10px] lg:text-xs font-bold">
                   {studyStreak < 3 ? "🌱 Beginner" :
                    studyStreak < 7 ? "🌟 Rising" :
                    studyStreak < 14 ? "🔥 Hot" :
@@ -266,12 +266,12 @@ const QuickActions = ({ theme = "light", data }) => {
 
           {/* Main Counter with 3D Effect */}
           <motion.div 
-            className="flex items-baseline gap-2 mb-1"
+            className="flex items-baseline gap-1.5 lg:gap-2 mb-1"
             animate={studyStreak >= 14 ? { scale: [1, 1.05, 1] } : {}}
             transition={{ duration: 2, repeat: Infinity }}
           >
             <div className="relative">
-              <p className="text-5xl font-black drop-shadow-2xl" style={{
+              <p className="text-4xl lg:text-5xl font-black drop-shadow-2xl" style={{
                 textShadow: isDark 
                   ? '3px 3px 0px rgba(0,0,0,0.4), 2px 2px 0px rgba(0,0,0,0.3)'
                   : '3px 3px 0px rgba(0,0,0,0.2), 2px 2px 0px rgba(0,0,0,0.1)'
@@ -289,12 +289,12 @@ const QuickActions = ({ theme = "light", data }) => {
               )}
             </div>
             <div>
-              <p className="text-xl font-bold opacity-95 drop-shadow-md">
+              <p className="text-lg lg:text-xl font-bold opacity-95 drop-shadow-md">
                 {studyStreak === 1 ? 'Day' : 'Days'}
               </p>
               {studyStreak > 0 && (
                 <motion.p 
-                  className="text-[10px] font-semibold opacity-80"
+                  className="text-[9px] lg:text-[10px] font-semibold opacity-80"
                   animate={{ opacity: [0.8, 1, 0.8] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -305,14 +305,14 @@ const QuickActions = ({ theme = "light", data }) => {
           </motion.div>
 
           {/* Message */}
-          <p className="text-xs font-medium opacity-90 drop-shadow-md">
+          <p className="text-[10px] lg:text-xs font-medium opacity-90 drop-shadow-md mb-2 lg:mb-0">
             {getStreakMessage()}
           </p>
 
           {/* Progress Bar to Next Milestone */}
           {studyStreak > 0 && studyStreak < 30 && (
             <div className="mt-2">
-              <div className="flex items-center justify-between text-xs opacity-90 mb-1">
+              <div className="flex items-center justify-between text-[10px] lg:text-xs opacity-90 mb-1">
                 <span className="font-semibold">Next Milestone</span>
                 <span className="font-bold">
                   {studyStreak < 3 ? `${3 - studyStreak} days to 🌟` :
@@ -321,7 +321,7 @@ const QuickActions = ({ theme = "light", data }) => {
                    `${30 - studyStreak} days to 🏆`}
                 </span>
               </div>
-              <div className={`h-2 ${
+              <div className={`h-1.5 lg:h-2 ${
                 isDark ? 'bg-gray-700/50 border-gray-600' : 'bg-white/20 border-white/30'
               } rounded-full overflow-hidden backdrop-blur-sm border`}>
                 <motion.div
@@ -349,7 +349,7 @@ const QuickActions = ({ theme = "light", data }) => {
           {/* Legendary Status */}
           {studyStreak >= 30 && (
             <motion.div
-              className={`mt-auto text-center py-2 ${
+              className={`mt-2 text-center py-1.5 lg:py-2 ${
                 isDark ? 'bg-gray-700/50 border-gray-600' : 'bg-white/20 border-white/40'
               } backdrop-blur-sm rounded-lg border`}
               animate={{ 
@@ -365,36 +365,36 @@ const QuickActions = ({ theme = "light", data }) => {
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <p className="text-sm font-bold">👑 LEGENDARY STATUS ACHIEVED! 👑</p>
+              <p className="text-xs lg:text-sm font-bold">👑 LEGENDARY STATUS ACHIEVED! 👑</p>
             </motion.div>
           )}
         </div>
       </motion.div>
 
-      {/* Performance Trend Graph */}
+      {/* Performance Trend Graph - Mobile Optimized */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className={`${isDark ? "bg-gray-900/60" : "bg-white"} backdrop-blur-xl rounded-2xl shadow-lg p-6 pt-2 pb-1 border ${
+        className={`${isDark ? "bg-gray-900/60" : "bg-white"} backdrop-blur-xl rounded-xl lg:rounded-2xl shadow-lg p-4 lg:p-6 pt-3 lg:pt-2 pb-2 lg:pb-1 border ${
           isDark ? "border-gray-800" : "border-gray-200"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3 lg:mb-4">
           <div>
-            <h2 className={`text-lg font-bold flex items-center ${isDark ? "text-white" : "text-gray-900"}`}>
-              <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
+            <h2 className={`text-base lg:text-lg font-bold flex items-center ${isDark ? "text-white" : "text-gray-900"}`}>
+              <TrendingUp className="w-4 h-4 lg:w-5 lg:h-5 mr-1.5 lg:mr-2 text-blue-500" />
               Performance Trend
             </h2>
-            <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"} mt-1`}>
+            <p className={`text-[10px] lg:text-xs ${isDark ? "text-gray-400" : "text-gray-600"} mt-0.5 lg:mt-1`}>
               Last {trendData.length} mock exam scores
             </p>
           </div>
           
           {/* Score Change Indicator */}
           {trendData.length > 1 && (
-            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
+            <div className={`flex items-center gap-1 px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg ${
               isImproving 
                 ? "bg-green-500/20 text-green-500" 
                 : scoreDiff === 0
@@ -402,7 +402,7 @@ const QuickActions = ({ theme = "light", data }) => {
                 : "bg-red-500/20 text-red-500"
             }`}>
               <i className={`fa-solid ${isImproving ? "fa-arrow-up" : scoreDiff === 0 ? "fa-minus" : "fa-arrow-down"} text-xs`}></i>
-              <span className="text-sm font-bold">{Math.abs(scoreDiff)}%</span>
+              <span className="text-xs lg:text-sm font-bold">{Math.abs(scoreDiff)}%</span>
             </div>
           )}
         </div>
@@ -410,7 +410,44 @@ const QuickActions = ({ theme = "light", data }) => {
         {/* Chart or Empty State */}
         {trendData.length > 0 ? (
           <>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={160} className="lg:hidden">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke={isDark ? "#374151" : "#E5E7EB"} 
+                  vertical={false}
+                />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fill: isDark ? "#9CA3AF" : "#6B7280", fontSize: 10 }}
+                  axisLine={{ stroke: isDark ? "#374151" : "#E5E7EB" }}
+                />
+                <YAxis 
+                  tick={{ fill: isDark ? "#9CA3AF" : "#6B7280", fontSize: 10 }}
+                  axisLine={{ stroke: isDark ? "#374151" : "#E5E7EB" }}
+                  domain={[0, 100]}
+                  width={30}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  fill="url(#colorScore)"
+                  dot={{ fill: "#3B82F6", strokeWidth: 2, r: 3 }}
+                  activeDot={{ r: 5, fill: "#3B82F6" }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+
+            <ResponsiveContainer width="100%" height={200} className="hidden lg:block">
               <AreaChart data={trendData}>
                 <defs>
                   <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
@@ -447,34 +484,34 @@ const QuickActions = ({ theme = "light", data }) => {
             </ResponsiveContainer>
 
             {/* Quick Stats Below Chart */}
-            <div className="grid grid-cols-3 gap-3 mt-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-3 gap-2 lg:gap-3 mt-2 lg:mt-3 pt-3 lg:pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="text-center pb-1">
-                <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Latest</p>
-                <p className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-[10px] lg:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Latest</p>
+                <p className={`text-base lg:text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                   {latestScore}%
                 </p>
               </div>
               <div className="text-center">
-                <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Average</p>
-                <p className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-[10px] lg:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Average</p>
+                <p className={`text-base lg:text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                   {Math.round(trendData.reduce((sum, item) => sum + item.score, 0) / trendData.length)}%
                 </p>
               </div>
               <div className="text-center">
-                <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Peak</p>
-                <p className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <p className={`text-[10px] lg:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Peak</p>
+                <p className={`text-base lg:text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                   {Math.max(...trendData.map(item => item.score))}%
                 </p>
               </div>
             </div>
           </>
         ) : (
-          <div className="h-[200px] flex flex-col items-center justify-center text-center">
-            <i className={`fa-solid fa-chart-line text-5xl mb-4 ${isDark ? "text-gray-700" : "text-gray-300"}`}></i>
-            <p className={`text-sm font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+          <div className="h-[160px] lg:h-[200px] flex flex-col items-center justify-center text-center">
+            <i className={`fa-solid fa-chart-line text-4xl lg:text-5xl mb-3 lg:mb-4 ${isDark ? "text-gray-700" : "text-gray-300"}`}></i>
+            <p className={`text-xs lg:text-sm font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}>
               No performance data yet
             </p>
-            <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-500"} mt-1`}>
+            <p className={`text-[10px] lg:text-xs ${isDark ? "text-gray-500" : "text-gray-500"} mt-1`}>
               Take your first mock exam to see your progress!
             </p>
           </div>

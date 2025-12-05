@@ -1,4 +1,3 @@
-// ProfileSection.jsx
 import React from 'react';
 import UserAvatar from './UserAvatar';
 import { NotificationBell } from '../notifification/NotificationBell';
@@ -13,9 +12,8 @@ const ProfileSection = ({
   notificationCount = 5,
   onNotificationClick 
 }) => (
-  <div className={`py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"} ${isCollapsed ? "px-4" : "px-6"}`}>
+  <div className={`py-3 sm:py-4 lg:py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"} ${isCollapsed ? "px-3 lg:px-4" : "px-4 sm:px-6"}`}>
     {isCollapsed ? (
-      // Collapsed state - just show centered avatar
       <div className="flex justify-center items-center">
         <button
           onClick={goToProfile}
@@ -26,8 +24,7 @@ const ProfileSection = ({
         </button>
       </div>
     ) : (
-      // Expanded state - show full profile section
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 lg:gap-4">
         <UserAvatar isLoggedIn={isLoggedIn} user={user} size={isMobile ? "lg" : "md"} />
         
         <button
@@ -36,19 +33,19 @@ const ProfileSection = ({
         >
           {isLoggedIn ? (
             <>
-              <span className={`font-semibold ${isMobile ? "" : "text-sm"} truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+              <span className={`font-semibold ${isMobile ? "text-sm" : "text-xs lg:text-sm"} truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                 {user.name}
               </span>
-              <span className={`${isMobile ? "text-sm" : "text-xs"} truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <span className={`${isMobile ? "text-xs" : "text-[10px] lg:text-xs"} truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 {user.email}
               </span>
             </>
           ) : (
             <>
-              <span className={`font-semibold ${isMobile ? "" : "text-sm"} ${isDark ? "text-white" : "text-gray-900"}`}>
+              <span className={`font-semibold ${isMobile ? "text-sm" : "text-xs lg:text-sm"} ${isDark ? "text-white" : "text-gray-900"}`}>
                 Guest User
               </span>
-              <span className={`${isMobile ? "text-sm" : "text-xs"} ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <span className={`${isMobile ? "text-xs" : "text-[10px] lg:text-xs"} ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 Login for full access
               </span>
             </>

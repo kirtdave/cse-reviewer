@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 export const NotificationBell = ({ count = 0, onClick, isDark }) => (
   <motion.button
     onClick={onClick}
-    className={`relative w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+    className={`relative w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center transition-all ${
       isDark 
         ? "bg-gray-800/80 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-700/50" 
         : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200"
@@ -14,7 +14,7 @@ export const NotificationBell = ({ count = 0, onClick, isDark }) => (
     title="Notifications"
   >
     <motion.i 
-      className="fa-solid fa-bell text-base"
+      className="fa-solid fa-bell text-sm lg:text-base"
       animate={count > 0 ? {
         rotate: [0, -15, 15, -15, 15, 0],
       } : {}}

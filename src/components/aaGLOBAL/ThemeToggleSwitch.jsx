@@ -1,7 +1,84 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-export default function ThemeToggleSwitch({ isDark, toggleTheme, isCollapsed = false }) {
+export default function ThemeToggleSwitch({ isDark, toggleTheme, isCollapsed = false, isMobile = false }) {
+  // Mobile compact version
+  if (isMobile) {
+    return (
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={toggleTheme}
+        className={`flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all ${
+          isDark ? "bg-gray-800/50 hover:bg-gray-800" : "bg-gray-100/50 hover:bg-gray-100"
+        }`}
+        aria-label="Toggle theme"
+      >
+        {/* Left: Icon and Label */}
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+              isDark
+                ? "bg-gradient-to-br from-indigo-600 to-purple-600"
+                : "bg-gradient-to-br from-amber-400 to-orange-500"
+            }`}
+          >
+            {isDark ? (
+              <i className="fa-solid fa-moon text-white text-sm"></i>
+            ) : (
+              <i className="fa-solid fa-sun text-white text-sm"></i>
+            )}
+          </div>
+          <div className="text-left">
+            <span
+              className={`text-sm font-semibold block ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {isDark ? "Dark Mode" : "Light Mode"}
+            </span>
+            <span
+              className={`text-xs ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Switch to {isDark ? "light" : "dark"}
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Toggle Switch */}
+        <div className="flex-shrink-0">
+          <div
+            className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors duration-300 ${
+              isDark
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600"
+                : "bg-gradient-to-r from-amber-400 to-orange-500"
+            }`}
+          >
+            <motion.div
+              className="w-5 h-5 rounded-full bg-white shadow-md flex items-center justify-center"
+              animate={{
+                x: isDark ? 20 : 0,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 700,
+                damping: 30,
+              }}
+            >
+              {isDark ? (
+                <i className="fa-solid fa-moon text-[9px] text-indigo-600"></i>
+              ) : (
+                <i className="fa-solid fa-sun text-[9px] text-amber-500"></i>
+              )}
+            </motion.div>
+          </div>
+        </div>
+      </motion.button>
+    );
+  }
+
+  // Desktop version (original)
   return (
     <button
       onClick={toggleTheme}

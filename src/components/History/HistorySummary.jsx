@@ -44,8 +44,34 @@ export default function HistorySummary({
 
   return (
     <>
-      {/* Summary Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      
+      {/* Summary Cards - Mobile 2x2 Grid */}
+      <section className="grid grid-cols-2 gap-3 mb-6 lg:hidden">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            className={`${isDark ? "bg-gray-800/80" : "bg-white"} backdrop-blur-xl p-3 rounded-xl border ${isDark ? "border-gray-700" : "border-gray-200"} shadow-lg`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-md`}>
+                <i className={`fa-solid ${stat.icon} text-white text-sm`}></i>
+              </div>
+              <h3 className={`font-semibold text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                {stat.title}
+              </h3>
+            </div>
+            <p className={`text-2xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+              {stat.value}
+            </p>
+          </motion.div>
+        ))}
+      </section>
+
+      {/* Summary Cards - Desktop 4-column Grid */}
+      <section className="hidden lg:grid lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.title}

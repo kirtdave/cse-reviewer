@@ -1,4 +1,3 @@
-// DesktopSidebar.jsx
 import React from 'react';
 import SidebarHeader from './SidebarHeader';
 import ProfileSection from './ProfileSection';
@@ -18,8 +17,8 @@ const DesktopSidebar = ({
   openSignup,
   handleLogout,
   goToProfile,
-  notificationCount,      // Add this
-  onNotificationClick     // Add this
+  notificationCount,
+  onNotificationClick
 }) => (
   <aside
     className={`hidden lg:flex flex-col transition-all duration-300
@@ -41,8 +40,8 @@ const DesktopSidebar = ({
       isDark={isDark}
       goToProfile={goToProfile}
       isCollapsed={isCollapsed}
-      notificationCount={notificationCount}        // Add this
-      onNotificationClick={onNotificationClick}    // Add this
+      notificationCount={notificationCount}
+      onNotificationClick={onNotificationClick}
     />
 
     <Navigation

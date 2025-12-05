@@ -61,28 +61,28 @@ const NotificationItem = ({ notification, isDark, onRead, onView, onDelete }) =>
           : isDark ? '0 2px 8px rgba(0, 0, 0, 0.2)' : '0 1px 3px rgba(0, 0, 0, 0.05)'
       }}
     >
-      <div className="p-4">
-        <div className="flex gap-3">
-          <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
-            <i className={`fa-solid ${icon} ${color} text-sm`}></i>
+      <div className="p-3 lg:p-4">
+        <div className="flex gap-2 lg:gap-3">
+          <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+            <i className={`fa-solid ${icon} ${color} text-xs lg:text-sm`}></i>
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 mb-1">
-              <h4 className={`font-semibold text-sm leading-snug truncate ${
+            <div className="flex items-start justify-between gap-2 lg:gap-3 mb-1">
+              <h4 className={`font-semibold text-xs lg:text-sm leading-snug truncate ${
                 isDark ? "text-white" : "text-gray-900"
               }`}>
                 {notification.title}
               </h4>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`text-xs whitespace-nowrap ${
+              <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+                <span className={`text-[10px] lg:text-xs whitespace-nowrap ${
                   isDark ? "text-gray-500" : "text-gray-500"
                 }`}>
                   {notification.time}
                 </span>
                 <motion.button
                   onClick={handleDelete}
-                  className={`opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center transition-all ${
+                  className={`opacity-0 group-hover:opacity-100 w-5 h-5 lg:w-6 lg:h-6 rounded flex items-center justify-center transition-all ${
                     isDark
                       ? "hover:bg-red-500/20 text-gray-500 hover:text-red-400"
                       : "hover:bg-red-50 text-gray-400 hover:text-red-500"
@@ -91,12 +91,12 @@ const NotificationItem = ({ notification, isDark, onRead, onView, onDelete }) =>
                   whileTap={{ scale: 0.9 }}
                   title="Dismiss"
                 >
-                  <i className="fa-solid fa-trash text-xs"></i>
+                  <i className="fa-solid fa-trash text-[10px] lg:text-xs"></i>
                 </motion.button>
               </div>
             </div>
             
-            <p className={`text-sm leading-relaxed line-clamp-2 break-words ${
+            <p className={`text-xs lg:text-sm leading-relaxed line-clamp-2 break-words ${
               isDark ? "text-gray-400" : "text-gray-600"
             }`}>
               {notification.message}
@@ -104,16 +104,16 @@ const NotificationItem = ({ notification, isDark, onRead, onView, onDelete }) =>
           </div>
         </div>
         
-        <div className={`flex items-center justify-end gap-1.5 mt-3 pt-3 border-t transition-all ${
+        <div className={`flex items-center justify-end gap-1 lg:gap-1.5 mt-2 lg:mt-3 pt-2 lg:pt-3 border-t transition-all ${
           isDark ? "border-gray-700/50 group-hover:border-blue-500/30" : "border-gray-200 group-hover:border-blue-200"
         }`}>
-          <span className={`text-xs font-medium transition-all ${
+          <span className={`text-[10px] lg:text-xs font-medium transition-all ${
             isDark ? "text-gray-500 group-hover:text-blue-400" : "text-gray-500 group-hover:text-blue-600"
           }`}>
-            Click to view details
+            Tap to view
           </span>
           <motion.i 
-            className={`fa-solid fa-arrow-right text-xs transition-all ${
+            className={`fa-solid fa-arrow-right text-[10px] lg:text-xs transition-all ${
               isDark ? "text-gray-500 group-hover:text-blue-400" : "text-gray-500 group-hover:text-blue-600"
             }`}
             animate={{ x: [0, 3, 0] }}
