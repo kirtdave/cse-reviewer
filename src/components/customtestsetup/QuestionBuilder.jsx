@@ -1,4 +1,4 @@
-// QuestionBuilder.jsx - SIMPLIFIED (Questions auto-save)
+// QuestionBuilder.jsx - Mobile-First Layout
 import React, { useState, useRef } from "react";
 import axios from 'axios';
 
@@ -138,29 +138,30 @@ const QuestionBuilder = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
+      {/* ✅ TRULY MOBILE-FIRST Create Question Card */}
       <div 
-        className="p-8 rounded-2xl transition-all mb-6"
+        className="p-3 sm:p-6 lg:p-8 rounded-lg sm:rounded-2xl mb-3 sm:mb-6"
         style={{ 
           backgroundColor: cardBg,
           border: `1px solid ${borderColor}`,
-          boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)",
         }}
       >
-        <h2 className="text-2xl font-bold mb-6" style={{ color: textColor }}>
-          Create New Question
+        <h2 className="text-base sm:text-2xl font-bold mb-3 sm:mb-6 flex items-center gap-2" style={{ color: textColor }}>
+          <i className="fas fa-plus-circle text-sm sm:text-xl"></i>
+          <span>Create Question</span>
         </h2>
 
-        {/* Question Category and Set Selection */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Category and Set - Stack on mobile */}
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 mb-3 sm:mb-6">
           <div>
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
-              Question Category
+            <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
+              Category
             </label>
             <select
               value={questionCategory}
               onChange={(e) => setQuestionCategory(e.target.value)}
-              className="w-full p-3 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full p-2 sm:p-3 rounded-lg sm:rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               style={{ borderColor, color: textColor }}
             >
               {categories.map((cat) => (
@@ -172,18 +173,18 @@ const QuestionBuilder = ({
           </div>
 
           <div>
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+            <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
               Add to Set
             </label>
             <select
               value={selectedSet}
               onChange={(e) => setSelectedSet(Number(e.target.value))}
-              className="w-full p-3 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full p-2 sm:p-3 rounded-lg sm:rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               style={{ borderColor, color: textColor }}
             >
               {sets.map((set) => (
                 <option key={set.id} value={set.id} style={{ backgroundColor: cardBg }}>
-                  {set.title} ({(questions[set.id] || []).length} questions)
+                  {set.title} ({(questions[set.id] || []).length})
                 </option>
               ))}
             </select>
@@ -191,74 +192,84 @@ const QuestionBuilder = ({
         </div>
 
         {/* Question Text */}
-        <div className="mb-6">
-          <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+        <div className="mb-3 sm:mb-6">
+          <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
             Question Text
           </label>
           <textarea
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
-            className="w-full p-4 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-            rows="4"
-            placeholder="Type your question here..."
+            className="w-full p-2.5 sm:p-4 rounded-lg sm:rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none text-sm"
+            rows="3"
+            placeholder="Type your question..."
             style={{ borderColor, color: textColor }}
           />
         </div>
 
-        {/* Multiple Choice Options */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <div className="flex items-center gap-4">
-            <label className="font-semibold text-sm" style={{ color: textColor }}>
-              Answer Choices:
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer" style={{ color: textColor }}>
-                <input
-                  type="radio"
-                  name="choiceMode"
-                  value="manual"
-                  checked={choiceMode === "manual"}
-                  onChange={() => setChoiceMode("manual")}
-                  className="w-4 h-4 accent-blue-500"
-                />
-                Manual
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer" style={{ color: textColor }}>
-                <input
-                  type="radio"
-                  name="choiceMode"
-                  value="ai"
-                  checked={choiceMode === "ai"}
-                  onChange={() => setChoiceMode("ai")}
-                  className="w-4 h-4 accent-blue-500"
-                />
-                AI Generate
-              </label>
-            </div>
+        {/* Choice Mode - Mobile Optimized */}
+        <div className="mb-3 sm:mb-6">
+          <label className="font-semibold text-xs sm:text-sm mb-2 block" style={{ color: textColor }}>
+            Answer Choices
+          </label>
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setChoiceMode("manual")}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                choiceMode === "manual" ? "ring-2" : ""
+              }`}
+              style={{
+                backgroundColor: choiceMode === "manual" 
+                  ? `${primaryGradientFrom}20` 
+                  : isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                color: choiceMode === "manual" ? primaryGradientFrom : textColor,
+                borderColor: choiceMode === "manual" ? primaryGradientFrom : borderColor,
+                border: `1px solid`,
+              }}
+            >
+              <i className="fas fa-keyboard mr-1.5"></i>
+              Manual
+            </button>
+            <button
+              onClick={() => setChoiceMode("ai")}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                choiceMode === "ai" ? "ring-2" : ""
+              }`}
+              style={{
+                backgroundColor: choiceMode === "ai" 
+                  ? `${primaryGradientFrom}20` 
+                  : isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                color: choiceMode === "ai" ? primaryGradientFrom : textColor,
+                borderColor: choiceMode === "ai" ? primaryGradientFrom : borderColor,
+                border: `1px solid`,
+              }}
+            >
+              <i className="fas fa-wand-magic-sparkles mr-1.5"></i>
+              AI
+            </button>
           </div>
 
           {choiceMode === "ai" && (
             <button
               disabled={loadingAI || !questionText.trim()}
               onClick={handleAIGenerateChoices}
-              className={`px-5 py-2 rounded-xl font-semibold transition-all ${loadingAI || !questionText.trim() ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
+              className={`w-full px-4 py-2.5 rounded-lg font-semibold text-sm ${loadingAI || !questionText.trim() ? "opacity-50" : ""}`}
               style={{ 
                 background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
                 color: "#fff",
-                boxShadow: isDark ? "0 4px 12px rgba(91,127,245,0.3)" : "0 4px 12px rgba(91,127,245,0.2)",
               }}
             >
-              {loadingAI ? "Generating..." : "Generate with AI"}
+              {loadingAI ? <><i className="fas fa-spinner fa-spin mr-2"></i>Generating...</> : <><i className="fas fa-magic mr-2"></i>Generate</>}
             </button>
           )}
         </div>
 
+        {/* Choices - Mobile Grid */}
         {choiceMode === "manual" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 mb-3 sm:mb-6">
             {choices.map((choice, index) => (
               <div key={index}>
-                <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
-                  Choice {String.fromCharCode(65 + index)}
+                <label className="text-xs font-semibold mb-1 block" style={{ color: textColor }}>
+                  {String.fromCharCode(65 + index)}
                 </label>
                 <input
                   type="text"
@@ -268,103 +279,112 @@ const QuestionBuilder = ({
                     updated[index] = e.target.value;
                     setChoices(updated);
                   }}
-                  className="w-full p-3 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full p-2 sm:p-2.5 rounded-lg border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none text-xs sm:text-sm"
                   style={{ borderColor, color: textColor }}
-                  placeholder={`Enter option ${String.fromCharCode(65 + index)}`}
+                  placeholder={`Option ${String.fromCharCode(65 + index)}`}
                 />
               </div>
             ))}
           </div>
         ) : (
           <div 
-            className="mb-6 p-4 rounded-xl"
+            className="mb-3 sm:mb-6 p-2.5 sm:p-4 rounded-lg"
             style={{ 
               backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
               border: `1px solid ${borderColor}`
             }}
           >
             {choices.some((c) => c.trim() !== "") ? (
-              <ul className="space-y-2">
+              <ul className="space-y-1.5">
                 {choices.map((c, i) => (
                   c.trim() && (
-                    <li key={i} style={{ color: textColor }}>
-                      <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span>
+                    <li key={i} className="text-xs sm:text-sm" style={{ color: textColor }}>
+                      <span className="font-semibold mr-1.5">{String.fromCharCode(65 + i)}.</span>
                       {c}
                     </li>
                   )
                 ))}
               </ul>
             ) : (
-              <p className="text-sm" style={{ color: secondaryText }}>
-                Click "Generate with AI" to populate options and explanation.
+              <p className="text-xs text-center" style={{ color: secondaryText }}>
+                Click "Generate" to create options
               </p>
             )}
           </div>
         )}
 
-        {/* Correct Answer Selection */}
-        <div className="mb-6">
-          <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+        {/* Correct Answer */}
+        <div className="mb-3 sm:mb-6">
+          <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
             Correct Answer
           </label>
-          <select
-            value={correctAnswer}
-            onChange={(e) => setCorrectAnswer(e.target.value)}
-            className="w-full p-3 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none"
-            style={{ borderColor, color: textColor }}
-          >
-            <option value="A" style={{ backgroundColor: cardBg }}>A</option>
-            <option value="B" style={{ backgroundColor: cardBg }}>B</option>
-            <option value="C" style={{ backgroundColor: cardBg }}>C</option>
-            <option value="D" style={{ backgroundColor: cardBg }}>D</option>
-          </select>
+          <div className="grid grid-cols-4 gap-2">
+            {['A', 'B', 'C', 'D'].map((letter) => (
+              <button
+                key={letter}
+                onClick={() => setCorrectAnswer(letter)}
+                className={`py-2.5 rounded-lg font-bold text-sm transition-all ${
+                  correctAnswer === letter ? 'ring-2' : ''
+                }`}
+                style={{
+                  backgroundColor: correctAnswer === letter 
+                    ? `${primaryGradientFrom}30` 
+                    : isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                  color: correctAnswer === letter ? primaryGradientFrom : textColor,
+                  borderColor: correctAnswer === letter ? primaryGradientFrom : borderColor,
+                  border: `1px solid`,
+                }}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Explanation */}
-        <div className="mb-6">
-          <label className="text-sm font-semibold mb-2 flex items-center gap-2" style={{ color: textColor }}>
+        <div className="mb-3 sm:mb-6">
+          <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
             Explanation
           </label>
           <textarea
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
-            className="w-full p-4 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-            rows="3"
-            placeholder={choiceMode === "ai" ? "AI will generate explanation..." : "Explain why this is the correct answer..."}
+            className="w-full p-2.5 sm:p-4 rounded-lg sm:rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none text-sm"
+            rows="2"
+            placeholder={choiceMode === "ai" ? "AI will generate..." : "Explain the answer..."}
             style={{ borderColor, color: textColor }}
             readOnly={choiceMode === "ai" && loadingAI}
           />
         </div>
 
-        {/* Add Question Button */}
+        {/* Add Button */}
         <button
           onClick={handleAddQuestion}
-          className="w-full px-6 py-4 rounded-xl font-bold text-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 rounded-lg sm:rounded-xl font-bold text-sm sm:text-lg flex items-center justify-center gap-2"
           style={{ 
             background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
             color: "#fff",
-            boxShadow: isDark ? "0 4px 16px rgba(91,127,245,0.4)" : "0 4px 16px rgba(91,127,245,0.3)",
           }}
         >
           <i className="fas fa-plus-circle" />
-          Add Question (Auto-Saves)
+          <span>Add Question</span>
         </button>
       </div>
 
-      {/* PDF Generation */}
+      {/* ✅ MOBILE-FIRST PDF Generation */}
       <div 
-        className="p-8 rounded-2xl"
+        className="p-3 sm:p-6 lg:p-8 rounded-lg sm:rounded-2xl"
         style={{ 
           backgroundColor: cardBg,
           border: `1px solid ${borderColor}`,
-          boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.08)",
         }}
       >
-        <h3 className="font-bold mb-4 flex items-center gap-2 text-xl" style={{ color: textColor }}>
-          <i className="fas fa-file-pdf text-red-500" /> Extract Questions from PDF
+        <h3 className="font-bold mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-xl" style={{ color: textColor }}>
+          <i className="fas fa-file-pdf text-red-500 text-sm sm:text-base" /> 
+          <span>Extract from PDF</span>
         </h3>
 
-        <div className="flex items-center gap-3 mb-4">
+        <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-3 mb-3">
           <input 
             ref={fileInputRef} 
             onChange={onLocalFileChange} 
@@ -374,20 +394,20 @@ const QuestionBuilder = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-3 rounded-xl border transition-all hover:scale-105 font-semibold"
+            className="w-full sm:w-auto px-3 py-2 sm:py-2.5 rounded-lg border font-semibold text-xs sm:text-sm"
             style={{ 
               borderColor, 
               color: textColor,
               backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)"
             }}
           >
-            <i className="fas fa-upload mr-2" /> {file ? "Replace PDF" : "Upload PDF"}
+            <i className="fas fa-upload mr-1.5"></i> {file ? "Replace" : "Upload PDF"}
           </button>
 
           {file && (
             <button
               onClick={() => handleFileUpload(null)}
-              className="px-4 py-3 rounded-xl transition-all hover:scale-105 font-semibold"
+              className="w-full sm:w-auto px-3 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm"
               style={{
                 background: `linear-gradient(135deg, ${errorColor}, #dc2626)`,
                 color: "#fff",
@@ -399,21 +419,21 @@ const QuestionBuilder = ({
         </div>
 
         {file && (
-          <div className="mb-4 text-sm p-3 rounded-xl flex items-center gap-2" style={{ 
+          <div className="mb-3 text-xs p-2 rounded-lg flex items-center gap-2" style={{ 
             backgroundColor: isDark ? "rgba(91,127,245,0.1)" : "rgba(91,127,245,0.05)",
             color: textColor,
             border: `1px solid ${borderColor}`
           }}>
-            <i className="fas fa-file-pdf text-red-500" />
-            <span>Selected: <span className="font-semibold">{file.name}</span></span>
+            <i className="fas fa-file-pdf text-red-500 flex-shrink-0 text-xs"></i>
+            <span className="truncate text-xs">{file.name}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="space-y-2.5 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-3 mb-3">
           <select
             value={pdfQuestionCategory}
             onChange={(e) => setPdfQuestionCategory(e.target.value)}
-            className="p-3 rounded-xl border bg-transparent outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 sm:p-2.5 rounded-lg border bg-transparent outline-none text-xs sm:text-sm"
             style={{ borderColor, color: textColor }}
           >
             {categories.map((cat) => (
@@ -429,31 +449,31 @@ const QuestionBuilder = ({
             max="100"
             value={pdfQuestionCount}
             onChange={(e) => setPdfQuestionCount(Number(e.target.value))}
-            className="p-3 rounded-xl border bg-transparent outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 sm:p-2.5 rounded-lg border bg-transparent outline-none text-xs sm:text-sm"
             style={{ borderColor, color: textColor }}
-            placeholder="Number of questions"
+            placeholder="Count"
           />
 
           <button
             onClick={handleGenerateFromPDF}
             disabled={loading || !file}
-            className={`px-4 py-3 rounded-xl font-semibold transition-all ${loading || !file ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
+            className={`w-full px-3 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm ${loading || !file ? "opacity-50" : ""}`}
             style={{ 
               background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
               color: "#fff",
             }}
           >
-            <i className="fas fa-wand-magic-sparkles mr-2" /> 
+            <i className="fas fa-wand-magic-sparkles mr-1.5"></i> 
             {loading ? "Generating..." : "Generate"}
           </button>
         </div>
 
         <textarea
-          rows="3"
+          rows="2"
           value={pdfCommand}
           onChange={(e) => setPdfCommand(e.target.value)}
-          placeholder="e.g., Focus on Philippine Constitution topics"
-          className="w-full p-4 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+          placeholder="Custom instructions (optional)"
+          className="w-full p-2.5 sm:p-4 rounded-lg border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none resize-none text-xs sm:text-sm"
           style={{ borderColor, color: textColor }}
         />
       </div>
