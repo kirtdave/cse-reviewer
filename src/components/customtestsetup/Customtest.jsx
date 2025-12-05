@@ -312,10 +312,9 @@ const Customtest = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 py-3 px-3 sm:py-6 sm:px-8 sticky top-0"
+        className="sticky top-0 z-10 py-3 px-3 sm:py-6 sm:px-8 backdrop-blur-md"
         style={{
-          backgroundColor: `${cardBg}f5`,
-          backdropFilter: 'blur(10px)',
+          backgroundColor: isDark ? 'rgba(22, 33, 62, 0.96)' : 'rgba(255, 255, 255, 0.96)',
           borderBottom: `1px solid ${borderColor}`,
         }}
       >
