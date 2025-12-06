@@ -1,3 +1,6 @@
+// ============================================
+// ExplanationSection.jsx - COMPACT MOBILE
+// ============================================
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,31 +17,29 @@ export default function ExplanationSection({ title, content, isDark, isMultipleM
           : "bg-blue-50 border border-blue-200"
       }`}
     >
-      {/* Method Header - Only show if multiple methods */}
       {isMultipleMethod && title && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
-            isDark ? "hover:bg-blue-500/20" : "hover:bg-blue-100"
+          className={`w-full px-2.5 sm:px-4 py-2 sm:py-3 flex items-center justify-between transition-colors ${
+            isDark ? "hover:bg-blue-500/20 active:bg-blue-500/20" : "hover:bg-blue-100 active:bg-blue-100"
           }`}
         >
           <span
-            className={`font-semibold text-sm flex items-center gap-2 ${
+            className={`font-semibold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 ${
               isDark ? "text-blue-400" : "text-blue-700"
             }`}
           >
-            <span className="text-lg">💡</span>
+            <span className="text-sm sm:text-lg">💡</span>
             {title}
           </span>
           <i
-            className={`fa-solid fa-chevron-${isExpanded ? "up" : "down"} text-sm ${
+            className={`fa-solid fa-chevron-${isExpanded ? "up" : "down"} text-[10px] sm:text-sm ${
               isDark ? "text-blue-400" : "text-blue-600"
             }`}
           ></i>
         </button>
       )}
 
-      {/* Content */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -48,18 +49,18 @@ export default function ExplanationSection({ title, content, isDark, isMultipleM
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 py-3">
+            <div className="px-2.5 sm:px-4 py-2 sm:py-3">
               {!isMultipleMethod && (
                 <p
-                  className={`text-sm font-semibold mb-2 flex items-center gap-2 ${
+                  className={`text-xs sm:text-sm font-semibold mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2 ${
                     isDark ? "text-blue-400" : "text-blue-700"
                   }`}
                 >
-                  <span className="text-lg">💡</span> Explanation:
+                  <span className="text-sm sm:text-lg">💡</span> Explanation:
                 </p>
               )}
               <p
-                className={`text-sm leading-relaxed ${
+                className={`text-xs sm:text-sm leading-relaxed ${
                   isDark ? "text-blue-300" : "text-blue-800"
                 }`}
               >

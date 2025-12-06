@@ -19,7 +19,6 @@ export function SmartRecommendations({ theme = "light", data }) {
     }
   }, [data]);
 
-  // ✅ FIXED: Now analyzes ALL 7 categories
   const getWeakTopics = () => {
     if (!data?.sections) return [];
     
@@ -33,7 +32,6 @@ export function SmartRecommendations({ theme = "light", data }) {
       { name: "Philippine Constitution", score: data.sections.constitution || 0 },
     ];
 
-    // Filter out categories with 0 score (not taken yet), then sort
     return sections
       .filter(s => s.score > 0)
       .sort((a, b) => a.score - b.score)
@@ -41,7 +39,6 @@ export function SmartRecommendations({ theme = "light", data }) {
       .map(s => s.name);
   };
 
-  // ✅ FIXED: Now analyzes ALL 7 categories
   const getStrongTopics = () => {
     if (!data?.sections) return [];
     
@@ -55,7 +52,6 @@ export function SmartRecommendations({ theme = "light", data }) {
       { name: "Philippine Constitution", score: data.sections.constitution || 0 },
     ];
 
-    // Filter out categories with 0 score (not taken yet), then sort
     return sections
       .filter(s => s.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -73,39 +69,31 @@ export function SmartRecommendations({ theme = "light", data }) {
       case "Start Practice":
         navigate('/test');
         break;
-
       case "Take a Test":
         navigate('/test');
         break;
-
       case "Schedule Tests":
         setShowScheduleModal(true);
         break;
-
       case "Review Errors":
         navigate('/history');
         break;
-
       case "View Guide":
       case "Study Guide":
         setShowGuideModal(true);
         break;
-
       case "View Forecast":
         const forecastSection = document.querySelector('[data-section="forecast"]');
         if (forecastSection) {
           forecastSection.scrollIntoView({ behavior: 'smooth' });
         }
         break;
-
       case "View All Tips":
         setShowTipsModal(true);
         break;
-
       case "Get Started":
         navigate('/test-setup');
         break;
-
       default:
         console.log('Action:', action);
     }
@@ -159,7 +147,6 @@ export function SmartRecommendations({ theme = "light", data }) {
                 const entries = Object.entries(schedule);
                 if (entries.length > 0) {
                   const [timeOfDay, activity] = entries[0];
-                  // Convert to string if it's an object
                   if (typeof activity === 'object') {
                     return `${timeOfDay}: ${Object.values(activity).join(', ')}`;
                   }
@@ -253,10 +240,10 @@ export function SmartRecommendations({ theme = "light", data }) {
 
   if (isLoading) {
     return (
-      <div className={`${isDark ? "bg-gradient-to-br from-purple-900/40 to-blue-900/40" : "bg-gradient-to-br from-purple-50 to-blue-50"} backdrop-blur-xl p-6 rounded-2xl border ${isDark ? "border-purple-500/30" : "border-purple-200"} shadow-xl`}>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-          <span className={`ml-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+      <div className={`${isDark ? "bg-gradient-to-br from-purple-900/40 to-blue-900/40" : "bg-gradient-to-br from-purple-50 to-blue-50"} backdrop-blur-xl p-3 sm:p-4 lg:p-6 rounded-xl lg:rounded-2xl border ${isDark ? "border-purple-500/30" : "border-purple-200"} shadow-lg lg:shadow-xl`}>
+        <div className="flex items-center justify-center py-8 sm:py-10 lg:py-12">
+          <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-purple-500 animate-spin" />
+          <span className={`ml-2 sm:ml-3 text-xs sm:text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
             AI is analyzing your performance data...
           </span>
         </div>
@@ -266,34 +253,34 @@ export function SmartRecommendations({ theme = "light", data }) {
 
   return (
     <>
-      <div className={`${isDark ? "bg-gradient-to-br from-purple-900/40 to-blue-900/40" : "bg-gradient-to-br from-purple-50 to-blue-50"} backdrop-blur-xl p-6 rounded-2xl border ${isDark ? "border-purple-500/30" : "border-purple-200"} shadow-xl`}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+      <div className={`${isDark ? "bg-gradient-to-br from-purple-900/40 to-blue-900/40" : "bg-gradient-to-br from-purple-50 to-blue-50"} backdrop-blur-xl p-3 sm:p-4 lg:p-6 rounded-xl lg:rounded-2xl border ${isDark ? "border-purple-500/30" : "border-purple-200"} shadow-lg lg:shadow-xl`}>
+        <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+          <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3">
             <motion.div
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg"
+              className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg flex-shrink-0"
             >
-              <Brain className="w-5 h-5 text-white" />
+              <Brain className="w-4 h-4 sm:w-4.5 sm:h-4.5 lg:w-5 lg:h-5 text-white" />
             </motion.div>
-            <div>
-              <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <div className="min-w-0">
+              <h3 className={`text-sm sm:text-base lg:text-lg font-bold ${isDark ? "text-white" : "text-gray-900"} truncate`}>
                 AI Recommendations
               </h3>
-              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                Personalized insights based on your actual performance data
+              <p className={`text-[10px] sm:text-xs ${isDark ? "text-gray-400" : "text-gray-600"} truncate`}>
+                Personalized insights
               </p>
             </div>
           </div>
           <button
             onClick={fetchRecommendations}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium ${isDark ? "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30" : "bg-purple-100 text-purple-700 hover:bg-purple-200"} transition-colors`}
+            className={`px-2 py-1 sm:px-2.5 sm:py-1.5 lg:px-3 lg:py-1.5 rounded-md lg:rounded-lg text-[10px] sm:text-xs font-medium ${isDark ? "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30" : "bg-purple-100 text-purple-700 hover:bg-purple-200"} transition-colors flex-shrink-0`}
           >
             Refresh
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
           {recommendations?.map((rec, i) => (
             <motion.div
               key={i}
@@ -301,28 +288,28 @@ export function SmartRecommendations({ theme = "light", data }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ scale: 1.02 }}
-              className={`relative overflow-hidden p-4 rounded-xl ${isDark ? "bg-gray-800/50" : "bg-white/50"} border ${isDark ? "border-gray-700" : "border-gray-200"} cursor-pointer group`}
+              className={`relative overflow-hidden p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-gray-800/50" : "bg-white/50"} border ${isDark ? "border-gray-700" : "border-gray-200"} cursor-pointer group`}
             >
               <div className={`absolute inset-0 bg-gradient-to-r ${rec.color} opacity-0 group-hover:opacity-5 transition-opacity`} />
               
               <div className="relative z-10">
-                <div className="flex items-start justify-between mb-3">
-                  <span className="text-2xl">{rec.icon}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${isDark ? "bg-purple-500/20 text-purple-400" : "bg-purple-100 text-purple-700"}`}>
+                <div className="flex items-start justify-between mb-2 sm:mb-2.5 lg:mb-3">
+                  <span className="text-xl sm:text-2xl">{rec.icon}</span>
+                  <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[9px] sm:text-xs font-medium ${isDark ? "bg-purple-500/20 text-purple-400" : "bg-purple-100 text-purple-700"}`}>
                     {rec.confidence}
                   </span>
                 </div>
                 
-                <h4 className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                <h4 className={`font-semibold text-xs sm:text-sm lg:text-base mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                   {rec.title}
                 </h4>
-                <p className={`text-sm mb-3 ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
+                <p className={`text-[11px] sm:text-xs lg:text-sm mb-2 sm:mb-2.5 lg:mb-3 ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed line-clamp-2 sm:line-clamp-none`}>
                   {rec.description}
                 </p>
                 
                 <button 
                   onClick={() => handleAction(rec.action, rec)}
-                  className={`w-full py-2 px-4 rounded-lg text-sm font-medium bg-gradient-to-r ${rec.color} text-white shadow-lg hover:shadow-xl transition-all`}
+                  className={`w-full py-1.5 sm:py-2 px-3 sm:px-4 rounded-md lg:rounded-lg text-xs sm:text-sm font-medium bg-gradient-to-r ${rec.color} text-white shadow-lg hover:shadow-xl transition-all`}
                 >
                   {rec.action} →
                 </button>

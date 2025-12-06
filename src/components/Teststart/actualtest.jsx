@@ -1,17 +1,14 @@
-// ActualTest.jsx - WITH SUB-TOPIC SUPPORT FOR FOCUSED PRACTICE
-
+// ActualTest.jsx - MOBILE-FIRST (Backend logic untouched)
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { ThemeContext } from "../../components/aaGLOBAL/ThemeContext";
 import { generateNewTest } from '../../services/testAttemptService';
 
-// import local components
 import Header from "./Header";
 import QuestionsList from "./QuestionsList";
 import SidebarPanel from "./SidebarPanel";
 import SubmitModal from "./SubmitModal";
 
-// sample questions (fallback if no AI questions)
 const sampleQuestions = [
   {
     question: "What is the capital of the Philippines?",
@@ -50,14 +47,12 @@ export default function ActualTest() {
   const location = useLocation();
   const navState = location.state || {};
   
-  // ✅ Detect scheduled practice mode
   const isScheduledPractice = navState.isScheduledPractice || false;
   const continuousGeneration = navState.continuousGeneration || false;
   const difficulty = navState.difficulty || "Normal";
   const scheduleType = navState.scheduleType || "";
-  const subTopic = navState.subTopic || ""; // ✅ NEW: Get sub-topic filter
+  const subTopic = navState.subTopic || "";
   
-  // ✅ Use state for questions (so we can add more dynamically)
   const [questions, setQuestions] = useState(
     navState.questions && navState.questions.length > 0 
       ? navState.questions 
@@ -65,14 +60,8 @@ export default function ActualTest() {
   );
   
   const [isLoadingNextQuestion, setIsLoadingNextQuestion] = useState(false);
-  
-  // ✅ Prevent double-loading with ref
   const hasLoadedFirstQuestion = useRef(false);
-  
-  // ✅ Track asked questions to avoid repeats - NOW STORES QUESTION TEXT
   const askedQuestionsRef = useRef(new Set());
-  
-  // ✅ Generate unique session ID for this practice session
   const sessionIdRef = useRef(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const questionNumberRef = useRef(0);
   
@@ -89,7 +78,6 @@ export default function ActualTest() {
   const [fadeQuestions, setFadeQuestions] = useState({});
   const [testStartTime] = useState(new Date());
 
-  // ✅ Load first question only once
   useEffect(() => {
     if (isScheduledPractice && questions.length === 0 && !hasLoadedFirstQuestion.current) {
       hasLoadedFirstQuestion.current = true;
@@ -97,7 +85,6 @@ export default function ActualTest() {
     }
   }, []);
 
-  // ✅ Function to load next question with SUB-TOPIC support
   const loadNextQuestion = async () => {
     if (!continuousGeneration) return;
     
@@ -105,7 +92,6 @@ export default function ActualTest() {
     questionNumberRef.current += 1;
     
     try {
-      // ✅ BUILD ARRAY OF QUESTION TEXTS TO AVOID
       const avoidQuestions = Array.from(askedQuestionsRef.current);
       
       console.log(`🔄 Loading question #${questionNumberRef.current}`);
@@ -117,9 +103,8 @@ export default function ActualTest() {
           topic: categories[0], 
           difficulty: difficulty, 
           count: 1,
-          subTopic: subTopic // ✅ NEW: Pass sub-topic to backend
+          subTopic: subTopic
         }],
-        // ✅ CRITICAL: Pass questions to avoid
         avoidQuestions: avoidQuestions,
         sessionId: sessionIdRef.current,
         questionNumber: questionNumberRef.current
@@ -130,7 +115,6 @@ export default function ActualTest() {
       if (response.success && response.questions && response.questions.length > 0) {
         const newQuestion = response.questions[0];
         
-        // ✅ FIX: Convert options to array if it's an object
         let optionsArray = newQuestion.options;
         if (!Array.isArray(optionsArray)) {
           if (typeof optionsArray === 'object' && optionsArray !== null) {
@@ -140,12 +124,11 @@ export default function ActualTest() {
           }
         }
         
-        // ✅ FIX: Convert correctAnswer letter to index
         let answerIndex = newQuestion.answer;
         if (newQuestion.correctAnswer !== undefined) {
           if (typeof newQuestion.correctAnswer === 'string') {
             const letter = newQuestion.correctAnswer.toUpperCase();
-            answerIndex = letter.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+            answerIndex = letter.charCodeAt(0) - 65;
           } else if (typeof newQuestion.correctAnswer === 'number') {
             answerIndex = newQuestion.correctAnswer;
           }
@@ -153,15 +136,12 @@ export default function ActualTest() {
         
         const questionText = newQuestion.question || newQuestion.questionText || "Question text missing";
         
-        // ✅ CHECK: Skip if we've already seen this exact question
         if (askedQuestionsRef.current.has(questionText)) {
           console.warn('⚠️ Received duplicate question from API, requesting another...');
-          // Retry once
           setTimeout(() => loadNextQuestion(), 500);
           return;
         }
         
-        // ✅ ADD to tracking set
         askedQuestionsRef.current.add(questionText);
         
         const formattedQuestion = {
@@ -178,14 +158,12 @@ export default function ActualTest() {
         
       } else {
         console.warn('⚠️ No question returned from API');
-        // Use fallback but still track it
         const fallback = sampleQuestions[Math.floor(Math.random() * sampleQuestions.length)];
         askedQuestionsRef.current.add(fallback.question);
         setQuestions(prev => [...prev, fallback]);
       }
     } catch (error) {
       console.error('❌ Failed to load next question:', error);
-      // Use fallback but still track it
       const fallback = sampleQuestions[Math.floor(Math.random() * sampleQuestions.length)];
       askedQuestionsRef.current.add(fallback.question);
       setQuestions(prev => [...prev, fallback]);
@@ -194,7 +172,6 @@ export default function ActualTest() {
     }
   };
 
-  // Timer effect
   useEffect(() => {
     if (submitted) return;
     setTimeLeft(initialSeconds);
@@ -211,7 +188,6 @@ export default function ActualTest() {
     return () => clearInterval(timer);
   }, [submitted, initialSeconds]);
 
-  // ✅ Handle select with auto-load for scheduled practice
   const handleSelect = (qIndex, optIndex) => {
     if (answers[qIndex] !== undefined || submitted) return;
     const correctIndex = questions[qIndex].answer;
@@ -224,7 +200,6 @@ export default function ActualTest() {
       setFadeQuestions((prev) => ({ ...prev, [qIndex]: true }));
     }, 1000);
 
-    // ✅ Auto-load next question in scheduled practice mode
     if (continuousGeneration && !submitted) {
       setTimeout(() => {
         loadNextQuestion();
@@ -263,9 +238,11 @@ export default function ActualTest() {
           scheduleType={scheduleType}
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+        {/* ✅ MOBILE-FIRST LAYOUT */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Questions - Full width mobile, 2/3 desktop */}
+            <div className="w-full lg:col-span-2">
               <QuestionsList
                 sampleQuestions={questions}
                 answers={answers}
@@ -277,7 +254,8 @@ export default function ActualTest() {
               />
             </div>
 
-            <div>
+            {/* Sidebar - Below on mobile, sidebar on desktop */}
+            <div className="w-full lg:col-span-1">
               <SidebarPanel
                 isDark={isDark}
                 correctCount={correctCount}

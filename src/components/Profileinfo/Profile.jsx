@@ -136,10 +136,10 @@ export default function Profile({ theme = "light" }) {
 
   if (isLoading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? "text-gray-100" : "text-gray-900"}`}>
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? "text-gray-100" : "text-gray-900"} px-4`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-sm">Loading profile...</p>
         </div>
       </div>
     );
@@ -147,8 +147,8 @@ export default function Profile({ theme = "light" }) {
 
   if (!user) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? "text-gray-100" : "text-gray-900"}`}>
-        <p>Profile not found</p>
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? "text-gray-100" : "text-gray-900"} px-4`}>
+        <p className="text-sm">Profile not found</p>
       </div>
     );
   }
@@ -164,17 +164,19 @@ export default function Profile({ theme = "light" }) {
         />
       </div>
 
-      <ProfileHeader isDark={isDark} />
-      <div className="relative z-10 p-6 lg:p-10">
-        <div className="max-w-[1400px] mx-auto space-y-6">
+        <ProfileHeader isDark={isDark} />
+
+      
+      <div className="relative z-10 px-3 pb-3 sm:px-6 sm:pb-6 lg:px-10 lg:pb-10">
+        <div className="max-w-[1400px] mx-auto space-y-2 sm:space-y-3 lg:space-y-6">
           {/* Messages */}
           {successMessage && <AlertMessage message={successMessage} type="success" />}
           {error && <AlertMessage message={error} type="error" />}
 
-          {/* Main Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Grid - Mobile: Stack, Desktop: Side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-6">
             {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-2 sm:space-y-3 lg:space-y-6">
               <PersonalInfoCard
                 user={user}
                 editForm={editForm}
@@ -200,9 +202,9 @@ export default function Profile({ theme = "light" }) {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-6">
-              <AchievementsCard user={user} isDark={isDark} />
+            <div className="space-y-2 sm:space-y-3 lg:space-y-6">
               <StatsCard stats={stats} isDark={isDark} />
+              <AchievementsCard user={user} isDark={isDark} />
             </div>
           </div>
         </div>

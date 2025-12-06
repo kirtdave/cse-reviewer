@@ -10,12 +10,12 @@ export function ProfileAvatar({
   isDark 
 }) {
   return (
-    <div className="md:col-span-2 flex items-center gap-6">
+    <div className="col-span-full flex items-center gap-3 pb-4 border-b border-gray-200/10">
       <div className="relative">
         <img
           src={imagePreview || user.avatar}
           alt="Profile"
-          className={`w-24 h-24 rounded-full object-cover border-4 border-blue-500/20 ${isEditing ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-blue-500/30 ${isEditing ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
           onClick={onImageClick}
         />
         {isEditing && (
@@ -30,23 +30,23 @@ export function ProfileAvatar({
             <button 
               type="button"
               onClick={onImageClick}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm hover:scale-110 transition-all"
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs hover:scale-110 transition-all shadow-lg"
             >
               <i className="fa-solid fa-camera"></i>
             </button>
           </>
         )}
       </div>
-      <div>
-        <h3 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+      <div className="flex-1 min-w-0">
+        <h3 className={`text-base sm:text-lg font-bold ${isDark ? "text-white" : "text-gray-900"} truncate`}>
           {user.name}
         </h3>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
           Member since {user.joinDate}
         </p>
         {isEditing && (
-          <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
-            Click image or camera icon to change
+          <p className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+            Tap image to change
           </p>
         )}
       </div>

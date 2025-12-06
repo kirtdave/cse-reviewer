@@ -10,7 +10,7 @@ export default function Contact({ theme = "dark" }) {
 
   return (
     <main className={`min-h-screen ${isDark ? "text-gray-100" : "text-gray-900"} font-sans relative transition-colors duration-500`}>
-
+      {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
@@ -20,12 +20,13 @@ export default function Contact({ theme = "dark" }) {
       </div>
 
         <ContactHeader theme={theme} />
-      <div className="relative z-10 p-6 lg:p-10">
-        <div className="max-w-[1600px] mx-auto space-y-8">
+
+      <div className="relative z-10 px-3 pb-3 sm:px-4 sm:pb-4 lg:px-10 lg:pb-10">
+        <div className="max-w-[1600px] mx-auto space-y-3 sm:space-y-4 lg:space-y-8">
           {/* Main Content - Two Columns */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             {/* Left Column: Form + Social Links */}
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-4 lg:space-y-6">
               <ContactForm theme={theme} />
               <ContactSocial theme={theme} />
             </div>

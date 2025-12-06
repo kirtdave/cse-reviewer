@@ -129,7 +129,7 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
         </div>
       </motion.header>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

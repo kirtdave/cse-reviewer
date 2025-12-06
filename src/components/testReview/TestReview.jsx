@@ -6,7 +6,6 @@ import { getAllBookmarks } from "../../services/bookmarkService";
 
 // Import sub-components
 import ReviewHeader from "./ReviewHeader";
-// ✅ REMOVED: PrintHeader import - no longer needed
 import SummaryCard from "./SummaryCard";
 import FilterButton from "./FilterButton";
 import ReviewQuestionCard from "./ReviewQuestionCard";
@@ -87,8 +86,8 @@ export default function TestReview({ theme = "dark" }) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-50"}`}>
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={isDark ? "text-gray-400" : "text-gray-600"}>Loading test review...</p>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Loading test review...</p>
         </div>
       </div>
     );
@@ -96,15 +95,15 @@ export default function TestReview({ theme = "dark" }) {
 
   if (error || !testData) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-50"}`}>
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-50"} px-4`}>
         <div className="text-center">
-          <i className="fa-solid fa-circle-xmark text-red-500 text-6xl mb-4"></i>
-          <p className={`text-xl mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
+          <i className="fa-solid fa-circle-xmark text-red-500 text-5xl sm:text-6xl mb-4"></i>
+          <p className={`text-lg sm:text-xl mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
             {error || "Test not found"}
           </p>
           <button
             onClick={() => navigate("/history")}
-            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
+            className="px-6 py-2 text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all"
           >
             <i className="fa-solid fa-arrow-left mr-2"></i>
             Back to History
@@ -159,158 +158,158 @@ export default function TestReview({ theme = "dark" }) {
         />
       </div>
 
-      {/* Header - No longer needs handlePrint or isPrinting */}
-      <ReviewHeader
-        name={name}
-        score={score}
-        totalQuestions={totalQuestions}
-        accuracy={accuracy}
-        isDark={isDark}
-        testData={testData}
-        studyMode={studyMode}
-        onStartStudyMode={handleStartStudyMode}
-        onExitStudyMode={handleExitStudyMode}
-        wrongCount={wrongCount}
-      />
-
-      {/* ✅ REMOVED: PrintHeader component - no longer needed */}
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-        {/* Study Mode Panel */}
-        {studyMode && (
-          <StudyModePanel 
-            totalQuestions={studyQuestions.length}
-            currentQuestion={1}
+      <div className="relative z-10">
+        {/* Header */}
+          <ReviewHeader
+            name={name}
+            score={score}
+            totalQuestions={totalQuestions}
+            accuracy={accuracy}
             isDark={isDark}
+            testData={testData}
+            studyMode={studyMode}
+            onStartStudyMode={handleStartStudyMode}
+            onExitStudyMode={handleExitStudyMode}
+            wrongCount={wrongCount}
           />
-        )}
 
-        {/* Summary Cards */}
-        {!studyMode && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <SummaryCard
-              icon="fa-circle-check"
-              label="Correct"
-              value={correctCount}
-              gradient="from-green-500 to-emerald-600"
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+          {/* Study Mode Panel */}
+          {studyMode && (
+            <StudyModePanel 
+              totalQuestions={studyQuestions.length}
+              currentQuestion={1}
               isDark={isDark}
             />
-            <SummaryCard
-              icon="fa-circle-xmark"
-              label="Wrong"
-              value={wrongCount}
-              gradient="from-red-500 to-pink-600"
-              isDark={isDark}
-            />
-            <SummaryCard
-              icon="fa-book-open"
-              label="Unanswered"
-              value={unansweredCount}
-              gradient="from-orange-500 to-yellow-600"
-              isDark={isDark}
-            />
-            <SummaryCard
-              icon="fa-clock"
-              label="Time Spent"
-              value={`${timeSpent}m`}
-              gradient="from-blue-500 to-purple-600"
-              isDark={isDark}
-            />
-          </div>
-        )}
+          )}
 
-        {/* Filter Buttons */}
-        {!studyMode && (
-          <div
-            className={`flex flex-wrap gap-3 mb-6 p-4 rounded-xl ${
-              isDark ? "bg-gray-900/60" : "bg-white/60"
-            } backdrop-blur-xl border ${
-              isDark ? "border-gray-800" : "border-gray-200"
-            } shadow-sm`}
-          >
-            <div className="flex items-center gap-2 mr-4">
-              <i className="fa-solid fa-filter text-blue-500"></i>
-              <span className={`font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                Filter Questions:
-              </span>
+          {/* Summary Cards - 2x2 Grid on Mobile, 4 columns on Desktop */}
+          {!studyMode && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
+              <SummaryCard
+                icon="fa-circle-check"
+                label="Correct"
+                value={correctCount}
+                gradient="from-green-500 to-emerald-600"
+                isDark={isDark}
+              />
+              <SummaryCard
+                icon="fa-circle-xmark"
+                label="Wrong"
+                value={wrongCount}
+                gradient="from-red-500 to-pink-600"
+                isDark={isDark}
+              />
+              <SummaryCard
+                icon="fa-book-open"
+                label="Unanswered"
+                value={unansweredCount}
+                gradient="from-orange-500 to-yellow-600"
+                isDark={isDark}
+              />
+              <SummaryCard
+                icon="fa-clock"
+                label="Time Spent"
+                value={`${timeSpent}m`}
+                gradient="from-blue-500 to-purple-600"
+                isDark={isDark}
+              />
             </div>
-            <FilterButton
-              active={filterMode === "all"}
-              onClick={() => setFilterMode("all")}
-              label="All Questions"
-              count={questions.length}
-              gradient="from-purple-500 to-pink-600"
-              isDark={isDark}
-            />
-            <FilterButton
-              active={filterMode === "correct"}
-              onClick={() => setFilterMode("correct")}
-              label="Correct"
-              count={correctCount}
-              gradient="from-green-500 to-emerald-600"
-              isDark={isDark}
-            />
-            <FilterButton
-              active={filterMode === "wrong"}
-              onClick={() => setFilterMode("wrong")}
-              label="Wrong"
-              count={wrongCount}
-              gradient="from-red-500 to-pink-600"
-              isDark={isDark}
-            />
-            <FilterButton
-              active={filterMode === "unanswered"}
-              onClick={() => setFilterMode("unanswered")}
-              label="Unanswered"
-              count={unansweredCount}
-              gradient="from-orange-500 to-yellow-600"
-              isDark={isDark}
-            />
+          )}
+
+          {/* Filter Buttons */}
+          {!studyMode && (
+            <div
+              className={`flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl ${
+                isDark ? "bg-gray-900/60" : "bg-white/60"
+              } backdrop-blur-xl border ${
+                isDark ? "border-gray-800" : "border-gray-200"
+              } shadow-sm`}
+            >
+              <div className="flex items-center gap-2 mr-2 sm:mr-4">
+                <i className="fa-solid fa-filter text-blue-500 text-sm"></i>
+                <span className={`font-medium text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                  Filter:
+                </span>
+              </div>
+              <FilterButton
+                active={filterMode === "all"}
+                onClick={() => setFilterMode("all")}
+                label="All"
+                count={questions.length}
+                gradient="from-purple-500 to-pink-600"
+                isDark={isDark}
+              />
+              <FilterButton
+                active={filterMode === "correct"}
+                onClick={() => setFilterMode("correct")}
+                label="Correct"
+                count={correctCount}
+                gradient="from-green-500 to-emerald-600"
+                isDark={isDark}
+              />
+              <FilterButton
+                active={filterMode === "wrong"}
+                onClick={() => setFilterMode("wrong")}
+                label="Wrong"
+                count={wrongCount}
+                gradient="from-red-500 to-pink-600"
+                isDark={isDark}
+              />
+              <FilterButton
+                active={filterMode === "unanswered"}
+                onClick={() => setFilterMode("unanswered")}
+                label="Unanswered"
+                count={unansweredCount}
+                gradient="from-orange-500 to-yellow-600"
+                isDark={isDark}
+              />
+            </div>
+          )}
+
+          {/* Questions Review */}
+          <div className="space-y-3 sm:space-y-6">
+            <AnimatePresence mode="popLayout">
+              {displayQuestions.map(({ question, index: originalIdx }, idx) => {
+                const userAnswer = userAnswers[originalIdx];
+                const correctAnswer = correctAnswers[originalIdx];
+                const isCorrect = userAnswer === correctAnswer && userAnswer !== null;
+                const isUnanswered = userAnswer === null || userAnswer === undefined;
+
+                return (
+                  <ReviewQuestionCard
+                    key={`${studyMode ? 'study' : 'normal'}-${originalIdx}`}
+                    question={question}
+                    questionNumber={originalIdx + 1}
+                    userAnswer={userAnswer}
+                    correctAnswer={correctAnswer}
+                    isCorrect={isCorrect}
+                    isUnanswered={isUnanswered}
+                    isDark={isDark}
+                    index={idx}
+                    attemptId={attemptId}
+                    questionIndex={originalIdx}
+                    initialBookmarked={bookmarkedQuestions.has(originalIdx)}
+                    theme={theme}
+                  />
+                );
+              })}
+            </AnimatePresence>
           </div>
-        )}
 
-        {/* Questions Review */}
-        <div className="space-y-6">
-          <AnimatePresence mode="popLayout">
-            {displayQuestions.map(({ question, index: originalIdx }, idx) => {
-              const userAnswer = userAnswers[originalIdx];
-              const correctAnswer = correctAnswers[originalIdx];
-              const isCorrect = userAnswer === correctAnswer && userAnswer !== null;
-              const isUnanswered = userAnswer === null || userAnswer === undefined;
-
-              return (
-                <ReviewQuestionCard
-                  key={`${studyMode ? 'study' : 'normal'}-${originalIdx}`}
-                  question={question}
-                  questionNumber={originalIdx + 1}
-                  userAnswer={userAnswer}
-                  correctAnswer={correctAnswer}
-                  isCorrect={isCorrect}
-                  isUnanswered={isUnanswered}
-                  isDark={isDark}
-                  index={idx}
-                  attemptId={attemptId}
-                  questionIndex={originalIdx}
-                  initialBookmarked={bookmarkedQuestions.has(originalIdx)}
-                  theme={theme}
-                />
-              );
-            })}
-          </AnimatePresence>
+          {displayQuestions.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-12"
+            >
+              <i className={`fa-solid fa-inbox text-5xl sm:text-6xl mb-4 ${isDark ? "text-gray-700" : "text-gray-300"}`}></i>
+              <p className={`text-base sm:text-lg ${isDark ? "text-gray-500" : "text-gray-600"}`}>
+                {studyMode ? "No wrong answers to study!" : "No questions match this filter"}
+              </p>
+            </motion.div>
+          )}
         </div>
-
-        {displayQuestions.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-12"
-          >
-            <i className={`fa-solid fa-inbox text-6xl mb-4 ${isDark ? "text-gray-700" : "text-gray-300"}`}></i>
-            <p className={`text-lg ${isDark ? "text-gray-500" : "text-gray-600"}`}>
-              {studyMode ? "No wrong answers to study!" : "No questions match this filter"}
-            </p>
-          </motion.div>
-        )}
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export function AlertMessage({ message, type = "success" }) {
         isSuccess 
           ? "bg-green-500/10 border-green-500 text-green-500" 
           : "bg-red-500/10 border-red-500 text-red-500"
-      } border px-4 py-3 rounded-xl`}
+      } border px-3 py-2 rounded-lg text-sm`}
     >
       {message}
     </motion.div>
