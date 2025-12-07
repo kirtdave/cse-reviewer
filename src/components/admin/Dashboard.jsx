@@ -93,7 +93,9 @@ const Dashboard = ({ palette }) => {
 
   const chartData = getChartData();
   const maxCount = Math.max(...chartData.map(d => d.count), 1);
-  const totalActivity = chartData.reduce((sum, d) => sum + d.count, 0);
+  
+  // ✅ FIX: Show total unique users, not sum of daily activity
+  const totalUniqueUsers = stats.totalUsers;
 
   const formatDate = (date) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -184,7 +186,7 @@ const Dashboard = ({ palette }) => {
               <p className="text-xs sm:text-sm" style={{ color: secondaryText }}>Last 7 days overview</p>
             </div>
             <div className="text-right">
-              <div className="text-lg sm:text-2xl font-bold" style={{ color: primaryGradientFrom }}>{totalActivity}</div>
+              <div className="text-lg sm:text-2xl font-bold" style={{ color: primaryGradientFrom }}>{stats.totalUsers}</div>
               <div className="text-xs hidden sm:block" style={{ color: secondaryText }}>Total Users</div>
             </div>
           </div>

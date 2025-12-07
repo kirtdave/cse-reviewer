@@ -1,4 +1,4 @@
-// QuestionBank/QuestionEditor.jsx
+// QuestionBank/QuestionEditor.jsx - FIXED CORRECT ANSWER MAPPING
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -32,18 +32,50 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
 
   useEffect(() => {
     if (question) {
-      const options = Array.isArray(question.options) 
-        ? question.options 
-        : typeof question.options === 'string'
-        ? JSON.parse(question.options)
-        : ["", "", "", ""];
+      // Parse options - ensure it's an array
+      let options = ["", "", "", ""];
+      if (Array.isArray(question.options)) {
+        options = question.options;
+      } else if (typeof question.options === 'string') {
+        try {
+          const parsed = JSON.parse(question.options);
+          options = Array.isArray(parsed) ? parsed : Object.values(parsed);
+        } catch (e) {
+          console.error('Failed to parse options:', e);
+        }
+      } else if (typeof question.options === 'object') {
+        options = Object.values(question.options);
+      }
 
-      const correctIndex = ['A', 'B', 'C', 'D'].indexOf(question.correctAnswer);
+      // ✅ FIX: Parse correctAnswer properly
+      // If it's a letter (A, B, C, D), convert to index (0, 1, 2, 3)
+      let correctIndex = 0;
+      if (typeof question.correctAnswer === 'string') {
+        const answerLetter = question.correctAnswer.trim().toUpperCase();
+        if (answerLetter === 'A') correctIndex = 0;
+        else if (answerLetter === 'B') correctIndex = 1;
+        else if (answerLetter === 'C') correctIndex = 2;
+        else if (answerLetter === 'D') correctIndex = 3;
+        else {
+          // Try to find by index in the letter
+          const letterIndex = ['A', 'B', 'C', 'D'].indexOf(answerLetter);
+          correctIndex = letterIndex >= 0 ? letterIndex : 0;
+        }
+      } else if (typeof question.correctAnswer === 'number') {
+        correctIndex = question.correctAnswer;
+      }
+
+      console.log('📝 Loading question:', {
+        questionId: question.id,
+        rawCorrectAnswer: question.correctAnswer,
+        parsedCorrectIndex: correctIndex,
+        options: options
+      });
 
       setFormData({
         questionText: question.questionText || "",
         options: options,
-        correctAnswer: correctIndex >= 0 ? correctIndex : 0,
+        correctAnswer: correctIndex,
         explanation: question.explanation || "",
         category: question.category || categories[0],
         difficulty: question.difficulty || "Normal",
@@ -111,20 +143,36 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
 
     setSaving(true);
     try {
+      // ✅ FIX: Always save as letter (A, B, C, D) not as index
+      const correctAnswerLetter = ['A', 'B', 'C', 'D'][formData.correctAnswer];
+      
       const submitData = {
         questionText: formData.questionText.trim(),
         options: formData.options.map(opt => opt.trim()),
-        correctAnswer: ['A', 'B', 'C', 'D'][formData.correctAnswer],
+        correctAnswer: correctAnswerLetter, // ✅ Save as letter
         explanation: formData.explanation.trim(),
         category: formData.category,
         difficulty: formData.difficulty,
         tags: formData.tags
       };
 
+      console.log('🔍 DEBUG - Before Save:', {
+        questionId: question?.id,
+        formDataCorrectAnswerIndex: formData.correctAnswer,
+        correctAnswerLetter: correctAnswerLetter,
+        optionsInOrder: submitData.options,
+        fullSubmitData: submitData
+      });
+
+      // Show alert to confirm what we're saving
+      console.log('📤 SENDING TO API:', JSON.stringify(submitData, null, 2));
+
       await onSave(submitData);
+      
+      console.log('✅ Save completed successfully');
       onClose();
     } catch (error) {
-      console.error('Error saving question:', error);
+      console.error('❌ Error saving question:', error);
       setErrors({ submit: error.message || 'Failed to save question' });
     } finally {
       setSaving(false);
@@ -136,14 +184,14 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6"
+          className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl md:rounded-2xl p-4 md:p-6"
           style={{ backgroundColor: cardBg }}
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
@@ -151,9 +199,9 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-4 sm:mb-5">
+          <div className="flex items-center justify-between mb-4 md:mb-5">
             <div>
-              <h3 className="text-base sm:text-xl font-bold" style={{ color: textColor }}>
+              <h3 className="text-base md:text-xl font-bold" style={{ color: textColor }}>
                 {question ? 'Edit Question' : 'Create Question'}
               </h3>
               <p className="text-xs mt-1" style={{ color: secondaryText }}>
@@ -162,7 +210,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
               style={{ backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
             >
               <i className="fas fa-times text-sm" style={{ color: textColor }}></i>
@@ -170,10 +218,10 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
           </div>
 
           {/* Form */}
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {/* Question Text */}
             <div>
-              <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
+              <label className="text-xs md:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
                 Question Text *
               </label>
               <textarea
@@ -181,7 +229,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
                 onChange={(e) => handleInputChange('questionText', e.target.value)}
                 placeholder="Enter your question..."
                 rows={3}
-                className="w-full px-3 py-2 sm:py-2.5 rounded-xl border outline-none text-xs sm:text-sm resize-none"
+                className="w-full px-3 py-2 md:py-2.5 rounded-xl border outline-none text-xs md:text-sm resize-none"
                 style={{
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                   borderColor: errors.questionText ? errorColor : borderColor,
@@ -198,7 +246,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
 
             {/* Options */}
             <div>
-              <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
+              <label className="text-xs md:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
                 Options * <span className="font-normal text-xs" style={{ color: secondaryText }}>(Tap circle for correct)</span>
               </label>
               <div className="space-y-2">
@@ -206,8 +254,12 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
                   <div key={index} className="flex items-start gap-2">
                     {/* Correct answer radio */}
                     <button
-                      onClick={() => handleInputChange('correctAnswer', index)}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1.5 sm:mt-2 transition-all ${
+                      type="button"
+                      onClick={() => {
+                        console.log(`✅ Marking option ${index} (${String.fromCharCode(65 + index)}) as correct`);
+                        handleInputChange('correctAnswer', index);
+                      }}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1.5 md:mt-2 transition-all ${
                         formData.correctAnswer === index ? 'scale-110' : ''
                       }`}
                       style={{
@@ -223,7 +275,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
                     {/* Option input */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold" style={{ color: textColor }}>
+                        <span className="text-xs md:text-sm font-bold" style={{ color: textColor }}>
                           {String.fromCharCode(65 + index)}.
                         </span>
                         <input
@@ -231,7 +283,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
                           value={option}
                           onChange={(e) => handleOptionChange(index, e.target.value)}
                           placeholder={`Option ${String.fromCharCode(65 + index)}`}
-                          className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border outline-none text-xs sm:text-sm"
+                          className="flex-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border outline-none text-xs md:text-sm"
                           style={{
                             backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                             borderColor: errors[`option${index}`] ? errorColor : borderColor,
@@ -250,9 +302,17 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
               </div>
             </div>
 
+            {/* Current Correct Answer Display */}
+            <div className="p-2 md:p-3 rounded-lg" style={{ backgroundColor: `${successColor}10`, border: `1px solid ${successColor}30` }}>
+              <p className="text-xs md:text-sm" style={{ color: textColor }}>
+                <i className="fas fa-check-circle mr-2" style={{ color: successColor }}></i>
+                <strong>Correct Answer:</strong> {String.fromCharCode(65 + formData.correctAnswer)} - {formData.options[formData.correctAnswer] || '(empty)'}
+              </p>
+            </div>
+
             {/* Explanation */}
             <div>
-              <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
+              <label className="text-xs md:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
                 Explanation *
               </label>
               <textarea
@@ -260,7 +320,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
                 onChange={(e) => handleInputChange('explanation', e.target.value)}
                 placeholder="Explain the correct answer..."
                 rows={2}
-                className="w-full px-3 py-2 sm:py-2.5 rounded-xl border outline-none text-xs sm:text-sm resize-none"
+                className="w-full px-3 py-2 md:py-2.5 rounded-xl border outline-none text-xs md:text-sm resize-none"
                 style={{
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                   borderColor: errors.explanation ? errorColor : borderColor,
@@ -276,15 +336,15 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
             </div>
 
             {/* Category & Difficulty */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
               <div>
-                <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
+                <label className="text-xs md:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
                   Category *
                 </label>
                 <select
                   value={formData.category}
                   onChange={(e) => handleInputChange('category', e.target.value)}
-                  className="w-full px-2 sm:px-3 py-2 rounded-xl border outline-none text-xs sm:text-sm"
+                  className="w-full px-2 md:px-3 py-2 rounded-xl border outline-none text-xs md:text-sm"
                   style={{
                     backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                     borderColor,
@@ -298,13 +358,13 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
+                <label className="text-xs md:text-sm font-semibold mb-1.5 block" style={{ color: textColor }}>
                   Difficulty *
                 </label>
                 <select
                   value={formData.difficulty}
                   onChange={(e) => handleInputChange('difficulty', e.target.value)}
-                  className="w-full px-2 sm:px-3 py-2 rounded-xl border outline-none text-xs sm:text-sm"
+                  className="w-full px-2 md:px-3 py-2 rounded-xl border outline-none text-xs md:text-sm"
                   style={{
                     backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                     borderColor,
@@ -321,23 +381,23 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
             {/* Submit Error */}
             {errors.submit && (
               <div
-                className="p-2.5 sm:p-3 rounded-xl flex items-start gap-2"
+                className="p-2.5 md:p-3 rounded-xl flex items-start gap-2"
                 style={{
                   backgroundColor: `${errorColor}10`,
                   border: `1px solid ${errorColor}30`,
                 }}
               >
                 <i className="fas fa-exclamation-triangle mt-0.5 flex-shrink-0" style={{ color: errorColor }}></i>
-                <p className="text-xs sm:text-sm" style={{ color: errorColor }}>{errors.submit}</p>
+                <p className="text-xs md:text-sm" style={{ color: errorColor }}>{errors.submit}</p>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-1">
+            <div className="grid grid-cols-2 gap-2 md:gap-3 pt-1">
               <button
                 onClick={onClose}
                 disabled={saving}
-                className="py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all hover:scale-105 disabled:opacity-50"
+                className="py-2 md:py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50"
                 style={{
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
                   color: textColor,
@@ -348,7 +408,7 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="py-2 sm:py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all hover:scale-105 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="py-2 md:py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all hover:scale-105 disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{
                   background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
                   color: "#fff",
@@ -357,13 +417,12 @@ export default function QuestionEditor({ show, question, onClose, onSave, palett
                 {saving ? (
                   <>
                     <i className="fas fa-spinner fa-spin"></i>
-                    <span className="hidden sm:inline">Saving...</span>
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
                     <i className="fas fa-save"></i>
-                    <span className="hidden sm:inline">{question ? 'Update' : 'Create'}</span>
-                    <span className="sm:hidden">{question ? 'Update' : 'Create'}</span>
+                    <span>{question ? 'Update' : 'Create'}</span>
                   </>
                 )}
               </button>

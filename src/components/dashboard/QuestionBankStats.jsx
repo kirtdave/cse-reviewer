@@ -13,6 +13,17 @@ export default function QuestionBankStats({ theme = "light" }) {
 
   useEffect(() => {
     const fetchStats = async () => {
+      // ✅ CHECK: Don't fetch if user is not logged in
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      
+      if (!isLoggedIn) {
+        console.log('👤 Guest user - skipping stats fetch');
+        setStats({ mastered: 0, learning: 0, needsReview: 0, total: 0, totalAvailable: 0 });
+        setBookmarkedCount(0);
+        setLoading(false);
+        return;
+      }
+
       try {
         const [userStats, bookmarks] = await Promise.all([
           getUserQuestionStats(),

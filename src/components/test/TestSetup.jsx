@@ -255,17 +255,28 @@ const Testsetup = ({ theme = "dark" }) => {
     "Philippine Constitution": { checked: false, difficulty: "Easy" },
   });
 
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      try {
-        const data = await getAnalyticsData();
-        setAnalyticsData(data);
-      } catch (err) {
-        console.error("Failed to load analytics data:", err);
-      }
-    };
-    loadAnalytics();
-  }, []);
+
+useEffect(() => {
+  const loadAnalytics = async () => {
+    // ✅ CHECK: Don't fetch analytics if user is not logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+      console.log('👤 Guest user - skipping analytics load');
+      setAnalyticsData(null);
+      return;
+    }
+
+    try {
+      const data = await getAnalyticsData();
+      setAnalyticsData(data);
+    } catch (err) {
+      console.error("Failed to load analytics data:", err);
+      setAnalyticsData(null); // Set to null instead of leaving undefined
+    }
+  };
+  loadAnalytics();
+}, []);
   
   const generateQuestionsAndNavigate = async (categoriesToGenerate, type, isGeneratingStateSetter) => {
     if (categoriesToGenerate.length === 0) {

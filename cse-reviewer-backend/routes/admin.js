@@ -1,4 +1,4 @@
-// routes/admin.js
+// routes/admin.js - FIXED CORRECT ANSWER BUG
 const express = require('express');
 const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth');
@@ -114,7 +114,7 @@ router.get('/stats', async (req, res) => {
       },
       attributes: [
         [sequelize.fn('DATE', sequelize.col('Activity.createdAt')), 'date'],
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('userId'))), 'count'] // ✅ Count unique users
+        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('userId'))), 'count']
       ],
       group: [sequelize.fn('DATE', sequelize.col('Activity.createdAt'))],
       order: [[sequelize.fn('DATE', sequelize.col('Activity.createdAt')), 'ASC']],
@@ -139,60 +139,54 @@ router.get('/stats', async (req, res) => {
 
     console.log('📊 Daily Activity Processed (Unique Users per Day):', dailyActivity);
 
-// ==================== RECENT ACTIVITY ====================
+    // ==================== RECENT ACTIVITY ====================
 
-// Fetch recent activities with smart deduplication
-const recentActivitiesRaw = await Activity.findAll({
-  limit: 50, // Fetch more to filter duplicates
-  order: [['createdAt', 'DESC']],
-  include: [{
-    model: User,
-    as: 'user',
-    attributes: ['name', 'email', 'avatar', 'role'],
-    where: { role: 'user' },
-    required: true
-  }]
-});
+    const recentActivitiesRaw = await Activity.findAll({
+      limit: 50,
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['name', 'email', 'avatar', 'role'],
+        where: { role: 'user' },
+        required: true
+      }]
+    });
 
-// Smart deduplication with priority for diverse activities
-const seenActivities = new Map();
-const deduplicatedActivities = [];
+    const seenActivities = new Map();
+    const deduplicatedActivities = [];
 
-// Priority order: More interesting activities first
-const activityPriority = {
-  'user_register': 1,
-  'achievement_earned': 2,
-  'test_completed': 3,
-  'question_generated': 4,
-  'test_started': 5,
-  'user_login': 6, // Login is least interesting
-};
+    const activityPriority = {
+      'user_register': 1,
+      'achievement_earned': 2,
+      'test_completed': 3,
+      'question_generated': 4,
+      'test_started': 5,
+      'user_login': 6,
+    };
 
-for (const activity of recentActivitiesRaw) {
-  // For login activities: Only show most recent per user
-  if (activity.type === 'user_login') {
-    const key = `${activity.userId}-user_login`;
-    if (!seenActivities.has(key)) {
-      seenActivities.set(key, true);
-      deduplicatedActivities.push(activity);
+    for (const activity of recentActivitiesRaw) {
+      if (activity.type === 'user_login') {
+        const key = `${activity.userId}-user_login`;
+        if (!seenActivities.has(key)) {
+          seenActivities.set(key, true);
+          deduplicatedActivities.push(activity);
+        }
+      } else {
+        deduplicatedActivities.push(activity);
+      }
+      
+      if (deduplicatedActivities.length >= 10) break;
     }
-  } else {
-    // For other activities: Show all, they're more interesting
-    deduplicatedActivities.push(activity);
-  }
-  
-  // Stop once we have 10 activities
-  if (deduplicatedActivities.length >= 10) break;
-}
 
-const recentActivity = deduplicatedActivities.map(activity => ({
-  user: activity.user?.name || 'Unknown User',
-  action: activity.action,
-  icon: getActivityIcon(activity.type),
-  color: getActivityColor(activity.type),
-  time: getTimeAgo(activity.createdAt),
-  timestamp: new Date(activity.createdAt).getTime()
-}));
+    const recentActivity = deduplicatedActivities.map(activity => ({
+      user: activity.user?.name || 'Unknown User',
+      action: activity.action,
+      icon: getActivityIcon(activity.type),
+      color: getActivityColor(activity.type),
+      time: getTimeAgo(activity.createdAt),
+      timestamp: new Date(activity.createdAt).getTime()
+    }));
 
     // ==================== RESPONSE ====================
     
@@ -396,7 +390,7 @@ router.get('/users/:id', async (req, res) => {
   }
 });
 
-// ... (rest of the routes remain the same - questions, reports, messages, notifications)
+// ==================== QUESTIONS ====================
 
 router.get('/questions', async (req, res) => {
   try {
@@ -447,9 +441,9 @@ router.get('/questions', async (req, res) => {
 
 router.post('/questions', async (req, res) => {
   try {
-    const { question, options, correctAnswer, category, difficulty, explanation } = req.body;
+    const { questionText, options, correctAnswer, category, difficulty, explanation } = req.body;
 
-    if (!question || !options || !correctAnswer || !category || !difficulty || !explanation) {
+    if (!questionText || !options || !correctAnswer || !category || !difficulty || !explanation) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -458,9 +452,9 @@ router.post('/questions', async (req, res) => {
     }
 
     const newQuestion = await Question.create({
-      questionText: question,
+      questionText,
       options,
-      correctAnswer: ['A', 'B', 'C', 'D'][correctAnswer],
+      correctAnswer,
       category,
       difficulty,
       explanation,
@@ -485,15 +479,27 @@ router.put('/questions/:id', async (req, res) => {
       return res.status(404).json({ message: 'Question not found' });
     }
 
-    const { question: questionText, options, correctAnswer, category, difficulty, explanation } = req.body;
+    const { questionText, options, correctAnswer, category, difficulty, explanation } = req.body;
 
+    console.log('🔄 Updating question:', {
+      id: req.params.id,
+      receivedCorrectAnswer: correctAnswer,
+      receivedOptions: options
+    });
+
+    // ✅ FIXED: Don't convert correctAnswer - it's already a letter (A/B/C/D)
     await question.update({
       questionText,
       options,
-      correctAnswer: ['A', 'B', 'C', 'D'][correctAnswer],
+      correctAnswer, // ✅ Use as-is, already correct format
       category,
       difficulty,
       explanation
+    });
+
+    console.log('✅ Question updated successfully:', {
+      id: question.id,
+      correctAnswer: question.correctAnswer
     });
 
     res.json({ 
@@ -522,6 +528,8 @@ router.delete('/questions/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting question', error: error.message });
   }
 });
+
+// ==================== REPORTS ====================
 
 router.get('/reports', async (req, res) => {
   try {
@@ -583,7 +591,7 @@ router.put('/reports/:id', async (req, res) => {
   try {
     const report = await QuestionReport.findByPk(req.params.id);
 
-    if (!question) {
+    if (!report) {
       return res.status(404).json({ message: 'Report not found' });
     }
 
@@ -619,6 +627,8 @@ router.delete('/reports/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting report:', error: error.message });
   }
 });
+
+// ==================== MESSAGES ====================
 
 router.get('/messages', async (req, res) => {
   try {
@@ -729,6 +739,8 @@ router.post('/messages/:id/reply', async (req, res) => {
   }
 });
 
+// ==================== NOTIFICATIONS ====================
+
 router.get('/notifications', async (req, res) => {
   try {
     const { status = 'All', type = 'All' } = req.query;
@@ -832,6 +844,8 @@ router.post('/notifications/:id/publish', async (req, res) => {
     res.status(500).json({ message: 'Error publishing notification', error: error.message });
   }
 });
+
+// ==================== HELPER FUNCTIONS ====================
 
 function isUserActive(lastActive) {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

@@ -1,4 +1,4 @@
-// UserMonitoringPage.jsx - Mobile Responsive Version
+// UserMonitoringPage.jsx - WITH AUTO-REFRESH & MOBILE-RESPONSIVE
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { getUsers, getUserById } from "../../services/adminApi";
@@ -12,14 +12,27 @@ export default function UserMonitoringPage({ palette }) {
   const [filterStatus, setFilterStatus] = useState("All");
   const [selectedUser, setSelectedUser] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
+  // Initial fetch and when dependencies change
   useEffect(() => {
     fetchUsers();
   }, [pagination.page, filterStatus, searchTerm]);
 
-  const fetchUsers = async () => {
+  // ✅ AUTO-REFRESH: Poll every 30 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsers(true); // Pass true for silent refresh
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [pagination.page, filterStatus, searchTerm]);
+
+  const fetchUsers = async (silentRefresh = false) => {
     try {
-      setLoading(true);
+      if (!silentRefresh) setLoading(true);
+      
       const data = await getUsers({
         page: pagination.page,
         limit: pagination.limit,
@@ -32,7 +45,7 @@ export default function UserMonitoringPage({ palette }) {
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
-      setLoading(false);
+      if (!silentRefresh) setLoading(false);
     }
   };
 
@@ -44,6 +57,11 @@ export default function UserMonitoringPage({ palette }) {
       console.error('Error fetching user details:', error);
       setSelectedUser(user);
     }
+  };
+
+  const handleManualRefresh = () => {
+    fetchUsers();
+    setLastRefresh(new Date());
   };
 
   const getStatusColor = (status) => {
@@ -79,9 +97,9 @@ export default function UserMonitoringPage({ palette }) {
     : 0;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-0">
       {/* Header Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {[
           { label: "Total Users", value: pagination.total.toString(), icon: "fa-users", color: primaryGradientFrom },
           { label: "Active Users", value: activeUsers.toString(), icon: "fa-user-check", color: successColor },
@@ -93,37 +111,37 @@ export default function UserMonitoringPage({ palette }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-4 sm:p-6 rounded-2xl"
+            className="p-3 md:p-4 lg:p-6 rounded-xl md:rounded-2xl"
             style={{
               backgroundColor: cardBg,
               border: `1px solid ${borderColor}`,
             }}
           >
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center justify-between mb-2 md:mb-3">
               <div
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                className="w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-lg md:rounded-xl flex items-center justify-center"
                 style={{ backgroundColor: `${stat.color}20` }}
               >
-                <i className={`fas ${stat.icon} text-lg sm:text-xl`} style={{ color: stat.color }}></i>
+                <i className={`fas ${stat.icon} text-base md:text-lg lg:text-xl`} style={{ color: stat.color }}></i>
               </div>
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: textColor }}>{stat.value}</h3>
-            <p className="text-xs sm:text-sm truncate" style={{ color: secondaryText }}>{stat.label}</p>
+            <h3 className="text-lg md:text-xl lg:text-2xl font-bold mb-1" style={{ color: textColor }}>{stat.value}</h3>
+            <p className="text-xs md:text-sm truncate" style={{ color: secondaryText }}>{stat.label}</p>
           </motion.div>
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Filters with Refresh Button */}
       <div
-        className="p-4 sm:p-6 rounded-2xl"
+        className="p-4 md:p-6 rounded-xl md:rounded-2xl"
         style={{
           backgroundColor: cardBg,
           border: `1px solid ${borderColor}`,
         }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           <div>
-            <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Search Users</label>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Search Users</label>
             <input
               type="text"
               placeholder="Search by name or email..."
@@ -132,7 +150,7 @@ export default function UserMonitoringPage({ palette }) {
                 setSearchTerm(e.target.value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none text-sm"
+              className="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-xl border outline-none text-sm"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                 borderColor,
@@ -141,14 +159,14 @@ export default function UserMonitoringPage({ palette }) {
             />
           </div>
           <div>
-            <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Status</label>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Status</label>
             <select
               value={filterStatus}
               onChange={(e) => {
                 setFilterStatus(e.target.value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none text-sm"
+              className="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-xl border outline-none text-sm"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                 borderColor,
@@ -160,13 +178,40 @@ export default function UserMonitoringPage({ palette }) {
               <option value="Inactive">Inactive</option>
             </select>
           </div>
+          
+          {/* ✅ Manual Refresh Button */}
+          <div>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+              <span className="hidden md:inline">Last Updated: {lastRefresh.toLocaleTimeString()}</span>
+              <span className="md:hidden">Last Updated</span>
+            </label>
+            <button
+              onClick={handleManualRefresh}
+              disabled={loading}
+              className="w-full px-3 md:px-4 py-2 md:py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{
+                backgroundColor: `${primaryGradientFrom}20`,
+                color: primaryGradientFrom,
+                border: `1px solid ${primaryGradientFrom}40`
+              }}
+            >
+              <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+              <span>Refresh Now</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Auto-refresh indicator */}
+        <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: secondaryText }}>
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: successColor }}></span>
+          <span>Auto-refreshing every 30 seconds</span>
         </div>
       </div>
 
       {/* Users Table - Mobile Cards / Desktop Table */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <i className="fas fa-spinner fa-spin text-2xl sm:text-3xl" style={{ color: primaryGradientFrom }}></i>
+          <i className="fas fa-spinner fa-spin text-2xl md:text-3xl" style={{ color: primaryGradientFrom }}></i>
         </div>
       ) : (
         <>
@@ -179,7 +224,7 @@ export default function UserMonitoringPage({ palette }) {
                   key={user.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-2xl"
+                  className="p-4 rounded-xl md:rounded-2xl"
                   style={{
                     backgroundColor: cardBg,
                     border: `1px solid ${borderColor}`,
@@ -198,7 +243,7 @@ export default function UserMonitoringPage({ palette }) {
                       />
                       {lastActiveInfo.dot && (
                         <span 
-                          className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
+                          className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 animate-pulse"
                           style={{ 
                             backgroundColor: successColor,
                             borderColor: cardBg
@@ -209,7 +254,7 @@ export default function UserMonitoringPage({ palette }) {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate" style={{ color: textColor }}>{user.name}</p>
                       <p className="text-xs truncate" style={{ color: secondaryText }}>{user.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span
                           className="px-2 py-0.5 rounded-full text-xs font-semibold"
                           style={{
@@ -240,12 +285,15 @@ export default function UserMonitoringPage({ palette }) {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <p className="text-xs" style={{ color: lastActiveInfo.color }}>
-                      {lastActiveInfo.text}
-                    </p>
+                    {/* ✅ FIXED: Only show last active time, not redundant "Online" text */}
+                    {!lastActiveInfo.dot && (
+                      <p className="text-xs" style={{ color: lastActiveInfo.color }}>
+                        {lastActiveInfo.text}
+                      </p>
+                    )}
                     <button
                       onClick={() => handleViewUser(user)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold ml-auto"
                       style={{
                         backgroundColor: `${primaryGradientFrom}20`,
                         color: primaryGradientFrom,
@@ -298,7 +346,7 @@ export default function UserMonitoringPage({ palette }) {
                               />
                               {lastActiveInfo.dot && (
                                 <span 
-                                  className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
+                                  className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 animate-pulse"
                                   style={{ 
                                     backgroundColor: successColor,
                                     borderColor: cardBg
@@ -438,36 +486,36 @@ export default function UserMonitoringPage({ palette }) {
       {/* User Details Modal */}
       {selectedUser && (
         <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => setSelectedUser(null)}
         >
           <motion.div
-            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6"
+            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl md:rounded-2xl p-4 md:p-6"
             style={{ backgroundColor: cardBg }}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h3 className="text-lg sm:text-2xl font-bold" style={{ color: textColor }}>User Details & API Usage</h3>
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold" style={{ color: textColor }}>User Details & API Usage</h3>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
               >
                 <i className="fas fa-times" style={{ color: textColor }}></i>
               </button>
             </div>
 
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-center gap-3 sm:gap-4">
+            <div className="space-y-4 md:space-y-6">
+              <div className="flex items-center gap-3 md:gap-4">
                 <div className="relative">
                   <img 
                     src={selectedUser.avatar || 'https://i.pravatar.cc/200?img=1'} 
                     alt={selectedUser.name}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-blue-500/20"
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-4 border-blue-500/20"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = 'https://i.pravatar.cc/200?img=1';
@@ -484,11 +532,11 @@ export default function UserMonitoringPage({ palette }) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-lg sm:text-xl font-bold truncate" style={{ color: textColor }}>{selectedUser.name}</h4>
+                  <h4 className="text-lg md:text-xl font-bold truncate" style={{ color: textColor }}>{selectedUser.name}</h4>
                   <p className="text-sm truncate" style={{ color: secondaryText }}>{selectedUser.email}</p>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <span
-                      className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold"
+                      className="inline-block px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs font-semibold"
                       style={{
                         backgroundColor: `${getStatusColor(selectedUser.status)}20`,
                         color: getStatusColor(selectedUser.status),
@@ -504,31 +552,31 @@ export default function UserMonitoringPage({ palette }) {
               </div>
 
               <div>
-                <h4 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2" style={{ color: textColor }}>
+                <h4 className="text-base md:text-lg font-bold mb-3 flex items-center gap-2" style={{ color: textColor }}>
                   <i className="fas fa-brain" style={{ color: primaryGradientFrom }}></i>
                   AI API Usage Statistics
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   <div
-                    className="p-3 sm:p-4 rounded-xl"
+                    className="p-3 md:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
                     <p className="text-xs mb-1" style={{ color: secondaryText }}>Total AI Requests</p>
-                    <p className="text-lg sm:text-2xl font-bold" style={{ color: primaryGradientFrom }}>{selectedUser.aiRequests || 0}</p>
+                    <p className="text-lg md:text-2xl font-bold" style={{ color: primaryGradientFrom }}>{selectedUser.aiRequests || 0}</p>
                   </div>
                   <div
-                    className="p-3 sm:p-4 rounded-xl"
+                    className="p-3 md:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
                     <p className="text-xs mb-1" style={{ color: secondaryText }}>Questions Generated</p>
-                    <p className="text-lg sm:text-2xl font-bold" style={{ color: primaryGradientTo }}>{selectedUser.questionsGenerated || 0}</p>
+                    <p className="text-lg md:text-2xl font-bold" style={{ color: primaryGradientTo }}>{selectedUser.questionsGenerated || 0}</p>
                   </div>
                   <div
-                    className="p-3 sm:p-4 rounded-xl"
+                    className="p-3 md:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
                     <p className="text-xs mb-1" style={{ color: secondaryText }}>Success Rate</p>
-                    <p className="text-lg sm:text-2xl font-bold" style={{ color: getApiRateColor(selectedUser.apiSuccessRate || 0) }}>
+                    <p className="text-lg md:text-2xl font-bold" style={{ color: getApiRateColor(selectedUser.apiSuccessRate || 0) }}>
                       {selectedUser.apiSuccessRate || 0}%
                     </p>
                   </div>
@@ -536,29 +584,29 @@ export default function UserMonitoringPage({ palette }) {
               </div>
 
               <div>
-                <h4 className="text-base sm:text-lg font-bold mb-3 flex items-center gap-2" style={{ color: textColor }}>
+                <h4 className="text-base md:text-lg font-bold mb-3 flex items-center gap-2" style={{ color: textColor }}>
                   <i className="fas fa-chart-line" style={{ color: successColor }}></i>
                   Performance Metrics
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   <div
-                    className="p-3 sm:p-4 rounded-xl"
+                    className="p-3 md:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
                     <p className="text-xs mb-1" style={{ color: secondaryText }}>Tests Completed</p>
-                    <p className="text-lg sm:text-2xl font-bold" style={{ color: textColor }}>{selectedUser.testsCompleted || 0}</p>
+                    <p className="text-lg md:text-2xl font-bold" style={{ color: textColor }}>{selectedUser.testsCompleted || 0}</p>
                   </div>
                   <div
-                    className="p-3 sm:p-4 rounded-xl"
+                    className="p-3 md:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
                     <p className="text-xs mb-1" style={{ color: secondaryText }}>Average Score</p>
-                    <p className="text-lg sm:text-2xl font-bold" style={{ color: getScoreColor(selectedUser.avgScore || 0) }}>
+                    <p className="text-lg md:text-2xl font-bold" style={{ color: getScoreColor(selectedUser.avgScore || 0) }}>
                       {selectedUser.avgScore || 0}%
                     </p>
                   </div>
                   <div
-                    className="p-3 sm:p-4 rounded-xl"
+                    className="p-3 md:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
                     <p className="text-xs mb-1" style={{ color: secondaryText }}>Member Since</p>

@@ -26,12 +26,25 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
 
   const loadBookmarks = async () => {
     try {
+      // ✅ CHECK: Don't fetch if user is not logged in
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      
+      if (!isLoggedIn) {
+        console.log('👤 Guest user - skipping bookmarks fetch');
+        setBookmarks([]);
+        setFilteredBookmarks([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       const data = await getAllBookmarks();
       setBookmarks(data);
       setFilteredBookmarks(data);
     } catch (error) {
       console.error('Failed to load bookmarks:', error);
+      setBookmarks([]);
+      setFilteredBookmarks([]);
     } finally {
       setLoading(false);
     }

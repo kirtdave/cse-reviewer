@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { getContactStats } from "../../services/adminApi";
 
-const CircularRing = ({ pct, size = 80, stroke = 8, gradient }) => {
+const CircularRing = ({ pct, size = 80, stroke = 8, color = "#8B5CF6" }) => {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = (pct / 100) * c;
 
   return (
-    <div className="relative">
+    <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
+        {/* Background circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -17,13 +18,14 @@ const CircularRing = ({ pct, size = 80, stroke = 8, gradient }) => {
           stroke="currentColor"
           strokeWidth={stroke}
           fill="none"
-          className="text-gray-700/30"
+          className="text-gray-700/20"
         />
+        {/* Progress circle */}
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="url(#gradient)"
+          stroke={color}
           strokeWidth={stroke}
           strokeDasharray={`${dash} ${c - dash}`}
           strokeLinecap="round"
@@ -32,15 +34,9 @@ const CircularRing = ({ pct, size = 80, stroke = 8, gradient }) => {
           animate={{ strokeDasharray: `${dash} ${c - dash}` }}
           transition={{ duration: 1.5, ease: "easeOut" }}
         />
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#3B82F6" />
-            <stop offset="100%" stopColor="#8B5CF6" />
-          </linearGradient>
-        </defs>
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs sm:text-base lg:text-xl font-bold">{pct}%</span>
+        <span className="text-xs sm:text-sm lg:text-xl font-bold">{pct}%</span>
       </div>
     </div>
   );
@@ -50,7 +46,7 @@ export default function ContactInfo({ theme = "dark" }) {
   const isDark = theme === "dark";
   const [stats, setStats] = useState({
     messagesReceivedPct: 100,
-    activeInquiriesPct: 0,
+    activeInquiriesPct: 100,
     avgResponseTimePct: 0
   });
   const [loading, setLoading] = useState(true);
@@ -79,19 +75,22 @@ export default function ContactInfo({ theme = "dark" }) {
       title: "Messages Received", 
       pct: stats.messagesReceivedPct, 
       icon: "fa-envelope", 
-      gradient: "from-blue-500 to-cyan-500" 
+      gradient: "from-blue-500 to-cyan-500",
+      color: "#3B82F6" // Blue
     },
     { 
       title: "Active Inquiries", 
       pct: stats.activeInquiriesPct, 
       icon: "fa-ticket", 
-      gradient: "from-orange-500 to-red-500" 
+      gradient: "from-orange-500 to-red-500",
+      color: "#F97316" // Orange
     },
     { 
       title: "Avg Response Time", 
       pct: stats.avgResponseTimePct, 
       icon: "fa-clock", 
-      gradient: "from-purple-500 to-pink-500" 
+      gradient: "from-purple-500 to-pink-500",
+      color: "#A855F7" // Purple
     },
   ];
 
@@ -158,11 +157,15 @@ export default function ContactInfo({ theme = "dark" }) {
             <h4 className={`text-[10px] sm:text-xs lg:text-sm font-semibold mb-1.5 sm:mb-2 lg:mb-3 ${isDark ? "text-gray-300" : "text-gray-700"} leading-tight`}>
               {metric.title}
             </h4>
+            
+            {/* Mobile Ring */}
             <div className="block lg:hidden">
-              <CircularRing pct={metric.pct} size={45} stroke={5} gradient={metric.gradient} />
+              <CircularRing pct={metric.pct} size={45} stroke={5} color={metric.color} />
             </div>
+            
+            {/* Desktop Ring */}
             <div className="hidden lg:block">
-              <CircularRing pct={metric.pct} size={80} stroke={8} gradient={metric.gradient} />
+              <CircularRing pct={metric.pct} size={80} stroke={8} color={metric.color} />
             </div>
           </motion.div>
         ))}

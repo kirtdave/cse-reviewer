@@ -14,6 +14,14 @@ const getAuthHeader = () => {
  */
 export const getAnalyticsData = async () => {
   try {
+    // ✅ CHECK: Don't fetch if user is not logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+      console.log('👤 Guest user - returning empty analytics');
+      return getEmptyAnalyticsData();
+    }
+
     console.log('📊 Fetching analytics data for MOCK EXAMS only...');
 
     const filterParams = { isMockExam: true };
@@ -28,14 +36,17 @@ export const getAnalyticsData = async () => {
 
     const timeMetrics = calculateTimeMetrics(recentAttempts.data.attempts);
 
+    // ✅ Safely process section stats with fallback to empty array
+    const sectionData = Array.isArray(sectionStats.data) ? sectionStats.data : [];
+
     // ✅ Process all 7 sections (used in Strengths & Weaknesses)
     const sections = {
-      verbal: sectionStats.data.find(s => s.category === 'Verbal Ability')?.averageScore || 0,
-      numerical: sectionStats.data.find(s => s.category === 'Numerical Ability')?.averageScore || 0,
-      analytical: sectionStats.data.find(s => s.category === 'Analytical Ability')?.averageScore || 0,
-      generalInfo: sectionStats.data.find(s => s.category === 'General Knowledge')?.averageScore || 0,
-      clerical: sectionStats.data.find(s => s.category === 'Clerical Ability')?.averageScore || 0,
-      constitution: sectionStats.data.find(s => s.category === 'Philippine Constitution')?.averageScore || 0
+      verbal: sectionData.find(s => s.category === 'Verbal Ability')?.averageScore || 0,
+      numerical: sectionData.find(s => s.category === 'Numerical Ability')?.averageScore || 0,
+      analytical: sectionData.find(s => s.category === 'Analytical Ability')?.averageScore || 0,
+      generalInfo: sectionData.find(s => s.category === 'General Knowledge')?.averageScore || 0,
+      clerical: sectionData.find(s => s.category === 'Clerical Ability')?.averageScore || 0,
+      constitution: sectionData.find(s => s.category === 'Philippine Constitution')?.averageScore || 0
     };
 
     const analyticsData = {
@@ -65,36 +76,71 @@ export const getAnalyticsData = async () => {
       })),
       
       // Recent Attempts
-  recentAttempts: recentAttempts.data.attempts.map(attempt => ({
-    id: attempt.id,
-    title: attempt.name,
-    score: attempt.score,
-    result: attempt.result,
-    date: new Date(attempt.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    accuracy: `${attempt.details.totalQuestions > 0 ? Math.round((attempt.details.correctQuestions / attempt.details.totalQuestions) * 100) : 0}%`,
-    time: attempt.details.timeSpent,
-    details: attempt.details
-  })),
+      recentAttempts: recentAttempts.data.attempts.map(attempt => ({
+        id: attempt.id,
+        title: attempt.name,
+        score: attempt.score,
+        result: attempt.result,
+        date: new Date(attempt.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        accuracy: `${attempt.details.totalQuestions > 0 ? Math.round((attempt.details.correctQuestions / attempt.details.totalQuestions) * 100) : 0}%`,
+        time: attempt.details.timeSpent,
+        details: attempt.details
+      })),
 
-  // ✅ ADD THESE THREE ARRAYS
-  recentFlashcardSessions: [],
-  recentPractice: [],
-  
-  // ✅ ADD THIS TOO - for category breakdown
-  questionTypes: {
-    multipleChoice: 0,
-    essay: 0,
-    situational: 0
-  }
-};
+      // ✅ ADD THESE THREE ARRAYS
+      recentFlashcardSessions: [],
+      recentPractice: [],
+      
+      // ✅ ADD THIS TOO - for category breakdown
+      questionTypes: {
+        multipleChoice: 0,
+        essay: 0,
+        situational: 0
+      }
+    };
 
     console.log('✅ Mock-exam-only analytics data loaded:', analyticsData);
     return analyticsData;
 
   } catch (error) {
     console.error('❌ Error fetching analytics:', error);
-    throw error;
+    return getEmptyAnalyticsData();
   }
+};
+
+/**
+ * ✅ Return empty analytics data for guest users
+ */
+const getEmptyAnalyticsData = () => {
+  return {
+    accuracy: 0,
+    avgScore: 0,
+    totalExams: 0,
+    totalPassed: 0,
+    totalFailed: 0,
+    timeMetrics: {
+      avgTimePerQuestion: 0,
+      consistency: 0,
+      speedScore: 0
+    },
+    sections: {
+      verbal: 0,
+      numerical: 0,
+      analytical: 0,
+      generalInfo: 0,
+      clerical: 0,
+      constitution: 0
+    },
+    trend: [],
+    recentAttempts: [],
+    recentFlashcardSessions: [],
+    recentPractice: [],
+    questionTypes: {
+      multipleChoice: 0,
+      essay: 0,
+      situational: 0
+    }
+  };
 };
 
 /**

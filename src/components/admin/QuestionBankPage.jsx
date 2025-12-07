@@ -1,7 +1,7 @@
-// QuestionBankPage.jsx - Main Component
+// QuestionBankPage.jsx - COMPLETELY FIXED
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { getQuestions, deleteQuestion } from "../../services/adminApi";
+import { getQuestions, deleteQuestion, updateQuestion, createQuestion } from "../../services/adminApi";
 import QuestionFilters from "./QuestionBank/QuestionFilters";
 import QuestionStats from "./QuestionBank/QuestionStats";
 import QuestionList from "./QuestionBank/QuestionList";
@@ -11,7 +11,6 @@ import QuestionEditor from "./QuestionBank/QuestionEditor";
 export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
 
-  // States
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -20,7 +19,6 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [viewMode, setViewMode] = useState('list');
   
-  // Filter states
   const [filters, setFilters] = useState({
     search: "",
     category: "All",
@@ -35,7 +33,6 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
     pages: 0 
   });
 
-  // Fetch questions
   useEffect(() => {
     fetchQuestions();
   }, [pagination.page, filters]);
@@ -61,7 +58,6 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
     }
   };
 
-  // Handlers
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -103,7 +99,6 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
     }
   };
 
-  // Calculate stats
   const stats = {
     total: pagination.total,
     byCategory: questions.reduce((acc, q) => {
@@ -117,21 +112,20 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: textColor }}>
+          <h2 className="text-xl md:text-2xl font-bold mb-1" style={{ color: textColor }}>
             Question Bank Management
           </h2>
-          <p className="text-sm" style={{ color: secondaryText }}>
+          <p className="text-xs md:text-sm" style={{ color: secondaryText }}>
             {pagination.total} total • {selectedQuestions.length} selected
           </p>
         </div>
-        <div className="flex gap-2 sm:gap-3 w-full md:w-auto">
+        <div className="flex gap-2 md:gap-3 w-full md:w-auto">
           <button
             onClick={() => setShowDuplicates(true)}
-            className="flex-1 md:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm"
+            className="flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-xs md:text-sm"
             style={{
               backgroundColor: `${warningColor}20`,
               color: warningColor,
@@ -144,13 +138,8 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
         </div>
       </div>
 
-      {/* Stats */}
-      <QuestionStats 
-        stats={stats} 
-        palette={palette} 
-      />
+      <QuestionStats stats={stats} palette={palette} />
 
-      {/* Filters & Actions */}
       <QuestionFilters
         filters={filters}
         onFilterChange={handleFilterChange}
@@ -163,7 +152,6 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
         palette={palette}
       />
 
-      {/* Question List */}
       <QuestionList
         questions={questions}
         loading={loading}
@@ -179,22 +167,21 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
         palette={palette}
       />
 
-      {/* Pagination */}
       {pagination.pages > 1 && (
         <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
             disabled={pagination.page === 1}
-            className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-50 transition-all"
+            className="px-3 md:px-4 py-2 rounded-lg font-semibold text-xs md:text-sm disabled:opacity-50 transition-all"
             style={{
               backgroundColor: `${primaryGradientFrom}20`,
               color: primaryGradientFrom
             }}
           >
-            <i className="fas fa-chevron-left sm:mr-2"></i>
-            <span className="hidden sm:inline">Previous</span>
+            <i className="fas fa-chevron-left md:mr-2"></i>
+            <span className="hidden md:inline">Previous</span>
           </button>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
               let pageNum;
               if (pagination.pages <= 5) {
@@ -211,7 +198,7 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
                 <button
                   key={pageNum}
                   onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-semibold text-sm transition-all"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-lg font-semibold text-xs md:text-sm transition-all"
                   style={{
                     backgroundColor: pagination.page === pageNum 
                       ? primaryGradientFrom 
@@ -227,14 +214,14 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
           <button
             onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
             disabled={pagination.page === pagination.pages}
-            className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-50 transition-all"
+            className="px-3 md:px-4 py-2 rounded-lg font-semibold text-xs md:text-sm disabled:opacity-50 transition-all"
             style={{
               backgroundColor: `${primaryGradientFrom}20`,
               color: primaryGradientFrom
             }}
           >
-            <span className="hidden sm:inline">Next</span>
-            <i className="fas fa-chevron-right sm:ml-2"></i>
+            <span className="hidden md:inline">Next</span>
+            <i className="fas fa-chevron-right md:ml-2"></i>
           </button>
         </div>
       )}
@@ -247,23 +234,35 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
         palette={palette}
       />
     
-<QuestionEditor
-  show={showModal}
-  question={editingQuestion}
-  onClose={() => {
-    setShowModal(false);
-    setEditingQuestion(null);
-  }}
-  onSave={async (questionData) => {
-    if (editingQuestion) {
-      await updateQuestion(editingQuestion.id, questionData);
-    } else {
-      await createQuestion(questionData);
-    }
-    fetchQuestions();
-  }}
-  palette={palette}
-/>
+      <QuestionEditor
+        show={showModal}
+        question={editingQuestion}
+        onClose={() => {
+          setShowModal(false);
+          setEditingQuestion(null);
+        }}
+        onSave={async (questionData) => {
+          try {
+            console.log('🔄 Saving question...', questionData);
+
+            if (editingQuestion) {
+              await updateQuestion(editingQuestion.id, questionData);
+              console.log('✅ Question updated');
+            } else {
+              await createQuestion(questionData);
+              console.log('✅ Question created');
+            }
+            
+            await fetchQuestions();
+            setShowModal(false);
+            setEditingQuestion(null);
+          } catch (error) {
+            console.error('❌ Save error:', error);
+            throw error;
+          }
+        }}
+        palette={palette}
+      />
     </div>
   );
 }
