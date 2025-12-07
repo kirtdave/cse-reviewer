@@ -34,30 +34,30 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
   }, [editingQuestion]);
 
   const handleGenerateChoices = async () => {
-  if (!formData.question.trim()) {
-    setError('Please enter a question first');
-    return;
-  }
+    if (!formData.question.trim()) {
+      setError('Please enter a question first');
+      return;
+    }
 
-  setGeneratingChoices(true);
-  setError('');
+    setGeneratingChoices(true);
+    setError('');
 
-  try {
-    // ✅ FIXED: Use the correct function name that matches the import
-    const result = await generateAIAnswerChoicesForQuestion(formData.question, formData.category);
-    
-    setFormData(prev => ({
-      ...prev,
-      options: result.choices,
-      correctAnswer: result.correctAnswer,
-      explanation: result.explanation
-    }));
-  } catch (err) {
-    setError(err.message || 'Failed to generate answer choices');
-  } finally {
-    setGeneratingChoices(false);
-  }
-};
+    try {
+      // ✅ FIXED: Use the correct function name that matches the import
+      const result = await generateAIAnswerChoicesForQuestion(formData.question, formData.category);
+      
+      setFormData(prev => ({
+        ...prev,
+        options: result.choices,
+        correctAnswer: result.correctAnswer,
+        explanation: result.explanation
+      }));
+    } catch (err) {
+      setError(err.message || 'Failed to generate answer choices');
+    } finally {
+      setGeneratingChoices(false);
+    }
+  };
 
   const handleSubmit = () => {
     // Validation
@@ -91,37 +91,37 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+          className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 md:p-6"
           style={{ backgroundColor: cardBg }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold" style={{ color: textColor }}>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h3 className="text-lg md:text-xl font-bold" style={{ color: textColor }}>
               {editingQuestion ? 'Edit Question' : 'Add New Question'}
             </h3>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
               style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
             >
-              <X style={{ color: textColor }} />
+              <X className="w-5 h-5 md:w-6 md:h-6" style={{ color: textColor }} />
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: `${errorColor}20` }}>
+            <div className="mb-4 p-3 rounded-lg text-sm" style={{ backgroundColor: `${errorColor}20` }}>
               <p style={{ color: errorColor }}>{error}</p>
             </div>
           )}
 
           {/* Question Text */}
           <div className="mb-4">
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
               Question Text
             </label>
             <textarea
@@ -129,7 +129,7 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
               onChange={(e) => setFormData({ ...formData, question: e.target.value })}
               placeholder="Enter your question here..."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border outline-none resize-none"
+              className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl border outline-none resize-none text-sm md:text-base"
               style={{
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                 borderColor,
@@ -139,15 +139,15 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
           </div>
 
           {/* Category & Difficulty */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
             <div>
-              <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+              <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
                 Category
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border outline-none"
+                className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl border outline-none text-sm md:text-base"
                 style={{
                   backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                   borderColor,
@@ -161,13 +161,13 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
             </div>
 
             <div>
-              <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+              <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
                 Difficulty
               </label>
               <select
                 value={formData.difficulty}
                 onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border outline-none"
+                className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl border outline-none text-sm md:text-base"
                 style={{
                   backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                   borderColor,
@@ -185,7 +185,7 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
           <button
             onClick={handleGenerateChoices}
             disabled={generatingChoices || !formData.question.trim()}
-            className="w-full mb-4 px-4 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2"
+            className="w-full mb-4 px-3 md:px-4 py-2.5 md:py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm md:text-base"
             style={{
               backgroundColor: `${primaryGradientFrom}20`,
               color: primaryGradientFrom,
@@ -195,33 +195,35 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
             {generatingChoices ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Generating answer choices...
+                <span className="hidden sm:inline">Generating answer choices...</span>
+                <span className="sm:hidden">Generating...</span>
               </>
             ) : (
               <>
                 <Wand2 className="w-4 h-4" />
-                Generate Answer Choices with AI
+                <span className="hidden sm:inline">Generate Answer Choices with AI</span>
+                <span className="sm:hidden">Generate with AI</span>
               </>
             )}
           </button>
 
           {/* Answer Options */}
           <div className="mb-4">
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
               Answer Options
             </label>
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {['A', 'B', 'C', 'D'].map((letter, index) => (
-                <div key={letter} className="flex items-center gap-3">
+                <div key={letter} className="flex items-center gap-2 md:gap-3">
                   <input
                     type="radio"
                     name="correctAnswer"
                     checked={formData.correctAnswer === letter}
                     onChange={() => setFormData({ ...formData, correctAnswer: letter })}
-                    className="w-5 h-5"
+                    className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0"
                     style={{ accentColor: successColor }}
                   />
-                  <span className="font-semibold w-6" style={{ color: textColor }}>{letter}.</span>
+                  <span className="font-semibold w-4 md:w-6 flex-shrink-0 text-sm md:text-base" style={{ color: textColor }}>{letter}.</span>
                   <input
                     type="text"
                     value={formData.options[index]}
@@ -231,7 +233,7 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
                       setFormData({ ...formData, options: newOptions });
                     }}
                     placeholder={`Option ${letter}`}
-                    className="flex-1 px-4 py-2 rounded-xl border outline-none"
+                    className="flex-1 px-3 md:px-4 py-2 md:py-2.5 rounded-xl border outline-none text-sm md:text-base"
                     style={{
                       backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                       borderColor,
@@ -247,8 +249,8 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
           </div>
 
           {/* Explanation */}
-          <div className="mb-6">
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+          <div className="mb-4 md:mb-6">
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
               Explanation
             </label>
             <textarea
@@ -256,7 +258,7 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
               onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
               placeholder="Explain why the correct answer is right..."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border outline-none resize-none"
+              className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl border outline-none resize-none text-sm md:text-base"
               style={{
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                 borderColor,
@@ -266,10 +268,10 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-3 rounded-xl font-semibold transition-all hover:scale-105"
+              className="flex-1 px-4 py-2.5 md:py-3 rounded-xl font-semibold transition-all hover:scale-105 text-sm md:text-base"
               style={{
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
                 color: textColor
@@ -279,7 +281,7 @@ export default function QuestionEditor({ isOpen, onClose, onSave, editingQuestio
             </button>
             <button
               onClick={handleSubmit}
-              className="flex-1 px-4 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 md:py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm md:text-base"
               style={{
                 background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
                 color: '#fff'

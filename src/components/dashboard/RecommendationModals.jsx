@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, Lightbulb, Loader2, Sparkles } from "lucide-react";
+import { X, Calendar, Loader2, Sparkles, BookOpen, CheckCircle, Clock, Target } from "lucide-react";
 
+// ========== STUDY SCHEDULE MODAL ==========
 export function StudyScheduleModal({ isOpen, onClose, theme = "light", weakTopic }) {
   const isDark = theme === "dark";
   const navigate = useNavigate();
@@ -21,75 +22,75 @@ export function StudyScheduleModal({ isOpen, onClose, theme = "light", weakTopic
   const todaySchedule = schedule.find(s => s.day === today) || schedule[0];
 
   const handleStartPractice = (scheduleItem) => {
-  if (scheduleItem.topic === "Rest Day") {
-    alert("Today is a rest day! Take a break 😊");
-    return;
-  }
-  
-  if (scheduleItem.topic === "Full Mock Exam") {
-    onClose();
-    navigate('/test');
-    return;
-  }
-
-  // Navigate to ActualTest with scheduled practice mode
-  navigate('/actualtest', {
-    state: {
-      selectedType: "Scheduled Practice",
-      timeLimit: scheduleItem.duration, // Duration in minutes
-      categories: [
-        scheduleItem.topic === "Mixed Review" ? "Verbal Ability" : 
-        scheduleItem.topic === "Weak Areas" ? weakTopic || "Verbal Ability" : 
-        scheduleItem.topic
-      ],
-      questions: [], // Start empty, will be generated
-      theme,
-      isScheduledPractice: true, // NEW FLAG
-      scheduleType: scheduleItem.type,
-      difficulty: scheduleItem.difficulty,
-      continuousGeneration: true // Enable continuous question loading
+    if (scheduleItem.topic === "Rest Day") {
+      alert("Today is a rest day! Take a break 😊");
+      return;
     }
-  });
-  
-  onClose();
-};
-const handleStartToday = () => {
-  handleStartPractice(todaySchedule);
-};
+    
+    if (scheduleItem.topic === "Full Mock Exam") {
+      onClose();
+      navigate('/test');
+      return;
+    }
+
+    navigate('/actualtest', {
+      state: {
+        selectedType: "Scheduled Practice",
+        timeLimit: scheduleItem.duration,
+        categories: [
+          scheduleItem.topic === "Mixed Review" ? "Verbal Ability" : 
+          scheduleItem.topic === "Weak Areas" ? weakTopic || "Verbal Ability" : 
+          scheduleItem.topic
+        ],
+        questions: [],
+        theme,
+        isScheduledPractice: true,
+        scheduleType: scheduleItem.type,
+        difficulty: scheduleItem.difficulty,
+        continuousGeneration: true
+      }
+    });
+    
+    onClose();
+  };
+
+  const handleStartToday = () => {
+    handleStartPractice(todaySchedule);
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-0 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-20 sm:pt-4 bg-black/50 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className={`${isDark ? "bg-gray-900" : "bg-white"} rounded-2xl p-6 max-w-2xl w-full shadow-2xl max-h-[80vh] overflow-y-auto`}
+            className={`${isDark ? "bg-gray-900" : "bg-white"} rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 max-w-2xl w-full shadow-2xl max-h-[85vh] overflow-y-auto`}
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-between mb-4 sm:mb-5 lg:mb-6">
+              <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-4 h-4 sm:w-4.5 sm:h-4.5 lg:w-5 lg:h-5 text-white" />
                 </div>
-                <div>
-                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <div className="min-w-0">
+                  <h3 className={`text-sm sm:text-base lg:text-lg font-bold ${isDark ? "text-white" : "text-gray-900"} truncate`}>
                     Your Personalized Study Schedule
                   </h3>
-                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className={`text-[10px] sm:text-xs ${isDark ? "text-gray-400" : "text-gray-600"} truncate`}>
                     AI-optimized for maximum improvement
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className={`p-2 rounded-lg ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-colors`}
+                className={`p-1.5 sm:p-2 rounded-lg ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-colors flex-shrink-0`}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2 sm:space-y-2.5 lg:space-y-3 mb-4 sm:mb-5 lg:mb-6">
               {schedule.map((item, i) => {
                 const isToday = item.day === today;
                 
@@ -100,15 +101,15 @@ const handleStartToday = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => handleStartPractice(item)}
-                    className={`p-4 rounded-xl cursor-pointer transition-all ${
+                    className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl cursor-pointer transition-all ${
                       isToday 
                         ? `${isDark ? "bg-green-500/20 border-green-500" : "bg-green-50 border-green-300"} border-2`
                         : `${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"}`
                     } hover:shadow-lg`}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                       <div className="flex items-center gap-2">
-                        <span className={`font-semibold ${
+                        <span className={`font-semibold text-xs sm:text-sm lg:text-base ${
                           isToday 
                             ? "text-green-500" 
                             : isDark ? "text-white" : "text-gray-900"
@@ -117,7 +118,7 @@ const handleStartToday = () => {
                           {isToday && " (Today)"}
                         </span>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[9px] sm:text-xs font-medium ${
                         item.type === "Timed Test" 
                           ? "bg-purple-500/20 text-purple-400"
                           : item.type === "Focus Practice"
@@ -130,10 +131,10 @@ const handleStartToday = () => {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                      <span className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} truncate pr-2`}>
                         {item.topic}
                       </span>
-                      <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <span className={`text-xs sm:text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"} flex-shrink-0`}>
                         {item.duration > 0 ? `${item.duration} min` : "—"}
                       </span>
                     </div>
@@ -142,8 +143,8 @@ const handleStartToday = () => {
               })}
             </div>
 
-            <div className={`p-4 rounded-xl ${isDark ? "bg-blue-500/10" : "bg-blue-50"} border ${isDark ? "border-blue-500/20" : "border-blue-200"} mb-4`}>
-              <p className={`text-sm ${isDark ? "text-blue-300" : "text-blue-700"}`}>
+            <div className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-blue-500/10" : "bg-blue-50"} border ${isDark ? "border-blue-500/20" : "border-blue-200"} mb-3 sm:mb-4`}>
+              <p className={`text-xs sm:text-sm ${isDark ? "text-blue-300" : "text-blue-700"}`}>
                 💡 <span className="font-semibold">Pro Tip:</span> Consistency beats intensity. 
                 Stick to this schedule for 3 weeks and see your scores improve by 15-20%!
               </p>
@@ -151,7 +152,7 @@ const handleStartToday = () => {
 
             <button
               onClick={handleStartToday}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold hover:shadow-xl transition-all"
+              className="w-full py-2.5 sm:py-3 rounded-lg lg:rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm sm:text-base font-semibold hover:shadow-xl transition-all"
             >
               Start Today's Session: {todaySchedule.topic}
             </button>
@@ -162,10 +163,7 @@ const handleStartToday = () => {
   );
 }
 
-// Study Guide Modal - Comprehensive category guides
-export { StudyGuideModal } from './StudyGuideModal';
-
-// Study Tips Modal
+// ========== AI STUDY TIPS MODAL ==========
 export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsData }) {
   const isDark = theme === "dark";
   const [tips, setTips] = useState([]);
@@ -182,7 +180,6 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
     try {
       const token = localStorage.getItem('token');
       
-      // Call AI to generate personalized tips based on user data
       const response = await fetch('http://localhost:5000/api/ai/chat', {
         method: 'POST',
         headers: {
@@ -205,7 +202,6 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
       const data = await response.json();
       
       if (data.success) {
-        // Parse AI response into tips array
         const parsedTips = parseAIResponse(data.response);
         setTips(parsedTips);
       } else {
@@ -220,12 +216,10 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
   };
 
   const parseAIResponse = (response) => {
-    // Try to extract tips from AI response
     const lines = response.split('\n').filter(line => line.trim());
     const tips = [];
     
     for (const line of lines) {
-      // Look for pattern: EMOJI|TITLE|DESCRIPTION or variations
       const parts = line.split('|');
       if (parts.length >= 3) {
         tips.push({
@@ -234,7 +228,6 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
           description: parts[2].trim()
         });
       } else {
-        // Try to extract from natural language
         const match = line.match(/([📚📊🎯💪⏰🧘✍️🏆🎓🤝💡🔥⚡📖🌟]+)\s*(.+?)[:.-]\s*(.+)/);
         if (match) {
           tips.push({
@@ -258,136 +251,82 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
     const totalExams = analyticsData?.totalExams || 0;
     
     return [
-      { 
-        icon: "📚", 
-        title: "Focus on Weak Areas", 
-        description: weak.length > 0 
-          ? `Spend 60% of your study time on ${weak[0]} where you scored ${analyticsData.sections[weak[0]]}%`
-          : "Complete more tests to identify your weak areas"
-      },
-      { 
-        icon: "⏰", 
-        title: "Time Management", 
-        description: analyticsData?.timeMetrics?.avgTimePerQuestion > 60 
-          ? `Work on speed - you're averaging ${analyticsData.timeMetrics.avgTimePerQuestion}s per question. Aim for under 60s`
-          : "Your time management is good! Keep maintaining your pace"
-      },
-      { 
-        icon: "🎯", 
-        title: "Consistency", 
-        description: totalExams < 5 
-          ? `Take more practice tests! You've only completed ${totalExams}. Aim for 3 tests per week`
-          : "Great consistency! Keep taking regular practice tests"
-      },
-      { 
-        icon: "💪", 
-        title: "Progressive Difficulty", 
-        description: avgScore < 70 
-          ? "Start with Easy questions to build confidence, then progress to Normal"
-          : "Challenge yourself with Hard difficulty to push beyond your comfort zone"
-      },
-      { 
-        icon: "🧘", 
-        title: "Strategic Breaks", 
-        description: "Take 5-minute breaks every 25 minutes. Your brain consolidates information during rest"
-      },
-      { 
-        icon: "📊", 
-        title: "Weekly Reviews", 
-        description: "Check your analytics every Sunday to track improvement and adjust your study plan"
-      },
-      { 
-        icon: "✍️", 
-        title: "Error Journal", 
-        description: analyticsData?.recentAttempts?.length > 0
-          ? `Review your ${analyticsData.recentAttempts[0].details?.incorrectQuestions || 0} recent mistakes`
-          : "Start maintaining an error journal to identify patterns"
-      },
-      { 
-        icon: "🎓", 
-        title: "Understand Concepts", 
-        description: "Focus on WHY answers are correct. Understanding lasts longer than memorization"
-      },
-      { 
-        icon: "🏆", 
-        title: "Celebrate Progress", 
-        description: avgScore > 0 
-          ? `You've improved to ${avgScore}% average! Keep up the momentum`
-          : "Complete your first test to start tracking your progress"
-      },
-      { 
-        icon: "🔥", 
-        title: "Build Momentum", 
-        description: "Study at the same time each day. Consistency builds habits and improves retention by 80%"
-      }
+      { icon: "📚", title: "Focus on Weak Areas", description: weak.length > 0 ? `Spend 60% of your study time on ${weak[0]} where you scored ${analyticsData.sections[weak[0]]}%` : "Complete more tests to identify your weak areas" },
+      { icon: "⏰", title: "Time Management", description: analyticsData?.timeMetrics?.avgTimePerQuestion > 60 ? `Work on speed - you're averaging ${analyticsData.timeMetrics.avgTimePerQuestion}s per question. Aim for under 60s` : "Your time management is good! Keep maintaining your pace" },
+      { icon: "🎯", title: "Consistency", description: totalExams < 5 ? `Take more practice tests! You've only completed ${totalExams}. Aim for 3 tests per week` : "Great consistency! Keep taking regular practice tests" },
+      { icon: "💪", title: "Progressive Difficulty", description: avgScore < 70 ? "Start with Easy questions to build confidence, then progress to Normal" : "Challenge yourself with Hard difficulty to push beyond your comfort zone" },
+      { icon: "🧘", title: "Strategic Breaks", description: "Take 5-minute breaks every 25 minutes. Your brain consolidates information during rest" },
+      { icon: "📊", title: "Weekly Reviews", description: "Check your analytics every Sunday to track improvement and adjust your study plan" },
+      { icon: "✍️", title: "Error Journal", description: analyticsData?.recentAttempts?.length > 0 ? `Review your ${analyticsData.recentAttempts[0].details?.incorrectQuestions || 0} recent mistakes` : "Start maintaining an error journal to identify patterns" },
+      { icon: "🎓", title: "Understand Concepts", description: "Focus on WHY answers are correct. Understanding lasts longer than memorization" },
+      { icon: "🏆", title: "Celebrate Progress", description: avgScore > 0 ? `You've improved to ${avgScore}% average! Keep up the momentum` : "Complete your first test to start tracking your progress" },
+      { icon: "🔥", title: "Build Momentum", description: "Study at the same time each day. Consistency builds habits and improves retention by 80%" }
     ];
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-20 sm:pt-4 bg-black/50 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className={`${isDark ? "bg-gray-900" : "bg-white"} rounded-2xl p-6 max-w-3xl w-full shadow-2xl max-h-[85vh] overflow-hidden flex flex-col`}
+            className={`${isDark ? "bg-gray-900" : "bg-white"} rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 max-w-3xl w-full shadow-2xl max-h-[85vh] overflow-hidden flex flex-col`}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between mb-4 sm:mb-5 lg:mb-6">
+              <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 min-w-0">
                 <motion.div
                   animate={{ rotate: [0, 360] }}
                   transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                  className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg"
+                  className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg flex-shrink-0"
                 >
-                  <Sparkles className="w-6 h-6 text-white" />
+                  <Sparkles className="w-5 h-5 sm:w-5.5 sm:h-5.5 lg:w-6 lg:h-6 text-white" />
                 </motion.div>
-                <div>
-                  <h3 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <div className="min-w-0">
+                  <h3 className={`text-base sm:text-lg lg:text-xl font-bold ${isDark ? "text-white" : "text-gray-900"} truncate`}>
                     AI-Powered Study Tips
                   </h3>
-                  <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} truncate`}>
                     Personalized for your performance
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className={`p-2 rounded-lg ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-colors`}
+                className={`p-1.5 sm:p-2 rounded-lg ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-colors flex-shrink-0`}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto">
               {isLoading ? (
-                <div className="flex items-center justify-center py-20">
+                <div className="flex items-center justify-center py-12 sm:py-16 lg:py-20">
                   <div className="text-center">
-                    <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    <Loader2 className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 text-purple-500 animate-spin mx-auto mb-3 sm:mb-4" />
+                    <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} px-4`}>
                       AI is analyzing your performance to generate personalized tips...
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
                   {tips.map((tip, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className={`p-4 rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"} hover:shadow-lg transition-all`}
+                      className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"} hover:shadow-lg transition-all`}
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl flex-shrink-0">{tip.icon}</span>
-                        <div>
-                          <h4 className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                      <div className="flex items-start gap-2 sm:gap-2.5 lg:gap-3">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">{tip.icon}</span>
+                        <div className="min-w-0">
+                          <h4 className={`font-semibold text-xs sm:text-sm lg:text-base mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                             {tip.title}
                           </h4>
-                          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                          <p className={`text-[11px] sm:text-xs lg:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
                             {tip.description}
                           </p>
                         </div>
@@ -398,11 +337,10 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
               )}
             </div>
 
-            {/* Footer */}
-            <div className="mt-4 flex gap-3">
+            <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-3">
               <button
                 onClick={onClose}
-                className={`flex-1 py-3 rounded-xl border-2 font-semibold transition-all ${
+                className={`flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl border-2 font-semibold transition-all ${
                   isDark
                     ? "border-gray-700 text-gray-300 hover:bg-gray-800"
                     : "border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -412,7 +350,7 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
               </button>
               <button
                 onClick={generatePersonalizedTips}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all"
+                className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all"
               >
                 Regenerate Tips
               </button>
@@ -423,3 +361,7 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
     </AnimatePresence>
   );
 }
+
+// ========== STUDY GUIDE MODAL ==========
+// Import from separate file
+export { StudyGuideModal } from './StudyGuideModal';

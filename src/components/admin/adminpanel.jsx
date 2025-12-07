@@ -1,3 +1,4 @@
+// AdminPanel.jsx - Mobile Responsive Version
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -34,21 +35,18 @@ const getPalette = (theme = "dark") => {
 const AdminPanel = ({ theme: initialTheme = "dark" }) => {
   const [currentPage, setCurrentPage] = useState("dashboard");
   
-  // Get collapse state from localStorage or use default
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem("adminSidebarCollapsed") === "true";
   });
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Get theme from localStorage or use default
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("adminTheme") || initialTheme;
   });
 
-  // ✅ NEW: State for editing test
-const [testBuilderView, setTestBuilderView] = useState('list'); // 'list' or 'builder'
-const [editingTest, setEditingTest] = useState(null);
+  const [testBuilderView, setTestBuilderView] = useState('list');
+  const [editingTest, setEditingTest] = useState(null);
   
   const navigate = useNavigate();
 
@@ -83,14 +81,13 @@ const [editingTest, setEditingTest] = useState(null);
   const navItems = [
     { id: "dashboard", name: "Dashboard", icon: "fa-home", badge: null },
     { id: "users", name: "User Monitoring", icon: "fa-users", badge: null },
-    { id: "test-builder", name: "Test Builder", icon: "fa-hammer", badge: null }, // ✅ NEW
+    { id: "test-builder", name: "Test Builder", icon: "fa-hammer", badge: null },
     { id: "questions", name: "Question Bank", icon: "fa-clipboard-list", badge: null },
     { id: "reports", name: "Question Reports", icon: "fa-flag", badge: null },
     { id: "messages", name: "Messages", icon: "fa-envelope", badge: null },
     { id: "notifications", name: "Notifications", icon: "fa-bell", badge: null },
   ];
 
-  // ✅ NEW: Handler for navigating to test builder
   const handleNavigateToTestBuilder = (test = null) => {
     setEditingTest(test);
     setCurrentPage("test-builder");
@@ -103,37 +100,37 @@ const [editingTest, setEditingTest] = useState(null);
       case "users": 
         return <UserMonitoringPage palette={palette} />;
       case 'test-builder':
-  if (testBuilderView === 'list') {
-    return (
-      <AdminTestListPage
-        palette={palette}
-        onCreateNew={() => {
-          setEditingTest(null);
-          setTestBuilderView('builder');
-        }}
-        onEdit={(test) => {
-          setEditingTest(test);
-          setTestBuilderView('builder');
-        }}
-      />
-    );
-  } else {
-    return (
-      <AdminTestBuilderPage
-        palette={palette}
-        onBack={() => {
-          setTestBuilderView('list');
-          setEditingTest(null);
-        }}
-        editingTest={editingTest}
-      />
-    );
-  }
+        if (testBuilderView === 'list') {
+          return (
+            <AdminTestListPage
+              palette={palette}
+              onCreateNew={() => {
+                setEditingTest(null);
+                setTestBuilderView('builder');
+              }}
+              onEdit={(test) => {
+                setEditingTest(test);
+                setTestBuilderView('builder');
+              }}
+            />
+          );
+        } else {
+          return (
+            <AdminTestBuilderPage
+              palette={palette}
+              onBack={() => {
+                setTestBuilderView('list');
+                setEditingTest(null);
+              }}
+              editingTest={editingTest}
+            />
+          );
+        }
       case "questions": 
         return (
           <QuestionBankPage 
             palette={palette} 
-            onNavigateToTestBuilder={handleNavigateToTestBuilder} // ✅ Pass callback
+            onNavigateToTestBuilder={handleNavigateToTestBuilder}
           />
         );
       case "reports": 
@@ -237,7 +234,7 @@ const [editingTest, setEditingTest] = useState(null);
           })}
         </nav>
 
-        {/* Bottom Actions - Theme Toggle & Logout */}
+        {/* Bottom Actions */}
         <div className={`px-4 pb-6 space-y-2 border-t pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
           <ThemeToggleSwitch isDark={isDark} toggleTheme={toggleTheme} isCollapsed={isSidebarCollapsed} />
           <button
@@ -251,18 +248,18 @@ const [editingTest, setEditingTest] = useState(null);
       </aside>
 
       {/* Mobile Header */}
-      <div className={`lg:hidden fixed top-0 left-0 right-0 z-40 backdrop-blur-xl ${isDark ? "bg-gray-900/80" : "bg-white/80"} border-b ${isDark ? "border-gray-700" : "border-gray-200"} px-4 py-3 flex items-center justify-between`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <i className="fas fa-shield-alt text-white text-lg"></i>
+      <div className={`lg:hidden fixed top-0 left-0 right-0 z-40 backdrop-blur-xl ${isDark ? "bg-gray-900/80" : "bg-white/80"} border-b ${isDark ? "border-gray-700" : "border-gray-200"} px-4 py-3 flex items-center justify-between shadow-lg`}>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg flex-shrink-0">
+            <i className="fas fa-shield-alt text-white text-sm sm:text-lg"></i>
           </div>
-          <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="font-bold text-sm sm:text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
             ADMIN PANEL
           </span>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all"
+          className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all flex-shrink-0"
         >
           <i className={`fas ${isMobileMenuOpen ? "fa-xmark" : "fa-bars"} text-lg`}></i>
         </button>
@@ -280,40 +277,40 @@ const [editingTest, setEditingTest] = useState(null);
               onClick={() => setIsMobileMenuOpen(false)} 
             />
             <motion.aside 
-              className={`lg:hidden fixed top-0 right-0 h-full w-80 z-50 overflow-y-auto ${isDark ? "bg-gray-900" : "bg-white"} shadow-2xl`}
+              className={`lg:hidden fixed top-0 right-0 h-full w-[85%] max-w-sm z-50 overflow-y-auto ${isDark ? "bg-gray-900" : "bg-white"} shadow-2xl`}
               initial={{ x: "100%" }} 
               animate={{ x: 0 }} 
               exit={{ x: "100%" }} 
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
               <div className="flex flex-col h-full">
-                <div className={`px-6 py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+                <div className={`px-4 sm:px-6 py-4 sm:py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <i className="fas fa-shield-alt text-white text-lg"></i>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                      <i className="fas fa-shield-alt text-white text-sm sm:text-lg"></i>
                     </div>
-                    <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <span className="font-bold text-base sm:text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       ADMIN PANEL
                     </span>
                   </div>
                 </div>
 
-                <div className={`px-6 py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-                  <div className="flex items-center gap-4">
+                <div className={`px-4 sm:px-6 py-4 sm:py-5 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div className="relative">
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg">
                         A
                       </div>
-                      <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 shadow-lg"></span>
+                      <span className="absolute -bottom-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 shadow-lg"></span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className={`font-semibold truncate block ${isDark ? "text-white" : "text-gray-900"}`}>Admin User</span>
-                      <span className={`text-sm truncate block ${isDark ? "text-gray-400" : "text-gray-500"}`}>admin@cse.com</span>
+                      <span className={`font-semibold text-sm sm:text-base truncate block ${isDark ? "text-white" : "text-gray-900"}`}>Admin User</span>
+                      <span className={`text-xs sm:text-sm truncate block ${isDark ? "text-gray-400" : "text-gray-500"}`}>admin@cse.com</span>
                     </div>
                   </div>
                 </div>
 
-                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <nav className="flex-1 px-3 sm:px-4 py-4 sm:py-6 space-y-1 sm:space-y-2 overflow-y-auto">
                   {navItems.map((item) => {
                     const active = currentPage === item.id;
                     return (
@@ -326,17 +323,17 @@ const [editingTest, setEditingTest] = useState(null);
                           }
                           setIsMobileMenuOpen(false); 
                         }}
-                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200
+                        className={`w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl transition-all duration-200
                           ${active 
                             ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg" 
                             : `${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`
                           }
                         `}
                       >
-                        <i className={`fas ${item.icon} text-lg`}></i>
-                        <span className="flex-1 text-left font-medium">{item.name}</span>
+                        <i className={`fas ${item.icon} text-base sm:text-lg`}></i>
+                        <span className="flex-1 text-left text-sm sm:text-base font-medium truncate">{item.name}</span>
                         {item.badge && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold" 
+                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0" 
                             style={{ 
                               backgroundColor: active ? "rgba(255,255,255,0.2)" : `${errorColor}20`, 
                               color: active ? "#fff" : errorColor 
@@ -350,14 +347,14 @@ const [editingTest, setEditingTest] = useState(null);
                   })}
                 </nav>
 
-                <div className={`px-4 pb-6 space-y-3 border-t pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+                <div className={`px-3 sm:px-4 pb-4 sm:pb-6 space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4 ${isDark ? "border-gray-800" : "border-gray-200"}`}>
                   <ThemeToggleSwitch isDark={isDark} toggleTheme={toggleTheme} />
                   <button
                     onClick={handleLogout}
-                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isDark ? "bg-red-900/20 text-red-400 hover:bg-red-900/30" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
+                    className={`w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-xl transition-all ${isDark ? "bg-red-900/20 text-red-400 hover:bg-red-900/30" : "bg-red-50 text-red-600 hover:bg-red-100"}`}
                   >
-                    <i className="fas fa-right-from-bracket text-lg"></i>
-                    <span className="font-medium">Logout</span>
+                    <i className="fas fa-right-from-bracket text-base sm:text-lg"></i>
+                    <span className="text-sm sm:text-base font-medium">Logout</span>
                   </button>
                 </div>
               </div>
@@ -367,7 +364,7 @@ const [editingTest, setEditingTest] = useState(null);
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0 mt-16 lg:mt-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 mt-14 sm:mt-16 lg:mt-0">
         <header className={`hidden lg:flex p-6 items-center justify-between backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
           <div className="flex items-center gap-4">
             <div>
@@ -388,26 +385,26 @@ const [editingTest, setEditingTest] = useState(null);
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className={`lg:hidden p-4 backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
+          <div className={`lg:hidden p-3 sm:p-4 backdrop-blur-xl ${isDark ? "bg-gray-900/95" : "bg-white/95"} border-b ${isDark ? "border-gray-800" : "border-gray-200"} shadow-sm`}>
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1 mr-2">
+                <h2 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
                   {navItems.find((item) => item.id === currentPage)?.name || "Dashboard"}
                 </h2>
-                <p className="text-sm mt-1" style={{ color: secondaryText }}>Manage your Civil Service Reviewer system</p>
+                <p className="text-xs sm:text-sm mt-0.5 sm:mt-1 truncate" style={{ color: secondaryText }}>Manage your CSE Reviewer system</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
-                  <i className="fas fa-bell"></i>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <button className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
+                  <i className="fas fa-bell text-sm sm:text-base"></i>
                 </button>
-                <button className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
-                  <i className="fas fa-search"></i>
+                <button className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
+                  <i className="fas fa-search text-sm sm:text-base"></i>
                 </button>
               </div>
             </div>
           </div>
           
-          <div className="p-4 lg:p-6">
+          <div className="p-3 sm:p-4 lg:p-6">
             {renderPage()}
           </div>
         </main>

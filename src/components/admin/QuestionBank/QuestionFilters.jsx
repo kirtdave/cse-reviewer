@@ -36,26 +36,26 @@ export default function QuestionFilters({
 
   return (
     <div
-      className="p-6 rounded-2xl space-y-4"
+      className="p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4"
       style={{
         backgroundColor: cardBg,
         border: `1px solid ${borderColor}`,
       }}
     >
       {/* Search and Quick Actions */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
         <div className="flex-1">
           <div className="relative">
             <i 
-              className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2" 
+              className="fas fa-search absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-sm" 
               style={{ color: secondaryText }}
             ></i>
             <input
               type="text"
-              placeholder="Search questions by text..."
+              placeholder="Search questions..."
               value={filters.search}
               onChange={(e) => onFilterChange({ search: e.target.value })}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border outline-none transition-all"
+              className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 rounded-xl border outline-none transition-all text-sm"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                 borderColor,
@@ -69,7 +69,7 @@ export default function QuestionFilters({
         <div className="flex gap-2">
           <button
             onClick={() => onViewModeChange('list')}
-            className={`px-4 py-3 rounded-xl transition-all ${
+            className={`flex-1 md:flex-none px-4 py-2.5 sm:py-3 rounded-xl transition-all ${
               viewMode === 'list' ? 'scale-105' : 'opacity-50'
             }`}
             style={{
@@ -83,7 +83,7 @@ export default function QuestionFilters({
           </button>
           <button
             onClick={() => onViewModeChange('grid')}
-            className={`px-4 py-3 rounded-xl transition-all ${
+            className={`flex-1 md:flex-none px-4 py-2.5 sm:py-3 rounded-xl transition-all ${
               viewMode === 'grid' ? 'scale-105' : 'opacity-50'
             }`}
             style={{
@@ -99,17 +99,17 @@ export default function QuestionFilters({
       </div>
 
       {/* Filters Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Category Filter */}
         <div>
-          <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+          <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
             <i className="fas fa-folder mr-2"></i>
             Category
           </label>
           <select
             value={filters.category}
             onChange={(e) => onFilterChange({ category: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl border outline-none transition-all"
+            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none transition-all text-sm"
             style={{
               backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
               borderColor,
@@ -124,14 +124,14 @@ export default function QuestionFilters({
 
         {/* Difficulty Filter */}
         <div>
-          <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+          <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
             <i className="fas fa-signal mr-2"></i>
             Difficulty
           </label>
           <select
             value={filters.difficulty}
             onChange={(e) => onFilterChange({ difficulty: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl border outline-none transition-all"
+            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none transition-all text-sm"
             style={{
               backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
               borderColor,
@@ -146,14 +146,14 @@ export default function QuestionFilters({
 
         {/* Sort By */}
         <div>
-          <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+          <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
             <i className="fas fa-sort mr-2"></i>
             Sort By
           </label>
           <select
             value={filters.sortBy}
             onChange={(e) => onFilterChange({ sortBy: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl border outline-none transition-all"
+            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none transition-all text-sm"
             style={{
               backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
               borderColor,
@@ -168,25 +168,30 @@ export default function QuestionFilters({
 
         {/* Bulk Actions */}
         <div>
-          <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+          <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
             <i className="fas fa-tasks mr-2"></i>
             Bulk Actions
           </label>
           <div className="flex gap-2">
             <button
               onClick={onSelectAll}
-              className="flex-1 px-4 py-2.5 rounded-xl font-medium transition-all hover:scale-105"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all hover:scale-105"
               style={{
                 backgroundColor: `${primaryGradientFrom}20`,
                 color: primaryGradientFrom,
               }}
             >
-              {selectedCount === totalQuestions ? 'Deselect All' : 'Select All'}
+              <span className="hidden sm:inline">
+                {selectedCount === totalQuestions ? 'Deselect All' : 'Select All'}
+              </span>
+              <span className="sm:hidden">
+                {selectedCount === totalQuestions ? 'Deselect' : 'Select'}
+              </span>
             </button>
             {selectedCount > 0 && (
               <button
                 onClick={onDeleteSelected}
-                className="px-4 py-2.5 rounded-xl font-medium transition-all hover:scale-105"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium transition-all hover:scale-105"
                 style={{
                   backgroundColor: `${errorColor}20`,
                   color: errorColor,
@@ -203,18 +208,18 @@ export default function QuestionFilters({
       {/* Active Filters Display */}
       {(filters.category !== "All" || filters.difficulty !== "All" || filters.search) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t" style={{ borderColor }}>
-          <span className="text-sm font-semibold" style={{ color: secondaryText }}>
+          <span className="text-xs sm:text-sm font-semibold" style={{ color: secondaryText }}>
             Active Filters:
           </span>
           {filters.search && (
             <span
-              className="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2"
+              className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold flex items-center gap-2"
               style={{
                 backgroundColor: `${primaryGradientFrom}20`,
                 color: primaryGradientFrom,
               }}
             >
-              Search: "{filters.search}"
+              <span className="truncate max-w-[100px] sm:max-w-none">Search: "{filters.search}"</span>
               <button onClick={() => onFilterChange({ search: "" })}>
                 <i className="fas fa-times"></i>
               </button>
@@ -222,7 +227,7 @@ export default function QuestionFilters({
           )}
           {filters.category !== "All" && (
             <span
-              className="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2"
+              className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold flex items-center gap-2"
               style={{
                 backgroundColor: `${primaryGradientFrom}20`,
                 color: primaryGradientFrom,
@@ -236,7 +241,7 @@ export default function QuestionFilters({
           )}
           {filters.difficulty !== "All" && (
             <span
-              className="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2"
+              className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold flex items-center gap-2"
               style={{
                 backgroundColor: `${primaryGradientFrom}20`,
                 color: primaryGradientFrom,
@@ -250,7 +255,7 @@ export default function QuestionFilters({
           )}
           <button
             onClick={() => onFilterChange({ search: "", category: "All", difficulty: "All" })}
-            className="px-3 py-1 rounded-full text-xs font-semibold"
+            className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold"
             style={{
               backgroundColor: `${errorColor}20`,
               color: errorColor,

@@ -128,38 +128,38 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="w-full max-w-lg rounded-2xl p-6"
+          className="w-full max-w-lg rounded-2xl p-4 md:p-6 max-h-[90vh] overflow-y-auto"
           style={{ backgroundColor: cardBg }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <div className="flex items-center gap-2 md:gap-3">
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center"
                 style={{ background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})` }}
               >
-                <Upload className="w-6 h-6 text-white" />
+                <Upload className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold" style={{ color: textColor }}>
+                <h3 className="text-lg md:text-xl font-bold" style={{ color: textColor }}>
                   Import from PDF
                 </h3>
-                <p className="text-sm" style={{ color: secondaryText }}>
+                <p className="text-xs md:text-sm" style={{ color: secondaryText }}>
                   Extract questions from PDF file
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
               style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
             >
-              <X style={{ color: textColor }} />
+              <X className="w-5 h-5 md:w-6 md:h-6" style={{ color: textColor }} />
             </button>
           </div>
 
@@ -167,21 +167,21 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 rounded-lg flex items-center gap-2"
+              className="mb-4 p-3 rounded-lg flex items-start gap-2 text-sm"
               style={{ backgroundColor: `${errorColor}20`, border: `1px solid ${errorColor}` }}
             >
-              <AlertCircle style={{ color: errorColor }} />
+              <AlertCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" style={{ color: errorColor }} />
               <p style={{ color: errorColor }}>{error}</p>
             </motion.div>
           )}
 
           {/* File Upload */}
           <div className="mb-4">
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
               Select PDF File
             </label>
             <div
-              className="relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all hover:scale-[1.02]"
+              className="relative border-2 border-dashed rounded-xl p-6 md:p-8 text-center cursor-pointer transition-all hover:scale-[1.02]"
               style={{ borderColor }}
               onClick={() => document.getElementById('pdf-upload').click()}
             >
@@ -195,22 +195,22 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
               />
               
               {file ? (
-                <div className="flex items-center justify-center gap-3">
-                  <FileText style={{ color: successColor }} className="w-8 h-8" />
-                  <div className="text-left">
-                    <p className="font-semibold" style={{ color: textColor }}>{file.name}</p>
-                    <p className="text-sm" style={{ color: secondaryText }}>
+                <div className="flex items-center justify-center gap-2 md:gap-3">
+                  <FileText style={{ color: successColor }} className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0" />
+                  <div className="text-left min-w-0">
+                    <p className="font-semibold text-sm md:text-base truncate" style={{ color: textColor }}>{file.name}</p>
+                    <p className="text-xs md:text-sm" style={{ color: secondaryText }}>
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <Upload style={{ color: secondaryText }} className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="font-semibold mb-1" style={{ color: textColor }}>
+                  <Upload style={{ color: secondaryText }} className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 opacity-50" />
+                  <p className="font-semibold mb-1 text-sm md:text-base" style={{ color: textColor }}>
                     Click to upload PDF
                   </p>
-                  <p className="text-sm" style={{ color: secondaryText }}>
+                  <p className="text-xs md:text-sm" style={{ color: secondaryText }}>
                     Maximum file size: 10MB
                   </p>
                 </div>
@@ -220,14 +220,14 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
 
           {/* Category */}
           <div className="mb-4">
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
               Question Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               disabled={uploading}
-              className="w-full px-4 py-3 rounded-xl border outline-none"
+              className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl border outline-none text-sm md:text-base"
               style={{
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                 borderColor,
@@ -243,8 +243,8 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
           </div>
 
           {/* Question Count */}
-          <div className="mb-6">
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+          <div className="mb-4 md:mb-6">
+            <label className="text-xs md:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
               Questions to Extract: {count}
             </label>
             <input
@@ -267,7 +267,7 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
           <button
             onClick={handleUpload}
             disabled={uploading || !file}
-            className="w-full px-4 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 md:py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm md:text-base"
             style={{
               background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
               color: '#fff',
@@ -277,13 +277,13 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
           >
             {uploading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Processing PDF...
+                <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                <span>Processing PDF...</span>
               </>
             ) : (
               <>
-                <Upload className="w-5 h-5" />
-                Extract Questions
+                <Upload className="w-4 h-4 md:w-5 md:h-5" />
+                <span>Extract Questions</span>
               </>
             )}
           </button>
@@ -296,7 +296,7 @@ export default function PDFQuestionImporter({ isOpen, onClose, onImported, palet
               border: `1px solid ${warningColor}30`
             }}
           >
-            <p className="text-sm" style={{ color: secondaryText }}>
+            <p className="text-xs md:text-sm" style={{ color: secondaryText }}>
               <i className="fas fa-exclamation-triangle mr-2" style={{ color: warningColor }}></i>
               AI will extract and generate questions based on PDF content. Results may vary.
             </p>

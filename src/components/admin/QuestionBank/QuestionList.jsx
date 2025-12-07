@@ -44,8 +44,8 @@ export default function QuestionList({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <i className="fas fa-spinner fa-spin text-4xl mb-4" style={{ color: primaryGradientFrom }}></i>
-          <p style={{ color: secondaryText }}>Loading questions...</p>
+          <i className="fas fa-spinner fa-spin text-3xl sm:text-4xl mb-4" style={{ color: primaryGradientFrom }}></i>
+          <p className="text-sm" style={{ color: secondaryText }}>Loading questions...</p>
         </div>
       </div>
     );
@@ -54,17 +54,17 @@ export default function QuestionList({
   if (questions.length === 0) {
     return (
       <div
-        className="p-12 rounded-2xl text-center"
+        className="p-8 sm:p-12 rounded-2xl text-center"
         style={{
           backgroundColor: cardBg,
           border: `1px solid ${borderColor}`,
         }}
       >
-        <i className="fas fa-inbox text-6xl mb-4" style={{ color: secondaryText, opacity: 0.3 }}></i>
-        <h3 className="text-xl font-bold mb-2" style={{ color: textColor }}>
+        <i className="fas fa-inbox text-4xl sm:text-6xl mb-4" style={{ color: secondaryText, opacity: 0.3 }}></i>
+        <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: textColor }}>
           No Questions Found
         </h3>
-        <p style={{ color: secondaryText }}>
+        <p className="text-sm" style={{ color: secondaryText }}>
           Try adjusting your filters or add a new question to get started.
         </p>
       </div>
@@ -73,7 +73,7 @@ export default function QuestionList({
 
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {questions.map((q) => {
           const questionOptions = parseOptions(q.options);
           const correctIndex = getCorrectAnswerIndex(q.correctAnswer);
@@ -84,7 +84,7 @@ export default function QuestionList({
               key={q.id}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`p-6 rounded-2xl transition-all cursor-pointer ${
+              className={`p-4 sm:p-6 rounded-2xl transition-all cursor-pointer ${
                 isSelected ? 'ring-2' : ''
               }`}
               style={{
@@ -97,7 +97,7 @@ export default function QuestionList({
               {/* Selection Checkbox */}
               <div className="flex items-start justify-between mb-3">
                 <div
-                  className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center transition-all ${
                     isSelected ? 'scale-110' : ''
                   }`}
                   style={{
@@ -109,7 +109,7 @@ export default function QuestionList({
                 </div>
                 <div className="flex gap-2">
                   <span
-                    className="px-2 py-1 rounded-lg text-xs font-semibold"
+                    className="px-2 py-0.5 sm:py-1 rounded-lg text-xs font-semibold"
                     style={{
                       backgroundColor: `${getDifficultyColor(q.difficulty)}20`,
                       color: getDifficultyColor(q.difficulty),
@@ -123,7 +123,7 @@ export default function QuestionList({
               {/* Category */}
               <div className="mb-3">
                 <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold"
+                  className="px-2 sm:px-3 py-1 rounded-full text-xs font-semibold"
                   style={{
                     backgroundColor: `${primaryGradientFrom}20`,
                     color: primaryGradientFrom,
@@ -150,8 +150,11 @@ export default function QuestionList({
               {/* Actions */}
               <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <button
-                  onClick={() => onEdit(q)}
-                  className="flex-1 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(q);
+                  }}
+                  className="flex-1 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all hover:scale-105"
                   style={{
                     backgroundColor: `${primaryGradientFrom}20`,
                     color: primaryGradientFrom,
@@ -161,8 +164,11 @@ export default function QuestionList({
                   Edit
                 </button>
                 <button
-                  onClick={() => onDelete(q.id)}
-                  className="px-4 py-2 rounded-lg transition-all hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(q.id);
+                  }}
+                  className="px-3 sm:px-4 py-2 rounded-lg transition-all hover:scale-105"
                   style={{
                     backgroundColor: `${errorColor}20`,
                     color: errorColor,
@@ -180,7 +186,7 @@ export default function QuestionList({
 
   // List View
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {questions.map((q, index) => {
         const questionOptions = parseOptions(q.options);
         const correctIndex = getCorrectAnswerIndex(q.correctAnswer);
@@ -192,7 +198,7 @@ export default function QuestionList({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
-            className={`p-6 rounded-2xl transition-all ${
+            className={`p-4 sm:p-6 rounded-2xl transition-all ${
               isSelected ? 'ring-2' : ''
             }`}
             style={{
@@ -201,11 +207,11 @@ export default function QuestionList({
               ringColor: primaryGradientFrom,
             }}
           >
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-3 sm:gap-4">
               {/* Selection Checkbox */}
               <button
                 onClick={() => onToggleSelect(q.id)}
-                className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+                className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
                   isSelected ? 'scale-110' : ''
                 }`}
                 style={{
@@ -219,9 +225,9 @@ export default function QuestionList({
               {/* Question Content */}
               <div className="flex-1 min-w-0">
                 {/* Tags */}
-                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold"
                     style={{
                       backgroundColor: `${getDifficultyColor(q.difficulty)}20`,
                       color: getDifficultyColor(q.difficulty),
@@ -230,7 +236,7 @@ export default function QuestionList({
                     {q.difficulty}
                   </span>
                   <span
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold truncate max-w-[150px] sm:max-w-none"
                     style={{
                       backgroundColor: `${primaryGradientFrom}20`,
                       color: primaryGradientFrom,
@@ -244,17 +250,17 @@ export default function QuestionList({
                 </div>
 
                 {/* Question Text */}
-                <h3 className="text-lg font-semibold mb-3" style={{ color: textColor }}>
+                <h3 className="text-sm sm:text-lg font-semibold mb-3 break-words" style={{ color: textColor }}>
                   {q.questionText}
                 </h3>
 
                 {/* Options */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                   {questionOptions.length > 0 ? (
                     questionOptions.map((opt, i) => (
                       <div
                         key={i}
-                        className="px-4 py-2 rounded-lg flex items-center gap-2"
+                        className="px-3 sm:px-4 py-2 rounded-lg flex items-start gap-2"
                         style={{
                           backgroundColor: i === correctIndex
                             ? `${successColor}15`
@@ -265,15 +271,15 @@ export default function QuestionList({
                         }}
                       >
                         {i === correctIndex && (
-                          <i className="fas fa-check-circle" style={{ color: successColor }}></i>
+                          <i className="fas fa-check-circle mt-0.5 flex-shrink-0" style={{ color: successColor }}></i>
                         )}
-                        <span className="text-sm font-medium" style={{ color: textColor }}>
+                        <span className="text-xs sm:text-sm font-medium break-words" style={{ color: textColor }}>
                           {String.fromCharCode(65 + i)}. {opt}
                         </span>
                       </div>
                     ))
                   ) : (
-                    <div className="col-span-2 text-center py-4" style={{ color: secondaryText }}>
+                    <div className="col-span-2 text-center py-4 text-xs sm:text-sm" style={{ color: secondaryText }}>
                       No options available
                     </div>
                   )}
@@ -287,7 +293,7 @@ export default function QuestionList({
                       backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
                     }}
                   >
-                    <p className="text-sm" style={{ color: secondaryText }}>
+                    <p className="text-xs sm:text-sm break-words" style={{ color: secondaryText }}>
                       <i className="fas fa-lightbulb mr-2" style={{ color: warningColor }}></i>
                       <strong>Explanation:</strong> {q.explanation}
                     </p>
@@ -298,26 +304,32 @@ export default function QuestionList({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 flex-shrink-0">
                 <button
-                  onClick={() => onEdit(q)}
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(q);
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
                   style={{
                     backgroundColor: `${primaryGradientFrom}20`,
                     color: primaryGradientFrom,
                   }}
                   title="Edit Question"
                 >
-                  <i className="fas fa-edit"></i>
+                  <i className="fas fa-edit text-sm"></i>
                 </button>
                 <button
-                  onClick={() => onDelete(q.id)}
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(q.id);
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
                   style={{
                     backgroundColor: `${errorColor}20`,
                     color: errorColor,
                   }}
                   title="Delete Question"
                 >
-                  <i className="fas fa-trash"></i>
+                  <i className="fas fa-trash text-sm"></i>
                 </button>
               </div>
             </div>

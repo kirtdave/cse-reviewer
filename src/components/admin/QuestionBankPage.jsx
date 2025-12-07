@@ -6,6 +6,7 @@ import QuestionFilters from "./QuestionBank/QuestionFilters";
 import QuestionStats from "./QuestionBank/QuestionStats";
 import QuestionList from "./QuestionBank/QuestionList";
 import DuplicateDetector from "./QuestionBank/DuplicateDetector";
+import QuestionEditor from "./QuestionBank/QuestionEditor";
 
 export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   const { isDark, cardBg, textColor, secondaryText, borderColor, primaryGradientFrom, primaryGradientTo, successColor, errorColor, warningColor } = palette;
@@ -17,14 +18,14 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+  const [viewMode, setViewMode] = useState('list');
   
   // Filter states
   const [filters, setFilters] = useState({
     search: "",
     category: "All",
     difficulty: "All",
-    sortBy: "newest", // newest, oldest, category, difficulty
+    sortBy: "newest",
   });
   
   const [pagination, setPagination] = useState({ 
@@ -116,28 +117,29 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold mb-1" style={{ color: textColor }}>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: textColor }}>
             Question Bank Management
           </h2>
-          <p style={{ color: secondaryText }}>
-            {pagination.total} total questions • {selectedQuestions.length} selected
+          <p className="text-sm" style={{ color: secondaryText }}>
+            {pagination.total} total • {selectedQuestions.length} selected
           </p>
         </div>
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-2 sm:gap-3 w-full md:w-auto">
           <button
             onClick={() => setShowDuplicates(true)}
-            className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
+            className="flex-1 md:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm"
             style={{
               backgroundColor: `${warningColor}20`,
               color: warningColor,
             }}
           >
             <i className="fas fa-copy"></i>
-            Find Duplicates
+            <span className="hidden sm:inline">Find Duplicates</span>
+            <span className="sm:hidden">Duplicates</span>
           </button>
         </div>
       </div>
@@ -179,20 +181,20 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
 
       {/* Pagination */}
       {pagination.pages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
             disabled={pagination.page === 1}
-            className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50 transition-all"
+            className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-50 transition-all"
             style={{
               backgroundColor: `${primaryGradientFrom}20`,
               color: primaryGradientFrom
             }}
           >
-            <i className="fas fa-chevron-left mr-2"></i>
-            Previous
+            <i className="fas fa-chevron-left sm:mr-2"></i>
+            <span className="hidden sm:inline">Previous</span>
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
               let pageNum;
               if (pagination.pages <= 5) {
@@ -209,7 +211,7 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
                 <button
                   key={pageNum}
                   onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-                  className="w-10 h-10 rounded-lg font-semibold transition-all"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-semibold text-sm transition-all"
                   style={{
                     backgroundColor: pagination.page === pageNum 
                       ? primaryGradientFrom 
@@ -225,14 +227,14 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
           <button
             onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
             disabled={pagination.page === pagination.pages}
-            className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50 transition-all"
+            className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-50 transition-all"
             style={{
               backgroundColor: `${primaryGradientFrom}20`,
               color: primaryGradientFrom
             }}
           >
-            Next
-            <i className="fas fa-chevron-right ml-2"></i>
+            <span className="hidden sm:inline">Next</span>
+            <i className="fas fa-chevron-right sm:ml-2"></i>
           </button>
         </div>
       )}
@@ -244,6 +246,24 @@ export default function QuestionBankPage({ palette, onNavigateToTestBuilder }) {
         onDelete={fetchQuestions}
         palette={palette}
       />
+    
+<QuestionEditor
+  show={showModal}
+  question={editingQuestion}
+  onClose={() => {
+    setShowModal(false);
+    setEditingQuestion(null);
+  }}
+  onSave={async (questionData) => {
+    if (editingQuestion) {
+      await updateQuestion(editingQuestion.id, questionData);
+    } else {
+      await createQuestion(questionData);
+    }
+    fetchQuestions();
+  }}
+  palette={palette}
+/>
     </div>
   );
 }

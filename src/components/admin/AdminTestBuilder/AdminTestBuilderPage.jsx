@@ -202,53 +202,53 @@ export default function AdminTestBuilderPage({ palette, onBack, editingTest = nu
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-2 md:p-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3 md:gap-4">
           <button
             onClick={onBack}
-            className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+            className="w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
             style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
           >
-            <ArrowLeft style={{ color: textColor }} />
+            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" style={{ color: textColor }} />
           </button>
           <div>
-            <h2 className="text-2xl font-bold" style={{ color: textColor }}>
+            <h2 className="text-xl md:text-2xl font-bold" style={{ color: textColor }}>
               {editingTest ? 'Edit Admin Test' : 'Create Admin Test'}
             </h2>
-            <p style={{ color: secondaryText }}>
+            <p className="text-xs md:text-sm" style={{ color: secondaryText }}>
               {getTotalQuestions()} questions • {sets.length} {sets.length === 1 ? 'set' : 'sets'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {editingTest && (
             <button
               onClick={handleTogglePublish}
-              className="px-4 py-2 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
+              className="px-3 py-2 md:px-4 md:py-2 rounded-xl text-xs md:text-sm font-semibold transition-all hover:scale-105 flex items-center gap-1 md:gap-2"
               style={{
                 backgroundColor: isPublished ? `${errorColor}20` : `${successColor}20`,
                 color: isPublished ? errorColor : successColor
               }}
             >
-              {isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              {isPublished ? 'Unpublish' : 'Publish'}
+              {isPublished ? <EyeOff className="w-3 h-3 md:w-4 md:h-4" /> : <Eye className="w-3 h-3 md:w-4 md:h-4" />}
+              <span className="hidden sm:inline">{isPublished ? 'Unpublish' : 'Publish'}</span>
             </button>
           )}
           <button
             onClick={() => handleSave(false)}
             disabled={saving}
-            className="px-6 py-2 rounded-xl font-semibold transition-all hover:scale-105 flex items-center gap-2"
+            className="px-4 py-2 md:px-6 md:py-2 rounded-xl text-xs md:text-sm font-semibold transition-all hover:scale-105 flex items-center gap-1 md:gap-2"
             style={{
               background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
               color: '#fff',
               opacity: saving ? 0.6 : 1
             }}
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? 'Saving...' : 'Save Test'}
+            {saving ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Save className="w-3 h-3 md:w-4 md:h-4" />}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
@@ -258,10 +258,10 @@ export default function AdminTestBuilderPage({ palette, onBack, editingTest = nu
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-xl flex items-center gap-2"
+          className="p-3 md:p-4 rounded-xl flex items-center gap-2 text-xs md:text-sm"
           style={{ backgroundColor: `${errorColor}20`, borderLeft: `4px solid ${errorColor}` }}
         >
-          <AlertCircle style={{ color: errorColor }} />
+          <AlertCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" style={{ color: errorColor }} />
           <span style={{ color: errorColor }}>{error}</span>
         </motion.div>
       )}
@@ -270,10 +270,10 @@ export default function AdminTestBuilderPage({ palette, onBack, editingTest = nu
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-xl flex items-center gap-2"
+          className="p-3 md:p-4 rounded-xl flex items-center gap-2 text-xs md:text-sm"
           style={{ backgroundColor: `${successColor}20`, borderLeft: `4px solid ${successColor}` }}
         >
-          <CheckCircle style={{ color: successColor }} />
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" style={{ color: successColor }} />
           <span style={{ color: successColor }}>{success}</span>
         </motion.div>
       )}

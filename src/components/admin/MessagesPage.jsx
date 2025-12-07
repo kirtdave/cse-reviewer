@@ -1,4 +1,4 @@
-// MessagesPage.jsx
+// MessagesPage.jsx - Mobile Responsive Version
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getMessages, markMessageAsRead, deleteMessage, replyToMessage } from "../../services/adminApi";
@@ -75,10 +75,8 @@ export default function MessagesPage({ palette }) {
         await replyToMessage(selectedMessage.id, replyText);
         alert(`Reply sent successfully to ${selectedMessage.sender}`);
         setReplyText("");
-        // ✅ REMOVED: handleMarkAsRead(selectedMessage.id);
-        // The backend already sets status to 'replied', no need to overwrite it
         setSelectedMessage(null);
-        fetchMessages(); // Refresh the message list to show updated status
+        fetchMessages();
       } catch (error) {
         console.error('Error sending reply:', error);
         alert('Failed to send reply');
@@ -90,9 +88,9 @@ export default function MessagesPage({ palette }) {
   const urgentCount = messages.filter(m => m.priority === "Urgent").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "Total Messages", value: pagination.total.toString(), icon: "fa-envelope", color: primaryGradientFrom },
           { label: "Unread", value: unreadCount.toString(), icon: "fa-envelope-open", color: errorColor },
@@ -104,44 +102,44 @@ export default function MessagesPage({ palette }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="p-6 rounded-2xl"
+            className="p-4 sm:p-6 rounded-2xl"
             style={{
               backgroundColor: cardBg,
               border: `1px solid ${borderColor}`,
             }}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
                 style={{ backgroundColor: `${stat.color}20` }}
               >
-                <i className={`fas ${stat.icon} text-xl`} style={{ color: stat.color }}></i>
+                <i className={`fas ${stat.icon} text-lg sm:text-xl`} style={{ color: stat.color }}></i>
               </div>
             </div>
-            <h3 className="text-2xl font-bold mb-1" style={{ color: textColor }}>{stat.value}</h3>
-            <p className="text-sm" style={{ color: secondaryText }}>{stat.label}</p>
+            <h3 className="text-xl sm:text-2xl font-bold mb-1" style={{ color: textColor }}>{stat.value}</h3>
+            <p className="text-xs sm:text-sm truncate" style={{ color: secondaryText }}>{stat.label}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Filters */}
       <div
-        className="p-6 rounded-2xl"
+        className="p-4 sm:p-6 rounded-2xl"
         style={{
           backgroundColor: cardBg,
           border: `1px solid ${borderColor}`,
         }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Status</label>
+            <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Status</label>
             <select
               value={filterStatus}
               onChange={(e) => {
                 setFilterStatus(e.target.value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="w-full px-4 py-2.5 rounded-xl border outline-none"
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none text-sm"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                 borderColor,
@@ -154,14 +152,14 @@ export default function MessagesPage({ palette }) {
             </select>
           </div>
           <div>
-            <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Priority</label>
+            <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Filter by Priority</label>
             <select
               value={filterPriority}
               onChange={(e) => {
                 setFilterPriority(e.target.value);
                 setPagination(prev => ({ ...prev, page: 1 }));
               }}
-              className="w-full px-4 py-2.5 rounded-xl border outline-none"
+              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border outline-none text-sm"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                 borderColor,
@@ -179,17 +177,17 @@ export default function MessagesPage({ palette }) {
       {/* Messages List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <i className="fas fa-spinner fa-spin text-3xl" style={{ color: primaryGradientFrom }}></i>
+          <i className="fas fa-spinner fa-spin text-2xl sm:text-3xl" style={{ color: primaryGradientFrom }}></i>
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {messages.map((msg) => (
               <motion.div
                 key={msg.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-6 rounded-2xl cursor-pointer hover:scale-[1.01] transition-all"
+                className="p-4 sm:p-6 rounded-2xl cursor-pointer hover:scale-[1.01] transition-all"
                 style={{
                   backgroundColor: cardBg,
                   border: `1px solid ${borderColor}`,
@@ -202,28 +200,28 @@ export default function MessagesPage({ palette }) {
                   }
                 }}
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0">
                     {msg.avatar}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex-1">
+                    <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold" style={{ color: textColor }}>{msg.sender}</h4>
+                          <h4 className="font-bold text-sm sm:text-base truncate" style={{ color: textColor }}>{msg.sender}</h4>
                           {msg.status === "Unread" && (
                             <span
-                              className="w-2 h-2 rounded-full"
+                              className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ backgroundColor: errorColor }}
                             ></span>
                           )}
                         </div>
-                        <p className="text-sm" style={{ color: secondaryText }}>{msg.email}</p>
+                        <p className="text-xs sm:text-sm truncate" style={{ color: secondaryText }}>{msg.email}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 flex-shrink-0">
                         <span
-                          className="px-3 py-1 rounded-full text-xs font-semibold"
+                          className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap"
                           style={{
                             backgroundColor: `${getStatusColor(msg.status)}20`,
                             color: getStatusColor(msg.status),
@@ -233,7 +231,7 @@ export default function MessagesPage({ palette }) {
                         </span>
                         {msg.priority === "Urgent" && (
                           <span
-                            className="px-3 py-1 rounded-full text-xs font-semibold"
+                            className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap"
                             style={{
                               backgroundColor: `${errorColor}20`,
                               color: errorColor,
@@ -245,11 +243,11 @@ export default function MessagesPage({ palette }) {
                       </div>
                     </div>
 
-                    <h5 className="font-semibold mb-2" style={{ color: textColor }}>{msg.subject}</h5>
-                    <p className="text-sm line-clamp-2 mb-2" style={{ color: secondaryText }}>{msg.message}</p>
+                    <h5 className="font-semibold mb-2 text-sm sm:text-base truncate" style={{ color: textColor }}>{msg.subject}</h5>
+                    <p className="text-xs sm:text-sm line-clamp-2 mb-2" style={{ color: secondaryText }}>{msg.message}</p>
                     
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs" style={{ color: secondaryText }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs truncate" style={{ color: secondaryText }}>
                         <i className="fas fa-clock mr-1"></i>
                         {msg.receivedDate}
                       </span>
@@ -258,10 +256,10 @@ export default function MessagesPage({ palette }) {
                           e.stopPropagation();
                           setSelectedMessage(msg);
                         }}
-                        className="text-xs font-semibold"
+                        className="text-xs font-semibold whitespace-nowrap"
                         style={{ color: primaryGradientFrom }}
                       >
-                        View Details →
+                        View →
                       </button>
                     </div>
                   </div>
@@ -272,11 +270,11 @@ export default function MessagesPage({ palette }) {
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <button
                 onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
                 disabled={pagination.page === 1}
-                className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-50"
                 style={{
                   backgroundColor: `${primaryGradientFrom}20`,
                   color: primaryGradientFrom
@@ -284,13 +282,13 @@ export default function MessagesPage({ palette }) {
               >
                 Previous
               </button>
-              <span style={{ color: textColor }}>
+              <span className="text-xs sm:text-sm" style={{ color: textColor }}>
                 Page {pagination.page} of {pagination.pages}
               </span>
               <button
                 onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.pages, prev.page + 1) }))}
                 disabled={pagination.page === pagination.pages}
-                className="px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 rounded-lg font-semibold text-sm disabled:opacity-50"
                 style={{
                   backgroundColor: `${primaryGradientFrom}20`,
                   color: primaryGradientFrom
@@ -307,22 +305,22 @@ export default function MessagesPage({ palette }) {
       <AnimatePresence>
         {selectedMessage && (
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedMessage(null)}
           >
             <motion.div
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6"
               style={{ backgroundColor: cardBg }}
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold" style={{ color: textColor }}>Message Details</h3>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-2xl font-bold" style={{ color: textColor }}>Message Details</h3>
                 <button
                   onClick={() => setSelectedMessage(null)}
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -332,17 +330,17 @@ export default function MessagesPage({ palette }) {
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl">
                     {selectedMessage.avatar}
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-xl font-bold mb-1" style={{ color: textColor }}>{selectedMessage.sender}</h4>
-                    <p style={{ color: secondaryText }}>{selectedMessage.email}</p>
-                    <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base sm:text-xl font-bold mb-1 truncate" style={{ color: textColor }}>{selectedMessage.sender}</h4>
+                    <p className="text-sm truncate" style={{ color: secondaryText }}>{selectedMessage.email}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <span
-                        className="px-3 py-1 rounded-full text-xs font-semibold"
+                        className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold"
                         style={{
                           backgroundColor: `${getStatusColor(selectedMessage.status)}20`,
                           color: getStatusColor(selectedMessage.status),
@@ -352,7 +350,7 @@ export default function MessagesPage({ palette }) {
                       </span>
                       {selectedMessage.priority === "Urgent" && (
                         <span
-                          className="px-3 py-1 rounded-full text-xs font-semibold"
+                          className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold"
                           style={{
                             backgroundColor: `${errorColor}20`,
                             color: errorColor,
@@ -366,42 +364,42 @@ export default function MessagesPage({ palette }) {
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Subject</label>
+                  <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Subject</label>
                   <div
-                    className="p-4 rounded-xl"
+                    className="p-3 sm:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
-                    <p className="font-semibold" style={{ color: textColor }}>{selectedMessage.subject}</p>
+                    <p className="font-semibold text-sm sm:text-base" style={{ color: textColor }}>{selectedMessage.subject}</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Message</label>
+                  <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Message</label>
                   <div
-                    className="p-4 rounded-xl"
+                    className="p-3 sm:p-4 rounded-xl"
                     style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                   >
-                    <p style={{ color: textColor }}>{selectedMessage.message}</p>
+                    <p className="text-sm sm:text-base" style={{ color: textColor }}>{selectedMessage.message}</p>
                   </div>
                 </div>
 
                 <div
-                  className="p-4 rounded-xl"
+                  className="p-3 sm:p-4 rounded-xl"
                   style={{ backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }}
                 >
-                  <p className="text-sm" style={{ color: secondaryText }}>
+                  <p className="text-xs sm:text-sm" style={{ color: secondaryText }}>
                     <i className="fas fa-clock mr-2"></i>
                     Received {selectedMessage.receivedDate}
                   </p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>Reply to {selectedMessage.sender}</label>
+                  <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>Reply to {selectedMessage.sender}</label>
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     rows="4"
-                    className="w-full px-4 py-3 rounded-xl border outline-none resize-none"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl border outline-none resize-none text-sm"
                     style={{
                       backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
                       borderColor,
@@ -411,11 +409,11 @@ export default function MessagesPage({ palette }) {
                   />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handleSendReply}
                     disabled={!replyText.trim()}
-                    className="flex-1 py-3 rounded-xl font-semibold disabled:opacity-50"
+                    className="flex-1 py-2.5 sm:py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
                     style={{
                       background: `linear-gradient(135deg, ${primaryGradientFrom}, ${primaryGradientTo})`,
                       color: "#fff",
@@ -426,7 +424,7 @@ export default function MessagesPage({ palette }) {
                   </button>
                   <button
                     onClick={() => handleDeleteMessage(selectedMessage.id)}
-                    className="px-6 py-3 rounded-xl font-semibold"
+                    className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold text-sm"
                     style={{
                       backgroundColor: `${errorColor}20`,
                       color: errorColor,

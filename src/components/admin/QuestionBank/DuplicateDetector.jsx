@@ -11,14 +11,12 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
   const [selectedForDeletion, setSelectedForDeletion] = useState([]);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.85);
 
-  // ✅ FIX 1: Added questions to dependency array
   useEffect(() => {
     if (show && questions.length > 0) {
       findDuplicates();
     }
   }, [show, similarityThreshold, questions]);
 
-  // ✅ FIX 2: Memoized similarity calculation for better performance
   const calculateSimilarity = useMemo(() => {
     return (str1, str2) => {
       const s1 = str1.toLowerCase().trim();
@@ -60,7 +58,6 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
   const findDuplicates = () => {
     setScanning(true);
     
-    // ✅ FIX 3: Added delay to show scanning animation
     setTimeout(() => {
       const duplicateGroups = [];
       const processed = new Set();
@@ -89,13 +86,12 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
         if (group.duplicates.length > 0) {
           processed.add(q1.id);
           
-          // ✅ FIX 4: Calculate actual average similarity
           const avgSimilarity = group.similarities.reduce((a, b) => a + b, 0) / group.similarities.length;
           
           duplicateGroups.push({
             id: `group-${i}`,
             questions: [group.original, ...group.duplicates],
-            similarity: Math.round(avgSimilarity * 100), // ✅ FIXED: Use actual similarity
+            similarity: Math.round(avgSimilarity * 100),
             maxSimilarity: Math.round(Math.max(...group.similarities) * 100)
           });
         }
@@ -139,7 +135,6 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
     }
   };
 
-  // ✅ FIX 5: Added stats calculation
   const stats = useMemo(() => ({
     totalGroups: duplicates.length,
     totalDuplicates: duplicates.reduce((sum, g) => sum + g.questions.length - 1, 0),
@@ -152,14 +147,14 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+            className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6"
             style={{ backgroundColor: cardBg }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -167,27 +162,27 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
-                <h3 className="text-2xl font-bold mb-1" style={{ color: textColor }}>
+                <h3 className="text-lg sm:text-2xl font-bold mb-1" style={{ color: textColor }}>
                   <i className="fas fa-copy mr-2" style={{ color: warningColor }}></i>
-                  Duplicate Question Detector
+                  Duplicate Detector
                 </h3>
-                <p style={{ color: secondaryText }}>
+                <p className="text-xs sm:text-sm" style={{ color: secondaryText }}>
                   {scanning 
-                    ? "Scanning for duplicates..." 
-                    : `Found ${stats.totalGroups} duplicate groups with ${stats.totalDuplicates} duplicates`
+                    ? "Scanning..." 
+                    : `${stats.totalGroups} groups • ${stats.totalDuplicates} duplicates`
                   }
                   {!scanning && duplicates.length > 0 && (
-                    <span className="ml-2">
-                      • Avg similarity: {stats.averageSimilarity}%
+                    <span className="ml-1 sm:ml-2">
+                      • {stats.averageSimilarity}% avg
                     </span>
                   )}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110"
                 style={{ backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
               >
                 <i className="fas fa-times" style={{ color: textColor }}></i>
@@ -196,17 +191,17 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
 
             {/* Controls */}
             <div
-              className="p-4 rounded-xl mb-6"
+              className="p-3 sm:p-4 rounded-xl mb-4 sm:mb-6"
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
                 border: `1px solid ${borderColor}`,
               }}
             >
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-                <div className="flex-1">
-                  <label className="text-sm font-semibold mb-2 block" style={{ color: textColor }}>
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-3 sm:gap-4">
+                <div className="flex-1 w-full">
+                  <label className="text-xs sm:text-sm font-semibold mb-2 block" style={{ color: textColor }}>
                     <i className="fas fa-sliders-h mr-2"></i>
-                    Similarity Threshold: {Math.round(similarityThreshold * 100)}%
+                    Similarity: {Math.round(similarityThreshold * 100)}%
                   </label>
                   <input
                     type="range"
@@ -219,22 +214,22 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                     style={{ accentColor: primaryGradientFrom }}
                   />
                   <div className="flex justify-between text-xs mt-1" style={{ color: secondaryText }}>
-                    <span>Less strict (70%)</span>
-                    <span>More strict (100%)</span>
+                    <span>Less strict</span>
+                    <span>More strict</span>
                   </div>
                 </div>
                 
                 {selectedForDeletion.length > 0 && (
                   <button
                     onClick={handleDeleteSelected}
-                    className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105"
+                    className="w-full md:w-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105"
                     style={{
                       backgroundColor: `${errorColor}`,
                       color: "#fff",
                     }}
                   >
                     <i className="fas fa-trash mr-2"></i>
-                    Delete {selectedForDeletion.length} Selected
+                    Delete {selectedForDeletion.length}
                   </button>
                 )}
               </div>
@@ -243,49 +238,49 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
             {/* Scanning State */}
             {scanning && (
               <div className="flex flex-col items-center justify-center py-12">
-                <i className="fas fa-spinner fa-spin text-4xl mb-4" style={{ color: primaryGradientFrom }}></i>
-                <p style={{ color: secondaryText }}>Analyzing {questions.length} questions...</p>
+                <i className="fas fa-spinner fa-spin text-3xl sm:text-4xl mb-4" style={{ color: primaryGradientFrom }}></i>
+                <p className="text-sm" style={{ color: secondaryText }}>Analyzing {questions.length} questions...</p>
               </div>
             )}
 
             {/* No Duplicates */}
             {!scanning && duplicates.length === 0 && (
               <div
-                className="p-12 rounded-2xl text-center"
+                className="p-8 sm:p-12 rounded-2xl text-center"
                 style={{
                   backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
                 }}
               >
-                <i className="fas fa-check-circle text-6xl mb-4" style={{ color: successColor, opacity: 0.5 }}></i>
-                <h4 className="text-xl font-bold mb-2" style={{ color: textColor }}>
+                <i className="fas fa-check-circle text-4xl sm:text-6xl mb-4" style={{ color: successColor, opacity: 0.5 }}></i>
+                <h4 className="text-lg sm:text-xl font-bold mb-2" style={{ color: textColor }}>
                   No Duplicates Found!
                 </h4>
-                <p style={{ color: secondaryText }}>
-                  All questions appear to be unique at the current similarity threshold.
+                <p className="text-sm" style={{ color: secondaryText }}>
+                  All questions appear unique.
                 </p>
               </div>
             )}
 
             {/* Duplicate Groups */}
             {!scanning && duplicates.length > 0 && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {duplicates.map((group, groupIndex) => (
                   <motion.div
                     key={group.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: groupIndex * 0.1 }}
-                    className="p-6 rounded-2xl"
+                    className="p-4 sm:p-6 rounded-2xl"
                     style={{
                       backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
                       border: `2px solid ${warningColor}40`,
                     }}
                   >
                     {/* Group Header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center font-bold"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold flex-shrink-0"
                           style={{
                             backgroundColor: `${warningColor}20`,
                             color: warningColor,
@@ -294,20 +289,17 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                           {groupIndex + 1}
                         </div>
                         <div>
-                          <h4 className="font-bold" style={{ color: textColor }}>
-                            Duplicate Group {groupIndex + 1}
+                          <h4 className="font-bold text-sm sm:text-base" style={{ color: textColor }}>
+                            Group {groupIndex + 1}
                           </h4>
-                          <p className="text-sm" style={{ color: secondaryText }}>
-                            {group.questions.length} similar questions • {group.similarity}% avg match
-                            {group.maxSimilarity > group.similarity && (
-                              <span className="ml-1">• {group.maxSimilarity}% max</span>
-                            )}
+                          <p className="text-xs sm:text-sm" style={{ color: secondaryText }}>
+                            {group.questions.length} questions • {group.similarity}% match
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => selectAllInGroup(group)}
-                        className="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105"
+                        className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all hover:scale-105"
                         style={{
                           backgroundColor: `${errorColor}20`,
                           color: errorColor,
@@ -319,7 +311,7 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                     </div>
 
                     {/* Questions in Group */}
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {group.questions.map((q, qIndex) => {
                         const isSelected = selectedForDeletion.includes(q.id);
                         const isOriginal = qIndex === 0;
@@ -327,7 +319,7 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                         return (
                           <div
                             key={q.id}
-                            className={`p-4 rounded-xl transition-all ${
+                            className={`p-3 sm:p-4 rounded-xl transition-all ${
                               isSelected ? 'ring-2' : ''
                             }`}
                             style={{
@@ -338,12 +330,12 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                               ringColor: errorColor,
                             }}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-start gap-2 sm:gap-3">
                               {/* Selection */}
                               {!isOriginal && (
                                 <button
                                   onClick={() => toggleSelection(q.id)}
-                                  className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
+                                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
                                     isSelected ? 'scale-110' : ''
                                   }`}
                                   style={{
@@ -358,7 +350,7 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                               {/* Original Badge */}
                               {isOriginal && (
                                 <div
-                                  className="px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0"
+                                  className="px-2 sm:px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0"
                                   style={{
                                     backgroundColor: `${successColor}20`,
                                     color: successColor,
@@ -370,10 +362,10 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                               )}
 
                               {/* Question Content */}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
                                   <span
-                                    className="px-2 py-1 rounded text-xs font-semibold"
+                                    className="px-2 py-0.5 rounded text-xs font-semibold"
                                     style={{
                                       backgroundColor: `${primaryGradientFrom}20`,
                                       color: primaryGradientFrom,
@@ -382,7 +374,7 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                                     ID: {q.id}
                                   </span>
                                   <span
-                                    className="px-2 py-1 rounded text-xs font-semibold"
+                                    className="px-2 py-0.5 rounded text-xs font-semibold truncate max-w-[120px] sm:max-w-none"
                                     style={{
                                       backgroundColor: `${primaryGradientFrom}20`,
                                       color: primaryGradientFrom,
@@ -391,7 +383,7 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                                     {q.category}
                                   </span>
                                   <span
-                                    className="px-2 py-1 rounded text-xs font-semibold"
+                                    className="px-2 py-0.5 rounded text-xs font-semibold"
                                     style={{
                                       backgroundColor: `${warningColor}20`,
                                       color: warningColor,
@@ -400,7 +392,7 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
                                     {q.difficulty}
                                   </span>
                                 </div>
-                                <p className="text-sm" style={{ color: textColor }}>
+                                <p className="text-xs sm:text-sm break-words" style={{ color: textColor }}>
                                   {q.questionText}
                                 </p>
                               </div>
@@ -417,29 +409,28 @@ export default function DuplicateDetector({ show, onClose, questions, onDelete, 
             {/* Footer Info */}
             {!scanning && duplicates.length > 0 && (
               <div
-                className="mt-6 p-4 rounded-xl"
+                className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-xl"
                 style={{
                   backgroundColor: `${primaryGradientFrom}10`,
                   border: `1px solid ${primaryGradientFrom}30`,
                 }}
               >
-                <div className="flex items-start gap-3">
-                  <i className="fas fa-info-circle mt-0.5" style={{ color: primaryGradientFrom }}></i>
-                  <div className="text-sm" style={{ color: textColor }}>
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <i className="fas fa-info-circle mt-0.5 flex-shrink-0" style={{ color: primaryGradientFrom }}></i>
+                  <div className="text-xs sm:text-sm" style={{ color: textColor }}>
                     <p className="font-semibold mb-1">How it works:</p>
-                    <ul className="list-disc list-inside space-y-1" style={{ color: secondaryText }}>
-                      <li>The first question in each group is marked as the original (KEEP)</li>
-                      <li>Select duplicates you want to remove - the original will be preserved</li>
-                      <li>Adjust the similarity threshold to find more or fewer matches</li>
-                      <li>Higher threshold = stricter matching (more exact duplicates only)</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+                    <ul className="list-disc list-insidespace-y-1" style={{ color: secondaryText }}>
+<li>First question = original (KEEP)</li>
+<li>Select duplicates to remove</li>
+<li>Adjust threshold for more/fewer matches</li>
+</ul>
+</div>
+</div>
+</div>
+)}
+</motion.div>
+</motion.div>
+)}
+</AnimatePresence>
+);
 }

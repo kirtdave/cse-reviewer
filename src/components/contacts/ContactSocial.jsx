@@ -8,7 +8,7 @@ export default function ContactSocial({ theme = "dark" }) {
     { 
       title: "Email", 
       icon: "fa-envelope", 
-      link: "mailto:OnlinecseReviewer@gmail.com", 
+      link: "https://mail.google.com/mail/u/0/#inbox?compose=GTvVlcRzCpKsbwFdtCrXPjrdtQqTjsMtDsChWGzdkmKQcvhrMVqJxJSGbpcMspPqhBWnGgQqKqcZB", 
       data: "OnlinecseReviewer@gmail.com",
       gradient: "from-red-500 to-pink-500"
     },
@@ -22,21 +22,21 @@ export default function ContactSocial({ theme = "dark" }) {
     { 
       title: "Facebook", 
       icon: "fa-facebook", 
-      link: "https://www.facebook.com/kirtdave.galgo.7", 
+      link: "https://www.facebook.com/profile.php?id=61584404477067", 
       data: "@OnlineCSEReviewer",
       gradient: "from-blue-600 to-blue-500"
     },
     { 
       title: "Instagram", 
       icon: "fa-instagram", 
-      link: "https://www.instagram.com/OnlineCSEReviewer", 
+      link: "https://www.instagram.com/accounts/edit/", 
       data: "@OnlineCSEReviewer",
       gradient: "from-purple-500 to-pink-500"
     },
     { 
       title: "Messenger", 
       icon: "fa-facebook-messenger", 
-      link: "https://www.messenger.com/e2ee/t/9190576804351874", 
+      link: "https://business.facebook.com/latest/inbox/messenger?asset_id=982728418249837&business_id=659843087094794&selected_item_id=100039177293411&thread_type=FB_MESSAGE&mailbox_id=", 
       data: "OnlineCSEReviewer",
       gradient: "from-blue-500 to-cyan-500"
     },
