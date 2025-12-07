@@ -1,7 +1,14 @@
-// services/aiService.js - FIXED PDF GENERATION
+// services/aiService.js - FINAL PRODUCTION VERSION (ENGLISH DEFAULT)
 const axios = require('axios');
 
-// ==================== RETRY LOGIC WITH EXPONENTIAL BACKOFF ====================
+// ==================== ⚙️ MODEL CONFIGURATION ====================
+// OPTION 1: The Newest/Fastest (Based on your list)
+const GEMINI_MODEL = "gemini-2.5-flash"; 
+
+// OPTION 2: The Old Reliable (Use this if Option 1 gives 404 or 503 errors)
+// const GEMINI_MODEL = "gemini-pro"; 
+
+// ==================== RETRY LOGIC ====================
 async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -18,13 +25,13 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
       }
 
       const delay = initialDelay * Math.pow(2, attempt - 1);
-      console.log(`⏳ Gemini API overloaded or timed out. Retrying in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
+      console.log(`⏳ Gemini API overloaded. Retrying in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 }
 
-// ==================== GEMINI API CALLER WITH RETRY ====================
+// ==================== GEMINI API CALLER ====================
 async function callGeminiAPI(prompt, expectJson = false) {
   const makeRequest = async () => {
     const requestBody = {
@@ -37,12 +44,13 @@ async function callGeminiAPI(prompt, expectJson = false) {
       };
     }
 
+    // ✅ Uses the GEMINI_MODEL constant defined at the top
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       requestBody,
       {
         headers: { "Content-Type": "application/json" },
-        timeout: 30000
+        timeout: 45000 
       }
     );
 
@@ -59,6 +67,12 @@ async function callGeminiAPI(prompt, expectJson = false) {
     return await retryWithBackoff(makeRequest, 3, 2000);
   } catch (error) {
     console.error('❌ Gemini API Error:', error.response?.data || error.message);
+    
+    // Check for Model Not Found
+    if (error.response?.status === 404) {
+      throw new Error(`AI_MODEL_ERROR: The model '${GEMINI_MODEL}' was not found. Try switching to 'gemini-pro' in aiService.js`);
+    }
+
     const isOverloadError =
       error.response?.status === 503 ||
       error.response?.status === 429 ||
@@ -72,7 +86,7 @@ async function callGeminiAPI(prompt, expectJson = false) {
   }
 }
 
-// ==================== ✅ ENHANCED JSON PARSER WITH CLEANUP ====================
+// ==================== JSON PARSER ====================
 function parseJsonFromAiResponse(text) {
   try {
     return JSON.parse(text);
@@ -98,56 +112,42 @@ function parseJsonFromAiResponse(text) {
       return parsed;
       
     } catch (cleanupError) {
-      console.warn("⚠️ JSON cleanup failed, attempting partial recovery...");
-      
       try {
         const objectMatches = text.match(/{[^{}]*}/g);
         if (objectMatches && objectMatches.length > 0) {
           const validObjects = [];
-          
           for (const match of objectMatches) {
             try {
               const obj = JSON.parse(match);
-              if (obj.question && obj.options && obj.correctAnswer) {
-                validObjects.push(obj);
-              }
-            } catch (e) {
-              continue;
-            }
+              if (obj.question && obj.options) validObjects.push(obj);
+            } catch (e) { continue; }
           }
-          
-          if (validObjects.length > 0) {
-            console.log(`✅ Recovered ${validObjects.length} valid questions from partial JSON`);
-            return validObjects;
-          }
+          if (validObjects.length > 0) return validObjects;
         }
-      } catch (recoveryError) {
-        console.error("❌ Could not recover any valid questions");
-      }
-      
+      } catch (recErr) { /* ignore */ }
+
       console.error("❌ All JSON parsing attempts failed:", text.substring(0, 500));
       throw new Error('AI_INVALID_JSON: AI generated an unreadable or incomplete JSON response.');
     }
   }
 }
 
-// ==================== ✅ FIXED: GENERATE QUESTIONS FROM PDF CONTENT ====================
+// ==================== ✅ GENERATE QUESTIONS FROM PDF ====================
 exports.generateQuestionsFromPDF = async (pdfText, category, count = 10, userCommand = '') => {
   try {
     console.log(`📚 Generating ${count} questions from PDF (${pdfText.length} chars)`);
     
-    // ✅ FIXED: Use the SAME format as generateQuestions() to ensure options are included
     let prompt = `You are a system that generates exam questions. Your ONLY output must be a raw JSON array of objects.
 
 Each object must have these exact keys: "question", "options", "correctAnswer", "explanation", "category", "difficulty".
-- "question" must be based on the PDF content below
-- "options" must be an array of exactly 4 strings, starting with "A)", "B)", "C)", or "D)"
+- "options" must be an array of exactly 4 strings.
 - "correctAnswer" must be one of: "A", "B", "C", or "D"
-- "explanation" MUST be a concise, single-line string explaining why the answer is correct
-- "category" must be "${category}"
-- "difficulty" can be "Easy", "Normal", or "Hard"
-- DO NOT add trailing commas after the last item in arrays or objects
-- Ensure the JSON is complete and properly closed
+- "explanation" MUST be a concise string.
+- DO NOT add trailing commas.
+
+🔴 FORMATTING RULES (CRITICAL):
+1. **NO VISUAL REFERENCES**: Do NOT use words like "underlined", "bolded", "italicized".
+2. **USE CAPS INSTEAD**: If referring to a specific word, write it in CAPS or 'QUOTES'. 
 
 Generate ${count} multiple-choice questions based on the following PDF content:
 
@@ -156,33 +156,9 @@ PDF CONTENT:
 ${pdfText}
 """
 
-CRITICAL REQUIREMENTS:
-✅ Base ALL questions on concepts, facts, and information from the PDF content above
-✅ Each question MUST have exactly 4 options (A, B, C, D)
-✅ One option must be correct, three must be plausible but incorrect
-✅ Extract key concepts from the text to create meaningful questions
-✅ Test understanding, not just memorization
-
 ${userCommand ? `\nADDITIONAL INSTRUCTIONS: ${userCommand}\n` : ''}
 
-EXAMPLE FORMAT (YOU MUST FOLLOW THIS EXACTLY):
-[
-  {
-    "question": "What is the main topic discussed in the first section?",
-    "options": [
-      "A) Topic 1 from the PDF",
-      "B) Topic 2 from the PDF", 
-      "C) Topic 3 from the PDF",
-      "D) Topic 4 from the PDF"
-    ],
-    "correctAnswer": "B",
-    "explanation": "The PDF clearly states that Topic 2 is the main focus of the first section.",
-    "category": "${category}",
-    "difficulty": "Normal"
-  }
-]
-
-CRITICAL: Return ONLY the JSON array. No extra text before or after. No markdown code blocks.`;
+CRITICAL: Return ONLY the JSON array.`;
 
     const rawTextResponse = await callGeminiAPI(prompt, true);
     console.log('🔍 Raw AI Response (first 500 chars):', rawTextResponse.substring(0, 500));
@@ -195,40 +171,25 @@ CRITICAL: Return ONLY the JSON array. No extra text before or after. No markdown
     
     // ✅ VALIDATE: Ensure every question has proper structure
     const validatedQuestions = questions.map((q, idx) => {
-      // Check if options exist and are an array
-      if (!Array.isArray(q.options) || q.options.length !== 4) {
-        console.warn(`⚠️ Question ${idx + 1} has invalid options, fixing...`);
-        return {
-          question: q.question || `Question ${idx + 1}`,
-          options: ['A) Option 1', 'B) Option 2', 'C) Option 3', 'D) Option 4'],
-          correctAnswer: 'A',
-          explanation: q.explanation || 'No explanation provided',
-          category: category,
-          difficulty: q.difficulty || 'Normal'
-        };
-      }
+      let finalOptions = Array.isArray(q.options) && q.options.length === 4 
+          ? q.options 
+          : ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"];
 
-      // Ensure options have proper A), B), C), D) prefixes
-      const formattedOptions = q.options.map((opt, i) => {
+      const formattedOptions = finalOptions.map((opt, i) => {
         const prefix = ['A)', 'B)', 'C)', 'D)'][i];
-        if (!opt.startsWith(prefix)) {
-          return `${prefix} ${opt}`;
-        }
-        return opt;
+        let cleanOpt = opt.replace(/^[A-D]\)\s*/i, '').trim();
+        return `${prefix} ${cleanOpt}`;
       });
 
       return {
         question: q.question || `Question ${idx + 1}`,
         options: formattedOptions,
-        correctAnswer: q.correctAnswer || 'A',
-        explanation: q.explanation || 'No explanation provided',
-        category: q.category || category,
+        correctAnswer: q.correctAnswer ? q.correctAnswer.charAt(0).toUpperCase() : 'A',
+        explanation: q.explanation || 'See study materials.',
+        category: category,
         difficulty: q.difficulty || 'Normal'
       };
     });
-    
-    console.log(`✅ Successfully generated and validated ${validatedQuestions.length} questions from PDF`);
-    console.log('📋 Sample question:', JSON.stringify(validatedQuestions[0], null, 2));
     
     return validatedQuestions;
 
@@ -239,27 +200,38 @@ CRITICAL: Return ONLY the JSON array. No extra text before or after. No markdown
   }
 };
 
-// ==================== 1. GENERATE CSE PRACTICE QUESTIONS (WITH SUB-TOPIC & DUPLICATE PREVENTION) ====================
+// ==================== 1. GENERATE CSE PRACTICE QUESTIONS (BEST VERSION) ====================
 exports.generateQuestions = async (topic, difficulty, count = 5, avoidQuestions = [], subTopic = "") => {
   try {
-    const batchSize = Math.min(count, 20);
+    const batchSize = Math.min(count, 10);
     const batches = Math.ceil(count / batchSize);
     const allQuestions = [];
     
     for (let i = 0; i < batches; i++) {
       const questionsInBatch = i === batches - 1 ? count - (i * batchSize) : batchSize;
       
-      let prompt = `You are a system that generates exam questions. Your ONLY output must be a raw JSON array of objects.
+      // ✅ IMPROVEMENT: Strong Philippines Context + Visual Safety Rules
+      let prompt = `You are an expert exam question generator for the PHILIPPINES Civil Service Examination (CSE). 
+Your ONLY output must be a raw JSON array of objects.
 
 Each object must have these exact keys: "question", "options", "correctAnswer", "explanation".
-- "options" must be an array of 4 strings, starting with "A)", "B)", "C)", or "D)".
-- "correctAnswer" must be the correct letter (e.g., "C").
+- "options" must be an array of 4 strings.
+- "correctAnswer" must be the correct letter ONLY (e.g., "C").
 - "explanation" MUST be a concise, single-line string.
-- DO NOT add trailing commas after the last item in arrays or objects.
-- Ensure the JSON is complete and properly closed.
 
-Generate ${questionsInBatch} Civil Service Exam multiple-choice questions for the topic "${topic}" at "${difficulty}" difficulty.`;
+Generate ${questionsInBatch} multiple-choice questions for the topic "${topic}" at "${difficulty}" difficulty.
 
+🔴 FORMATTING RULES (CRITICAL):
+1. **NO VISUAL REFERENCES**: Do NOT use words like "underlined", "bolded", or "italicized". The user cannot see formatting.
+2. **USE CAPS INSTEAD**: If you need to highlight a word, write it in CAPITAL LETTERS or put it in 'SINGLE QUOTES'.
+
+🌍 CONTEXT RULES (CRITICAL):
+1. Philippine Constitution: Use the 1987 Constitution, Bill of Rights.
+2. General Information: Focus on RA 6713 (Code of Conduct), Peace & Human Rights, Phil. Environment laws.
+3. Numerical Ability: Use Philippine currency (Peso/PHP) and Metric system (meters/kg).
+4. Verbal Ability: Use formal English grammar standards relevant to the CSE.`;
+
+      // ✅ RESTORED: Your original, strong sub-topic instructions
       if (subTopic && subTopic.trim() !== "") {
         prompt += `\n\n🎯 SPECIFIC FOCUS: Your questions MUST be about "${subTopic}".
 Focus ONLY on this specific sub-topic within ${topic}. Do NOT generate general ${topic} questions.
@@ -268,37 +240,56 @@ Make sure every question directly relates to: ${subTopic}`;
       }
 
       if (avoidQuestions && avoidQuestions.length > 0) {
-        prompt += `\n\n🚫 CRITICAL INSTRUCTION - DO NOT REPEAT THESE QUESTIONS:
-The user has already answered these questions. You MUST generate COMPLETELY DIFFERENT questions:
-
-`;
+        prompt += `\n\n🚫 DO NOT REPEAT THESE QUESTIONS (Generate NEW content):\n`;
         avoidQuestions.slice(0, 10).forEach((q, idx) => {
           prompt += `${idx + 1}. ${q}\n`;
         });
-        
-        prompt += `\n✅ YOUR TASK: Generate ${questionsInBatch} NEW questions that are:
-- About DIFFERENT concepts/scenarios within "${subTopic || topic}"
-- NOT similar to any of the questions listed above
-- Unique and fresh content
-- Same difficulty level: "${difficulty}"`;
       }
 
-      prompt += `\n\nCRITICAL: Return ONLY valid JSON array. No extra text, no markdown, no explanations.`;
+      prompt += `\n\nCRITICAL: Return ONLY valid JSON array. No extra text.`;
 
-      console.log(`📝 Generating batch ${i + 1}/${batches}${subTopic ? ` (Sub-topic: ${subTopic})` : ''}`);
-      if (avoidQuestions.length > 0) {
-        console.log(`🚫 Avoiding ${avoidQuestions.length} previous questions`);
-      }
+      console.log(`📝 Generating batch ${i + 1}/${batches}${subTopic ? ` (Sub-topic: ${subTopic})` : ''} (Model: ${GEMINI_MODEL})`);
 
       const rawTextResponse = await callGeminiAPI(prompt, true);
       const batchQuestions = parseJsonFromAiResponse(rawTextResponse);
       
+      let rawList = [];
       if (Array.isArray(batchQuestions)) {
-        console.log(`✅ Batch ${i + 1}: Generated ${batchQuestions.length} new questions`);
-        allQuestions.push(...batchQuestions);
-      } else if (typeof batchQuestions === 'object') {
-        allQuestions.push(batchQuestions);
+        rawList = batchQuestions;
+      } else if (typeof batchQuestions === 'object' && batchQuestions !== null) {
+        rawList = [batchQuestions];
       }
+
+      // ✅ VALIDATION: Fix A) B) C) D) formatting and Answers
+      const validatedBatch = rawList.map((q, idx) => {
+        let finalOptions = Array.isArray(q.options) && q.options.length === 4 
+          ? q.options 
+          : ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"];
+
+        finalOptions = finalOptions.map((opt, k) => {
+          const prefix = ['A)', 'B)', 'C)', 'D)'][k];
+          let cleanOpt = opt.replace(/^[A-D]\)\s*/i, '').trim();
+          return `${prefix} ${cleanOpt}`;
+        });
+
+        let cleanAnswer = 'A';
+        if (q.correctAnswer) {
+          const match = q.correctAnswer.match(/[A-D]/i);
+          if (match) cleanAnswer = match[0].toUpperCase();
+        }
+
+        return {
+          question: q.question || `Question ${idx + 1}`,
+          options: finalOptions,
+          correctAnswer: cleanAnswer,
+          explanation: q.explanation || "See study materials for details.",
+          category: topic, 
+          difficulty: difficulty
+        };
+      });
+      
+      console.log(`✅ Batch ${i + 1}: Generated and Validated ${validatedBatch.length} questions`);
+      allQuestions.push(...validatedBatch);
     }
     
     return allQuestions;
@@ -319,7 +310,8 @@ Question: ${question}
 Student's Answer: ${studentAnswer}
 Correct Answer: ${correctAnswer}
 
-Provide a clear, friendly explanation of why the correct answer is right and any key concepts to remember. Keep it concise.`;
+Provide a clear, friendly explanation of why the correct answer is right and any key concepts to remember. Keep it concise.
+IMPORTANT: Respond in English unless the student asks in Tagalog.`;
 
     return await callGeminiAPI(prompt, false);
   } catch (error) {
@@ -337,7 +329,8 @@ exports.getStudyRecommendations = async (weakTopics, strongTopics, recentScores)
 - Strong Topics: ${strongTopics.join(', ') || 'None specified'}
 - Recent Scores: ${recentScores.join(', ') || 'None specified'}%
 
-Your response MUST be ONLY a single, raw JSON object with keys: "priorities" (array), "schedule" (object), "methods" (array), "tips" (array).`;
+Your response MUST be ONLY a single, raw JSON object with keys: "priorities" (array), "schedule" (object), "methods" (array), "tips" (array).
+IMPORTANT: The content inside the JSON must be in English.`;
 
     const rawTextResponse = await callGeminiAPI(prompt, true);
     return parseJsonFromAiResponse(rawTextResponse);
@@ -348,10 +341,12 @@ Your response MUST be ONLY a single, raw JSON object with keys: "priorities" (ar
   }
 };
 
-// ==================== 4. CHATBOT FOR CSE QUESTIONS (WITH ANALYTICS DATA) ====================
+// ==================== 4. CHATBOT FOR CSE QUESTIONS (ENGLISH DEFAULT) ====================
 exports.chatWithAI = async (userMessage, conversationHistory = [], userData = null) => {
   try {
     let systemContext = `You are a helpful and friendly Civil Service Exam tutor for the Philippines.
+
+🔴 LANGUAGE RULE: You must speak in ENGLISH by default. Only use Tagalog/Filipino if the user explicitly asks for it or speaks to you in Tagalog first.
 
 IMPORTANT STYLE RULE: You must write your entire response in short but concise straight to the point and complete, flowing paragraphs. Do NOT use any markdown like bullet points with asterisks (*) or lists with dashes (-). Structure your answer as a continuous, conversational block of text, as if you were speaking directly to the student.
 
@@ -407,12 +402,14 @@ DO NOT ask for more information - you have all the data you need above. Provide 
   }
 };
 
-// ==================== 5. HELP WITH SPECIFIC QUESTION ====================
+// ==================== 5. HELP WITH SPECIFIC QUESTION (ENGLISH DEFAULT) ====================
 exports.helpWithQuestion = async (questionData, userMessage = null) => {
   try {
     const { questionText, category, isCorrect, userAnswer, correctAnswer, explanation } = questionData;
     
     let contextPrompt = `You are a helpful Civil Service Exam tutor for the Philippines. A student needs help with this question.
+
+🔴 LANGUAGE RULE: Respond in ENGLISH. Only use Tagalog if the student explicitly requests it.
 
 IMPORTANT STYLE RULE: Write your entire response in short but concise straight to the point complete, flowing paragraphs. Do NOT use any markdown like bullet points with asterisks (*) or lists with dashes (-). Structure your answer as a continuous, conversational block of text, as if you were speaking directly to the student.
 
