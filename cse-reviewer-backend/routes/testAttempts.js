@@ -134,6 +134,7 @@ router.post('/', protect, async (req, res) => {
 
 // ==================== READ ====================
 
+// ✅ UPDATED: Can include deleted tests for analytics
 router.get('/', protect, async (req, res) => {
   try {
     const { 
@@ -142,10 +143,18 @@ router.get('/', protect, async (req, res) => {
       sortBy = 'completedAt', 
       sortOrder = 'desc',
       result,
-      isMockExam
+      isMockExam,
+      includeDeleted = false  // ✅ NEW: Allow including deleted for analytics
     } = req.query;
 
-    const where = { userId: req.user.id };
+    const where = { 
+      userId: req.user.id
+    };
+    
+    // ✅ Only filter deleted if not explicitly requesting them
+    if (includeDeleted !== 'true') {
+      where.isDeleted = false;
+    }
     
     if (result && result !== 'All') {
       where.result = result;
@@ -181,6 +190,7 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Stats include ALL tests (even deleted) for accuracy
 router.get('/stats/overview', protect, async (req, res) => {
   try {
     const { isMockExam } = req.query;
@@ -190,6 +200,7 @@ router.get('/stats/overview', protect, async (req, res) => {
       filter.isMockExam = true;
     }
     
+    // ✅ getUserStats includes deleted tests for accurate stats
     const stats = await TestAttempt.getUserStats(req.user.id, filter);
     res.json(stats);
 
@@ -199,22 +210,18 @@ router.get('/stats/overview', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Trend includes ALL tests for accuracy
 router.get('/stats/trend', protect, async (req, res) => {
   try {
     const { limit = 7, isMockExam } = req.query;
-    const where = { userId: req.user.id };
+    const filter = {};
 
     if (isMockExam === 'true') {
-      where.isMockExam = true;
+      filter.isMockExam = true;
     }
 
-    const trend = await TestAttempt.findAll({
-      where,
-      order: [['completedAt', 'DESC']],
-      limit: parseInt(limit),
-      attributes: ['name', 'score', 'completedAt', 'details']
-    });
-    
+    // ✅ getPerformanceTrend includes deleted tests
+    const trend = await TestAttempt.getPerformanceTrend(req.user.id, parseInt(limit), filter);
     res.json(trend);
 
   } catch (error) {
@@ -223,10 +230,12 @@ router.get('/stats/trend', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Section stats include ALL tests
 router.get('/stats/sections', protect, async (req, res) => {
   try {
     const { isMockExam } = req.query;
     const where = { userId: req.user.id };
+    // ✅ Include ALL tests for accurate section averages
 
     if (isMockExam === 'true') {
       where.isMockExam = true;
@@ -286,10 +295,12 @@ router.get('/stats/sections', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Question type stats include ALL tests
 router.get('/stats/question-types', protect, async (req, res) => {
   try {
     const { isMockExam } = req.query;
     const where = { userId: req.user.id };
+    // ✅ Include ALL tests for accurate question type averages
 
     if (isMockExam === 'true') {
       where.isMockExam = true;
@@ -329,8 +340,10 @@ router.get('/stats/question-types', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Only show bookmarks from non-deleted tests
 router.get('/bookmarks/all', protect, async (req, res) => {
   try {
+    // ✅ getAllBookmarks already filters out deleted tests
     const bookmarks = await TestAttempt.getAllBookmarks(req.user.id);
     res.json(bookmarks);
   } catch (error) {
@@ -342,7 +355,13 @@ router.get('/bookmarks/all', protect, async (req, res) => {
 router.get('/:id/bookmark/:questionIndex/status', protect, async (req, res) => {
   try {
     const { id, questionIndex } = req.params;
-    const attempt = await TestAttempt.findOne({ where: { id, userId: req.user.id } });
+    const attempt = await TestAttempt.findOne({ 
+      where: { 
+        id, 
+        userId: req.user.id,
+        isDeleted: false  // ✅ Only non-deleted
+      } 
+    });
     if (!attempt) return res.status(404).json({ error: 'Test attempt not found' });
     const question = attempt.questionResponses[parseInt(questionIndex)];
     if (!question) return res.status(404).json({ error: 'Question not found' });
@@ -357,7 +376,13 @@ router.post('/:id/bookmark/:questionIndex', protect, async (req, res) => {
   try {
     const { id, questionIndex } = req.params;
     const { note = '' } = req.body;
-    const attempt = await TestAttempt.findOne({ where: { id, userId: req.user.id } });
+    const attempt = await TestAttempt.findOne({ 
+      where: { 
+        id, 
+        userId: req.user.id,
+        isDeleted: false  // ✅ Only non-deleted
+      } 
+    });
     if (!attempt) return res.status(404).json({ error: 'Test attempt not found' });
     const result = await attempt.toggleBookmark(parseInt(questionIndex), note);
     res.json({ message: result.bookmarked ? 'Question bookmarked!' : 'Bookmark removed', bookmarked: result.bookmarked, note: result.note });
@@ -371,7 +396,13 @@ router.put('/:id/bookmark/:questionIndex/note', protect, async (req, res) => {
   try {
     const { id, questionIndex } = req.params;
     const { note } = req.body;
-    const attempt = await TestAttempt.findOne({ where: { id, userId: req.user.id } });
+    const attempt = await TestAttempt.findOne({ 
+      where: { 
+        id, 
+        userId: req.user.id,
+        isDeleted: false  // ✅ Only non-deleted
+      } 
+    });
     if (!attempt) return res.status(404).json({ error: 'Test attempt not found' });
     const qIndex = parseInt(questionIndex);
     const question = attempt.questionResponses[qIndex];
@@ -390,8 +421,10 @@ router.put('/:id/bookmark/:questionIndex/note', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Can review deleted tests
 router.get('/:id/review', protect, async (req, res) => {
   try {
+    // ✅ getTestForReview allows viewing deleted tests
     const reviewData = await TestAttempt.getTestForReview(req.params.id, req.user.id);
     if (!reviewData) return res.status(404).json({ error: 'Test attempt not found' });
     res.json(reviewData);
@@ -401,9 +434,16 @@ router.get('/:id/review', protect, async (req, res) => {
   }
 });
 
+// ✅ UPDATED: Can view deleted tests by ID
 router.get('/:id', protect, async (req, res) => {
   try {
-    const attempt = await TestAttempt.findOne({ where: { id: req.params.id, userId: req.user.id } });
+    // ✅ Allow viewing any test by ID (even deleted)
+    const attempt = await TestAttempt.findOne({ 
+      where: { 
+        id: req.params.id, 
+        userId: req.user.id 
+      } 
+    });
     if (!attempt) return res.status(404).json({ error: 'Test attempt not found' });
     res.json(attempt);
   } catch (error) {
@@ -412,25 +452,84 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// ==================== DELETE ====================
+// ==================== DELETE (NOW SOFT DELETE) ====================
+
+// ✅ NEW: Soft delete single test
 router.delete('/:id', protect, async (req, res) => {
   try {
-    const deleted = await TestAttempt.destroy({ where: { id: req.params.id, userId: req.user.id } });
-    if (!deleted) return res.status(404).json({ error: 'Test attempt not found' });
-    res.json({ message: 'Test attempt deleted successfully', deletedId: req.params.id });
+    const attempt = await TestAttempt.softDelete(
+      req.params.id, 
+      req.user.id, 
+      req.user.id  // deletedBy = current user
+    );
+    
+    res.json({ 
+      message: 'Test attempt removed from history', 
+      deletedId: req.params.id 
+    });
   } catch (error) {
+    if (error.message === 'Test attempt not found') {
+      return res.status(404).json({ error: 'Test attempt not found' });
+    }
     console.error('Error deleting test attempt:', error);
     res.status(500).json({ error: 'Failed to delete test attempt', details: error.message });
   }
 });
 
+// ✅ NEW: Soft delete all tests
 router.delete('/bulk/all', protect, async (req, res) => {
   try {
-    const deletedCount = await TestAttempt.destroy({ where: { userId: req.user.id } });
-    res.json({ message: `Deleted ${deletedCount} test attempts`, deletedCount });
+    const updated = await TestAttempt.update(
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: req.user.id
+      },
+      {
+        where: {
+          userId: req.user.id,
+          isDeleted: false  // Only delete non-deleted tests
+        }
+      }
+    );
+    
+    const deletedCount = updated[0];  // Sequelize returns [affectedCount]
+    
+    res.json({ 
+      message: `Removed ${deletedCount} test attempts from history`, 
+      deletedCount 
+    });
   } catch (error) {
     console.error('Error deleting test attempts:', error);
     res.status(500).json({ error: 'Failed to delete test attempts', details: error.message });
+  }
+});
+
+// ✅ NEW: Get deleted attempts (optional - for future "restore" feature)
+router.get('/deleted/list', protect, async (req, res) => {
+  try {
+    const deletedAttempts = await TestAttempt.getDeletedAttempts(req.user.id);
+    res.json(deletedAttempts);
+  } catch (error) {
+    console.error('Error fetching deleted attempts:', error);
+    res.status(500).json({ error: 'Failed to fetch deleted attempts', details: error.message });
+  }
+});
+
+// ✅ NEW: Restore deleted attempt (optional - for future feature)
+router.post('/:id/restore', protect, async (req, res) => {
+  try {
+    const restored = await TestAttempt.restore(req.params.id, req.user.id);
+    res.json({ 
+      message: 'Test attempt restored successfully', 
+      attempt: restored 
+    });
+  } catch (error) {
+    if (error.message === 'Deleted test attempt not found') {
+      return res.status(404).json({ error: 'Deleted test attempt not found' });
+    }
+    console.error('Error restoring test attempt:', error);
+    res.status(500).json({ error: 'Failed to restore test attempt', details: error.message });
   }
 });
 

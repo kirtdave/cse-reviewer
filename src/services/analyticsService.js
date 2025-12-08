@@ -10,7 +10,9 @@ const getAuthHeader = () => {
 // ==================== ANALYTICS DATA ====================
 
 /**
- * ✅ Get comprehensive analytics data, filtered for MOCK EXAMS ONLY.
+ * ✅ FIXED: Get comprehensive analytics data
+ * - ALL TESTS (including deleted) for stats, KPIs, speed, consistency, streak
+ * - VISIBLE TESTS ONLY for history display
  */
 export const getAnalyticsData = async () => {
   try {
@@ -22,19 +24,59 @@ export const getAnalyticsData = async () => {
       return getEmptyAnalyticsData();
     }
 
-    console.log('📊 Fetching analytics data for MOCK EXAMS only...');
+    console.log('📊 Fetching analytics data...');
+    console.log('   - ALL tests (including deleted) for accurate analytics');
+    console.log('   - Visible tests only for history display');
 
     const filterParams = { isMockExam: true };
 
-    // ✅ Fetch only what's needed (removed questionTypeStats)
-    const [stats, sectionStats, trend, recentAttempts] = await Promise.all([
+    // ✅ CRITICAL FIX: Fetch ALL data INCLUDING DELETED for accurate analytics
+    const [stats, sectionStats, trend, allMockAttempts, visibleMockAttempts, allAttemptsForStreak] = await Promise.all([
+      // Stats (already includes deleted) ✅
       axios.get(`${API_URL}/stats/overview`, { headers: getAuthHeader(), params: filterParams }),
       axios.get(`${API_URL}/stats/sections`, { headers: getAuthHeader(), params: filterParams }),
       axios.get(`${API_URL}/stats/trend`, { headers: getAuthHeader(), params: { ...filterParams, limit: 7 } }),
-      axios.get(`${API_URL}`, { headers: getAuthHeader(), params: { ...filterParams, page: 1, limit: 10, sortBy: 'completedAt', sortOrder: 'desc' } })
+      
+      // ✅ ALL MOCK EXAMS (including deleted) for time metrics
+      axios.get(`${API_URL}`, { 
+        headers: getAuthHeader(), 
+        params: { 
+          ...filterParams, 
+          includeDeleted: true,  // ✅ INCLUDE DELETED
+          page: 1, 
+          limit: 50, 
+          sortBy: 'completedAt', 
+          sortOrder: 'desc' 
+        } 
+      }),
+      
+      // ✅ VISIBLE MOCK EXAMS ONLY for display
+      axios.get(`${API_URL}`, { 
+        headers: getAuthHeader(), 
+        params: { 
+          ...filterParams, 
+          page: 1, 
+          limit: 10, 
+          sortBy: 'completedAt', 
+          sortOrder: 'desc' 
+        } 
+      }),
+      
+      // ✅ ALL TESTS (including deleted) for accurate streak
+      axios.get(`${API_URL}`, { 
+        headers: getAuthHeader(), 
+        params: { 
+          includeDeleted: true,  // ✅ INCLUDE DELETED
+          page: 1, 
+          limit: 50, 
+          sortBy: 'completedAt', 
+          sortOrder: 'desc' 
+        } 
+      })
     ]);
 
-    const timeMetrics = calculateTimeMetrics(recentAttempts.data.attempts);
+    // ✅ Calculate time metrics from ALL mock exams (including deleted)
+    const timeMetrics = calculateTimeMetrics(allMockAttempts.data.attempts);
 
     // ✅ Safely process section stats with fallback to empty array
     const sectionData = Array.isArray(sectionStats.data) ? sectionStats.data : [];
@@ -50,7 +92,7 @@ export const getAnalyticsData = async () => {
     };
 
     const analyticsData = {
-      // KPI Metrics
+      // KPI Metrics (INCLUDES ALL TESTS, even deleted)
       accuracy: Math.round(stats.data.averageScore || 0),
       avgScore: Math.round(stats.data.averageScore || 0),
       totalExams: stats.data.totalAttempts || 0,
@@ -59,10 +101,10 @@ export const getAnalyticsData = async () => {
       
       timeMetrics: timeMetrics,
       
-      // ✅ All 7 categories (used in Strengths & Weaknesses and Radar Chart)
+      // ✅ All 7 categories (INCLUDES ALL, even deleted)
       sections: sections,
       
-      // Performance Trend
+      // Performance Trend (MOCK EXAMS ONLY)
       trend: trend.data.map((item, index) => ({
         exam: `Mock ${index + 1}`,
         score: item.score,
@@ -75,8 +117,8 @@ export const getAnalyticsData = async () => {
         constitution: item.details?.sectionScores?.constitution || 0
       })),
       
-      // Recent Attempts
-      recentAttempts: recentAttempts.data.attempts.map(attempt => ({
+      // ✅ Recent Attempts (VISIBLE ONLY - for display)
+      recentAttempts: visibleMockAttempts.data.attempts.map(attempt => ({
         id: attempt.id,
         title: attempt.name,
         score: attempt.score,
@@ -87,11 +129,24 @@ export const getAnalyticsData = async () => {
         details: attempt.details
       })),
 
-      // ✅ ADD THESE THREE ARRAYS
+      // ✅ ALL ATTEMPTS (including deleted) for accurate streak calculation
+      allAttempts: allAttemptsForStreak.data.attempts.map(attempt => ({
+        id: attempt.id,
+        title: attempt.name,
+        score: attempt.score,
+        result: attempt.result,
+        date: new Date(attempt.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        completedAt: attempt.completedAt,
+        accuracy: `${attempt.details.totalQuestions > 0 ? Math.round((attempt.details.correctQuestions / attempt.details.totalQuestions) * 100) : 0}%`,
+        time: attempt.details.timeSpent,
+        details: attempt.details,
+        isMockExam: attempt.isMockExam || false,
+        isDeleted: attempt.isDeleted || false
+      })),
+
       recentFlashcardSessions: [],
       recentPractice: [],
       
-      // ✅ ADD THIS TOO - for category breakdown
       questionTypes: {
         multipleChoice: 0,
         essay: 0,
@@ -99,7 +154,11 @@ export const getAnalyticsData = async () => {
       }
     };
 
-    console.log('✅ Mock-exam-only analytics data loaded:', analyticsData);
+    console.log('✅ Analytics data loaded:');
+    console.log('   - All mock attempts (for metrics):', allMockAttempts.data.attempts.length);
+    console.log('   - Visible mock attempts (for display):', visibleMockAttempts.data.attempts.length);
+    console.log('   - All attempts for streak:', allAttemptsForStreak.data.attempts.length);
+    console.log('   - Time Metrics:', timeMetrics);
     return analyticsData;
 
   } catch (error) {
@@ -133,6 +192,7 @@ const getEmptyAnalyticsData = () => {
     },
     trend: [],
     recentAttempts: [],
+    allAttempts: [],
     recentFlashcardSessions: [],
     recentPractice: [],
     questionTypes: {
@@ -144,43 +204,90 @@ const getEmptyAnalyticsData = () => {
 };
 
 /**
- * Calculate time-based metrics using ACTUAL time spent
+ * ✅ Calculate time-based metrics using ACTUAL time spent
  */
 export const calculateTimeMetrics = (attempts) => {
+  console.log('🔍 Calculating time metrics for', attempts?.length || 0, 'attempts');
+  
   if (!attempts || attempts.length === 0) {
+    console.log('⚠️ No attempts found, returning zeros');
     return { avgTimePerQuestion: 0, consistency: 0, speedScore: 0 };
   }
 
   let totalTimeSeconds = 0;
   let totalQuestions = 0;
 
-  attempts.forEach((attempt) => {
-    if (attempt.details?.timeSpentSeconds !== undefined) {
-      totalTimeSeconds += attempt.details.timeSpentSeconds;
-    } else {
-      const timeStr = attempt.details?.timeSpent || '0 minutes';
+  attempts.forEach((attempt, index) => {
+    let attemptTimeSeconds = 0;
+    
+    if (attempt.details?.timeSpentSeconds !== undefined && attempt.details.timeSpentSeconds > 0) {
+      attemptTimeSeconds = attempt.details.timeSpentSeconds;
+    } else if (attempt.details?.timeSpent) {
+      const timeStr = attempt.details.timeSpent.toString();
       const minutes = parseInt(timeStr) || 0;
-      totalTimeSeconds += minutes * 60;
+      attemptTimeSeconds = minutes * 60;
     }
-    totalQuestions += attempt.details?.totalQuestions || 0;
+    
+    const questions = attempt.details?.totalQuestions || 0;
+    
+    console.log(`  📝 Attempt ${index + 1}:`, {
+      time: attemptTimeSeconds + 's',
+      questions: questions,
+      timePerQ: questions > 0 ? Math.round(attemptTimeSeconds / questions) + 's' : 'N/A',
+      isDeleted: attempt.isDeleted ? '🗑️ DELETED' : '✅'
+    });
+    
+    totalTimeSeconds += attemptTimeSeconds;
+    totalQuestions += questions;
   });
 
-  const avgTimePerQuestion = totalQuestions > 0 ? Math.round(totalTimeSeconds / totalQuestions) : 0;
+  const avgTimePerQuestion = totalQuestions > 0 
+    ? Math.round(totalTimeSeconds / totalQuestions) 
+    : 0;
 
-  const scores = attempts.map(a => a.score);
-  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / scores.length;
+  console.log('📊 Total time:', totalTimeSeconds + 's', '| Total questions:', totalQuestions);
+  console.log('⏱️  Average time per question:', avgTimePerQuestion + 's');
+
+  // Calculate consistency (based on score variance)
+  const scores = attempts.map(a => a.score || 0);
+  const avgScore = scores.length > 0 
+    ? scores.reduce((a, b) => a + b, 0) / scores.length 
+    : 0;
+  
+  const variance = scores.length > 0
+    ? scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / scores.length
+    : 0;
+  
   const stdDev = Math.sqrt(variance);
   const consistency = Math.max(0, Math.round(100 - stdDev));
 
-  let speedScore;
-  if (avgTimePerQuestion < 30) speedScore = 95;
-  else if (avgTimePerQuestion < 45) speedScore = 85;
-  else if (avgTimePerQuestion < 60) speedScore = 75;
-  else if (avgTimePerQuestion < 90) speedScore = 65;
-  else speedScore = 50;
+  console.log('📈 Consistency:', consistency, '(stdDev:', Math.round(stdDev) + ')');
 
-  return { avgTimePerQuestion, consistency, speedScore };
+  // Calculate speed score
+  let speedScore = 0;
+  
+  if (avgTimePerQuestion === 0) {
+    speedScore = 0;
+  } else if (avgTimePerQuestion < 30) {
+    speedScore = 95;
+  } else if (avgTimePerQuestion < 45) {
+    speedScore = 85;
+  } else if (avgTimePerQuestion < 60) {
+    speedScore = 75;
+  } else if (avgTimePerQuestion < 90) {
+    speedScore = 65;
+  } else {
+    speedScore = 50;
+  }
+
+  console.log('⚡ Speed score:', speedScore);
+  console.log('✅ Final metrics:', { avgTimePerQuestion, consistency, speedScore });
+
+  return { 
+    avgTimePerQuestion, 
+    consistency, 
+    speedScore 
+  };
 };
 
 /**
@@ -196,7 +303,6 @@ export const calculateStrengthsWeaknesses = (sectionStats) => {
     { label: 'Philippine Constitution', value: sectionStats.constitution || 0 }
   ];
 
-  // Show ALL 7 categories, even if score is 0
   return sections.map(section => ({
     ...section,
     type: section.value >= 75 ? 'strength' : section.value >= 60 ? 'neutral' : 'weakness',
@@ -209,13 +315,12 @@ export const calculateStrengthsWeaknesses = (sectionStats) => {
 };
 
 /**
- * ✅ Generate AI recommendations based on all 7 categories
+ * ✅ Generate AI recommendations
  */
 export const generateRecommendations = (analyticsData) => {
   const recommendations = [];
   const { sections, avgScore, totalExams, recentAttempts, timeMetrics } = analyticsData;
 
-  // Check all 7 sections
   const weakSections = [
     { name: 'Verbal Ability', score: sections.verbal, icon: 'fa-spell-check' },
     { name: 'Numerical Ability', score: sections.numerical, icon: 'fa-calculator' },
@@ -225,7 +330,6 @@ export const generateRecommendations = (analyticsData) => {
     { name: 'Philippine Constitution', score: sections.constitution, icon: 'fa-gavel' }
   ].filter(s => s.score > 0 && s.score < 75);
 
-  // Add recommendations for weak sections
   weakSections.slice(0, 1).forEach(section => {
     recommendations.push({
       icon: section.icon,
@@ -235,7 +339,6 @@ export const generateRecommendations = (analyticsData) => {
     });
   });
 
-  // Time management
   if (timeMetrics.avgTimePerQuestion > 60) {
     recommendations.push({
       icon: 'fa-clock',
@@ -252,7 +355,6 @@ export const generateRecommendations = (analyticsData) => {
     });
   }
 
-  // Practice frequency
   if (totalExams < 5) {
     recommendations.push({
       icon: 'fa-calendar',
@@ -262,7 +364,6 @@ export const generateRecommendations = (analyticsData) => {
     });
   }
 
-  // Error review
   if (recentAttempts.length > 0) {
     const totalErrors = recentAttempts.reduce((sum, a) => sum + (a.details?.incorrectQuestions || 0), 0);
     if (totalErrors > 0) {
@@ -275,7 +376,6 @@ export const generateRecommendations = (analyticsData) => {
     }
   }
 
-  // Progress prediction
   if (avgScore > 0 && totalExams >= 3) {
     const improvement = Math.min(10, Math.round(5 + (totalExams * 0.5)));
     recommendations.push({

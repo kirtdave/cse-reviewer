@@ -5,11 +5,18 @@ import { X, Loader2, Sparkles } from "lucide-react";
 export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsData }) {
   const isDark = theme === "dark";
   const [tips, setTips] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // ✅ Changed to false by default
+  const [useAI, setUseAI] = useState(false); // ✅ New state to track if AI should be used
 
   useEffect(() => {
     if (isOpen && analyticsData) {
-      generatePersonalizedTips();
+      // ✅ Show fallback tips immediately, try AI in background
+      setTips(getFallbackTips());
+      
+      // Try to get AI tips in background (don't block UI)
+      if (useAI) {
+        generatePersonalizedTips();
+      }
     }
   }, [isOpen, analyticsData]);
 
@@ -17,6 +24,10 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
+      
+      // ✅ Add timeout to prevent infinite loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
       const response = await fetch('http://localhost:5000/api/ai/chat', {
         method: 'POST',
@@ -34,20 +45,23 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
             timeMetrics: analyticsData.timeMetrics,
             recentAttempts: analyticsData.recentAttempts?.slice(0, 3)
           }
-        })
+        }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.response) {
         const parsedTips = parseAIResponse(data.response);
-        setTips(parsedTips);
-      } else {
-        setTips(getFallbackTips());
+        if (parsedTips.length > 0) {
+          setTips(parsedTips);
+        }
       }
     } catch (error) {
       console.error('Error generating tips:', error);
-      setTips(getFallbackTips());
+      // Keep fallback tips if AI fails
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +91,7 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
       }
     }
     
-    return tips.length > 0 ? tips.slice(0, 10) : getFallbackTips();
+    return tips.length > 0 ? tips.slice(0, 10) : [];
   };
 
   const getFallbackTips = () => {
@@ -100,6 +114,11 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
       { icon: "🏆", title: "Celebrate Progress", description: avgScore > 0 ? `You've improved to ${avgScore}% average! Keep up the momentum` : "Complete your first test to start tracking your progress" },
       { icon: "🔥", title: "Build Momentum", description: "Study at the same time each day. Consistency builds habits and improves retention by 80%" }
     ];
+  };
+
+  const handleRegenerateTips = () => {
+    setUseAI(true);
+    generatePersonalizedTips();
   };
 
   return (
@@ -139,40 +158,38 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12 sm:py-16 lg:py-20">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 text-purple-500 animate-spin mx-auto mb-3 sm:mb-4" />
-                    <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} px-4`}>
-                      AI is analyzing your performance to generate personalized tips...
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
-                  {tips.map((tip, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"} hover:shadow-lg transition-all`}
-                    >
-                      <div className="flex items-start gap-2 sm:gap-2.5 lg:gap-3">
-                        <span className="text-xl sm:text-2xl flex-shrink-0">{tip.icon}</span>
-                        <div className="min-w-0">
-                          <h4 className={`font-semibold text-xs sm:text-sm lg:text-base mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
-                            {tip.title}
-                          </h4>
-                          <p className={`text-[11px] sm:text-xs lg:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
-                            {tip.description}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+              {isLoading && (
+                <div className="flex items-center justify-center py-4 mb-4">
+                  <Loader2 className="w-6 h-6 text-purple-500 animate-spin mr-2" />
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    AI is generating personalized tips...
+                  </p>
                 </div>
               )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
+                {tips.map((tip, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"} hover:shadow-lg transition-all`}
+                  >
+                    <div className="flex items-start gap-2 sm:gap-2.5 lg:gap-3">
+                      <span className="text-xl sm:text-2xl flex-shrink-0">{tip.icon}</span>
+                      <div className="min-w-0">
+                        <h4 className={`font-semibold text-xs sm:text-sm lg:text-base mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                          {tip.title}
+                        </h4>
+                        <p className={`text-[11px] sm:text-xs lg:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
+                          {tip.description}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
 
             <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-3">
@@ -187,10 +204,18 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
                 Close
               </button>
               <button
-                onClick={generatePersonalizedTips}
-                className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all"
+                onClick={handleRegenerateTips}
+                disabled={isLoading}
+                className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Regenerate Tips
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  "Generate AI Tips"
+                )}
               </button>
             </div>
           </motion.div>

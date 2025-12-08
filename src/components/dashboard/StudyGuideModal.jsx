@@ -341,7 +341,7 @@ const guides = {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-20 sm:pt-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pt-20">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className={`${isDark ? "bg-gray-900" : "bg-white"} rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 max-w-4xl w-full shadow-2xl max-h-[85vh] overflow-hidden flex flex-col`}>
             <div className="flex items-center justify-between mb-4 sm:mb-5 lg:mb-6">
               <div className="flex items-center gap-2 sm:gap-2.5 lg:gap-3 min-w-0">
@@ -356,14 +356,28 @@ const guides = {
               <button onClick={onClose} className={`p-1.5 sm:p-2 rounded-lg ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"} transition-colors flex-shrink-0`}><X className="w-4 h-4 sm:w-5 sm:h-5" /></button>
             </div>
 
-            <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-5 lg:mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+            <div className={`flex gap-0 mb-4 sm:mb-5 lg:mb-6 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all relative whitespace-nowrap ${activeTab === tab.id ? `${isDark ? "text-orange-400" : "text-orange-600"}` : `${isDark ? "text-gray-400 hover:text-gray-300" : "text-gray-600 hover:text-gray-800"}`}`}>
-                    <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <button 
+                    key={tab.id} 
+                    onClick={() => setActiveTab(tab.id)} 
+                    className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 lg:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all relative whitespace-nowrap flex-1 ${
+                      activeTab === tab.id 
+                        ? `${isDark ? "text-orange-400" : "text-orange-600"}` 
+                        : `${isDark ? "text-gray-400 hover:text-gray-300" : "text-gray-600 hover:text-gray-800"}`
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
                     <span>{tab.label}</span>
-                    {activeTab === tab.id && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-red-500" />}
+                    {activeTab === tab.id && (
+                      <motion.div 
+                        layoutId="activeTab" 
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-red-500" 
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
                   </button>
                 );
               })}

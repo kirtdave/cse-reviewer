@@ -1,12 +1,8 @@
-// services/aiService.js - FINAL PRODUCTION VERSION (ENGLISH DEFAULT)
+// services/aiService.js - OPTIMIZED FOR SPEED
 const axios = require('axios');
 
 // ==================== ⚙️ MODEL CONFIGURATION ====================
-// OPTION 1: The Newest/Fastest (Based on your list)
 const GEMINI_MODEL = "gemini-2.5-flash"; 
-
-// OPTION 2: The Old Reliable (Use this if Option 1 gives 404 or 503 errors)
-// const GEMINI_MODEL = "gemini-pro"; 
 
 // ==================== RETRY LOGIC ====================
 async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
@@ -44,13 +40,12 @@ async function callGeminiAPI(prompt, expectJson = false) {
       };
     }
 
-    // ✅ Uses the GEMINI_MODEL constant defined at the top
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       requestBody,
       {
         headers: { "Content-Type": "application/json" },
-        timeout: 45000 
+        timeout: 30000 // ✅ Reduced from 45s to 30s
       }
     );
 
@@ -64,11 +59,10 @@ async function callGeminiAPI(prompt, expectJson = false) {
   };
 
   try {
-    return await retryWithBackoff(makeRequest, 3, 2000);
+    return await retryWithBackoff(makeRequest, 2, 1500); // ✅ Reduced retries from 3 to 2
   } catch (error) {
     console.error('❌ Gemini API Error:', error.response?.data || error.message);
     
-    // Check for Model Not Found
     if (error.response?.status === 404) {
       throw new Error(`AI_MODEL_ERROR: The model '${GEMINI_MODEL}' was not found. Try switching to 'gemini-pro' in aiService.js`);
     }
@@ -169,7 +163,6 @@ CRITICAL: Return ONLY the JSON array.`;
       throw new Error('AI generated no valid questions from PDF');
     }
     
-    // ✅ VALIDATE: Ensure every question has proper structure
     const validatedQuestions = questions.map((q, idx) => {
       let finalOptions = Array.isArray(q.options) && q.options.length === 4 
           ? q.options 
@@ -200,7 +193,7 @@ CRITICAL: Return ONLY the JSON array.`;
   }
 };
 
-// ==================== 1. GENERATE CSE PRACTICE QUESTIONS (UPDATED CONTEXT) ====================
+// ==================== 1. GENERATE CSE PRACTICE QUESTIONS ====================
 exports.generateQuestions = async (topic, difficulty, count = 5, avoidQuestions = [], subTopic = "") => {
   try {
     const batchSize = Math.min(count, 10);
@@ -210,7 +203,6 @@ exports.generateQuestions = async (topic, difficulty, count = 5, avoidQuestions 
     for (let i = 0; i < batches; i++) {
       const questionsInBatch = i === batches - 1 ? count - (i * batchSize) : batchSize;
       
-      // ✅ IMPROVEMENT: Strong Philippines Context + Visual Safety Rules
       let prompt = `You are an expert exam question generator for the PHILIPPINES Civil Service Examination (CSE). 
 Your ONLY output must be a raw JSON array of objects.
 
@@ -233,7 +225,6 @@ Generate ${questionsInBatch} multiple-choice questions for the topic "${topic}" 
 5. **Analytical Ability**: Focus on Logic, Assumptions, Data Sufficiency, and Word Association.
 6. **Clerical Ability**: Focus on Alphabetical Filing Rules, Spelling, and Data Checking (Sub-Professional Level).`;
 
-      // 🎯 SUB-TOPIC LOGIC: This captures the data sent from your Study Guide
       if (subTopic && subTopic.trim() !== "") {
         prompt += `\n\n🎯 SPECIFIC FOCUS: Your questions MUST be about "${subTopic}".
 Focus ONLY on this specific sub-topic within ${topic}. Do NOT generate general ${topic} questions.
@@ -262,7 +253,6 @@ Make sure every question directly relates to: ${subTopic}`;
         rawList = [batchQuestions];
       }
 
-      // ✅ VALIDATION: Fix A) B) C) D) formatting and Answers
       const validatedBatch = rawList.map((q, idx) => {
         let finalOptions = Array.isArray(q.options) && q.options.length === 4 
           ? q.options 
@@ -281,7 +271,7 @@ Make sure every question directly relates to: ${subTopic}`;
         }
 
         return {
-          question: q.question || `Question ${idx + 1}`,
+          question: q.question || `Question ${i + 1}`,
           options: finalOptions,
           correctAnswer: cleanAnswer,
           explanation: q.explanation || "See study materials for details.",
@@ -343,9 +333,12 @@ IMPORTANT: The content inside the JSON must be in English.`;
   }
 };
 
-// ==================== 4. CHATBOT FOR CSE QUESTIONS (ENGLISH DEFAULT) ====================
+// ==================== 4. CHATBOT FOR CSE QUESTIONS - ✅ OPTIMIZED ====================
 exports.chatWithAI = async (userMessage, conversationHistory = [], userData = null) => {
   try {
+    // ✅ LIMIT conversation history to last 3 messages to reduce prompt size
+    const recentHistory = conversationHistory.slice(-3);
+    
     let systemContext = `You are a helpful and friendly Civil Service Exam tutor for the Philippines.
 
 🔴 LANGUAGE RULE: You must speak in ENGLISH by default. Only use Tagalog/Filipino if the user explicitly asks for it or speaks to you in Tagalog first.
@@ -354,46 +347,38 @@ IMPORTANT STYLE RULE: You must write your entire response in short but concise s
 
 Answer questions about exam topics, study tips, and exam procedures. Be clear and educational.`;
 
-    if (userData && userData.avgScore !== undefined) {
-      systemContext += `\n\n📊 STUDENT PERFORMANCE DATA (Use this to provide personalized insights):
-- Average Score: ${userData.avgScore}%
-- Total Mock Exams Taken: ${userData.totalExams}
-- Section Performance:
-  * Verbal Ability: ${userData.sections?.verbal || 0}%
-  * Numerical Ability: ${userData.sections?.numerical || 0}%
-  * Analytical Ability: ${userData.sections?.analytical || 0}%
-  * General Knowledge: ${userData.sections?.generalInfo || 0}%
-  * Clerical Ability: ${userData.sections?.clerical || 0}%
-  * Philippine Constitution: ${userData.sections?.constitution || 0}%
-- Time Performance:
-  * Average Time per Question: ${userData.timeMetrics?.avgTimePerQuestion || 0} seconds
-  * Consistency Score: ${userData.timeMetrics?.consistency || 0}%
-  * Speed Score: ${userData.timeMetrics?.speedScore || 0}%`;
-
-      if (userData.recentAttempts && userData.recentAttempts.length > 0) {
-        systemContext += `\n- Recent Test Results:`;
-        userData.recentAttempts.slice(0, 3).forEach((attempt, idx) => {
-          systemContext += `\n  ${idx + 1}. ${attempt.title}: ${attempt.score}% (${attempt.result})`;
-        });
+    // ✅ SIMPLIFIED userData section - only include if relevant
+    if (userData && (userData.avgScore !== undefined || userData.totalExams > 0)) {
+      systemContext += `\n\n📊 STUDENT PERFORMANCE:`;
+      systemContext += `\n- Average Score: ${userData.avgScore}%`;
+      systemContext += `\n- Total Tests: ${userData.totalExams}`;
+      
+      // Only include sections if they exist and have data
+      if (userData.sections && Object.keys(userData.sections).length > 0) {
+        const weakSections = Object.entries(userData.sections)
+          .filter(([_, score]) => score > 0 && score < 65)
+          .map(([name, score]) => `${name} (${score}%)`)
+          .slice(0, 3); // Only top 3 weak areas
+        
+        if (weakSections.length > 0) {
+          systemContext += `\n- Weak Areas: ${weakSections.join(', ')}`;
+        }
       }
 
-      systemContext += `\n\n🎯 WHEN THE STUDENT ASKS ABOUT THEIR PROGRESS:
-- Analyze the data above
-- Identify specific strengths (sections with 75%+)
-- Identify weaknesses (sections below 65%)
-- Give concrete, actionable recommendations
-- Mention their overall average (${userData.avgScore}%)
-- Comment on time management if relevant
-- Be encouraging but honest
-
-DO NOT ask for more information - you have all the data you need above. Provide a complete analysis based on this data.`;
+      // ✅ REMOVED: timeMetrics and recentAttempts to reduce prompt size
+      // These can be added back if specifically asked by user
     }
 
     let fullPrompt = systemContext + "\n\n";
-    conversationHistory.forEach(msg => {
+    
+    // ✅ Only include recent conversation history
+    recentHistory.forEach(msg => {
       fullPrompt += `${msg.role === 'user' ? 'Student' : 'Tutor'}: ${msg.content}\n`;
     });
+    
     fullPrompt += `Student: ${userMessage}\nTutor:`;
+
+    console.log(`📝 Chat prompt size: ${fullPrompt.length} characters`);
 
     const response = await callGeminiAPI(fullPrompt, false);
     return response;
@@ -404,7 +389,7 @@ DO NOT ask for more information - you have all the data you need above. Provide 
   }
 };
 
-// ==================== 5. HELP WITH SPECIFIC QUESTION (ENGLISH DEFAULT) ====================
+// ==================== 5. HELP WITH SPECIFIC QUESTION ====================
 exports.helpWithQuestion = async (questionData, userMessage = null) => {
   try {
     const { questionText, category, isCorrect, userAnswer, correctAnswer, explanation } = questionData;
@@ -449,7 +434,7 @@ Student's Answer: ${isCorrect ? 'Correct ✓' : 'Wrong ✗'}`;
   }
 };
 
-// ==================== 6. GENERATE ANSWER CHOICES - FORCED RANDOMIZATION ====================
+// ==================== 6. GENERATE ANSWER CHOICES ====================
 exports.generateAnswerChoices = async (questionText, category) => {
   try {
     const prompt = `You are generating multiple choice answers for a Civil Service Exam question.
@@ -500,7 +485,6 @@ Generate now.`;
       throw new Error('AI did not provide correct answer and 3 wrong answers');
     }
 
-    // ✅ FORCE RANDOMIZATION
     const positions = ['A', 'B', 'C', 'D'];
     const correctPosition = positions[Math.floor(Math.random() * 4)];
     const correctIndex = correctPosition.charCodeAt(0) - 65;

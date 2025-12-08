@@ -61,7 +61,7 @@ export function StudyScheduleModal({ isOpen, onClose, theme = "light", weakTopic
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-20 sm:pt-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pt-20">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -163,20 +163,33 @@ export function StudyScheduleModal({ isOpen, onClose, theme = "light", weakTopic
   );
 }
 
-// ========== AI STUDY TIPS MODAL ==========
+// ========== AI STUDY TIPS MODAL - ✅ FIXED ABORT ERROR ==========
 export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsData }) {
   const isDark = theme === "dark";
   const [tips, setTips] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [useAI, setUseAI] = useState(false);
 
   useEffect(() => {
     if (isOpen && analyticsData) {
-      generatePersonalizedTips();
+      // ✅ Show fallback tips immediately, DON'T call AI automatically
+      setTips(getFallbackTips());
     }
   }, [isOpen, analyticsData]);
 
   const generatePersonalizedTips = async () => {
+    // ✅ Safety check: Don't call API if analyticsData is missing
+    if (!analyticsData) {
+      console.error('No analytics data available');
+      return;
+    }
+
     setIsLoading(true);
+    
+    // ✅ CRITICAL FIX: Declare controller and timeoutId in outer scope
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     try {
       const token = localStorage.getItem('token');
       
@@ -190,28 +203,42 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
           message: "Generate 10 personalized study tips for me based on my performance data. Format each tip as: ICON|TITLE|DESCRIPTION (e.g., 📚|Review Mistakes|Focus on your 15 recent errors in Numerical Ability). Be specific and actionable.",
           conversationHistory: [],
           userData: {
-            avgScore: analyticsData.avgScore,
-            totalExams: analyticsData.totalExams,
-            sections: analyticsData.sections,
-            timeMetrics: analyticsData.timeMetrics,
-            recentAttempts: analyticsData.recentAttempts?.slice(0, 3)
+            avgScore: analyticsData?.avgScore || 0,
+            totalExams: analyticsData?.totalExams || 0,
+            sections: analyticsData?.sections || {},
+            timeMetrics: analyticsData?.timeMetrics || {},
+            recentAttempts: analyticsData?.recentAttempts?.slice(0, 3) || []
           }
-        })
+        }),
+        signal: controller.signal
       });
+
+      // ✅ CRITICAL FIX: Clear timeout immediately after successful response
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.response) {
         const parsedTips = parseAIResponse(data.response);
-        setTips(parsedTips);
-      } else {
-        setTips(getFallbackTips());
+        if (parsedTips.length > 0) {
+          setTips(parsedTips);
+        }
       }
     } catch (error) {
+      // ✅ CRITICAL FIX: Clear timeout in catch block too
+      clearTimeout(timeoutId);
+      
       console.error('Error generating tips:', error);
-      setTips(getFallbackTips());
+      
+      // ✅ Show user-friendly error message
+      if (error.message?.includes('AI_OVERLOAD') || error.message?.includes('quota')) {
+        alert('⚠️ AI quota exceeded. Please wait a minute and try again.\n\nThe tips shown are already personalized based on your performance data!');
+      }
+      
+      // Keep fallback tips if AI fails
     } finally {
       setIsLoading(false);
+      setUseAI(false); // ✅ Reset AI flag
     }
   };
 
@@ -239,7 +266,7 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
       }
     }
     
-    return tips.length > 0 ? tips.slice(0, 10) : getFallbackTips();
+    return tips.length > 0 ? tips.slice(0, 10) : [];
   };
 
   const getFallbackTips = () => {
@@ -264,10 +291,15 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
     ];
   };
 
+  const handleRegenerateTips = async () => {
+    setUseAI(true);
+    await generatePersonalizedTips();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pt-20 sm:pt-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pt-20">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -301,40 +333,46 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12 sm:py-16 lg:py-20">
-                  <div className="text-center">
-                    <Loader2 className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 text-purple-500 animate-spin mx-auto mb-3 sm:mb-4" />
-                    <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} px-4`}>
-                      AI is analyzing your performance to generate personalized tips...
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
-                  {tips.map((tip, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"} hover:shadow-lg transition-all`}
-                    >
-                      <div className="flex items-start gap-2 sm:gap-2.5 lg:gap-3">
-                        <span className="text-xl sm:text-2xl flex-shrink-0">{tip.icon}</span>
-                        <div className="min-w-0">
-                          <h4 className={`font-semibold text-xs sm:text-sm lg:text-base mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
-                            {tip.title}
-                          </h4>
-                          <p className={`text-[11px] sm:text-xs lg:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
-                            {tip.description}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+              {isLoading && (
+                <div className="flex items-center justify-center py-4 mb-4">
+                  <Loader2 className="w-6 h-6 text-purple-500 animate-spin mr-2" />
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    AI is generating personalized tips...
+                  </p>
                 </div>
               )}
+              
+              {!isLoading && !useAI && (
+                <div className={`mb-4 p-3 rounded-lg ${isDark ? "bg-blue-500/10 border border-blue-500/20" : "bg-blue-50 border border-blue-200"}`}>
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-blue-300" : "text-blue-700"}`}>
+                    💡 <span className="font-semibold">Smart Tips Ready!</span> These are personalized based on your test performance. Click "Generate AI Tips" below for even more specific recommendations.
+                  </p>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
+                {tips.map((tip, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`p-3 sm:p-3.5 lg:p-4 rounded-lg lg:rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"} border ${isDark ? "border-gray-700" : "border-gray-200"} hover:shadow-lg transition-all`}
+                  >
+                    <div className="flex items-start gap-2 sm:gap-2.5 lg:gap-3">
+                      <span className="text-xl sm:text-2xl flex-shrink-0">{tip.icon}</span>
+                      <div className="min-w-0">
+                        <h4 className={`font-semibold text-xs sm:text-sm lg:text-base mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                          {tip.title}
+                        </h4>
+                        <p className={`text-[11px] sm:text-xs lg:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
+                          {tip.description}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
 
             <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-3">
@@ -349,10 +387,21 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
                 Close
               </button>
               <button
-                onClick={generatePersonalizedTips}
-                className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all"
+                onClick={handleRegenerateTips}
+                disabled={isLoading}
+                className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Regenerate Tips
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Generate AI Tips</span>
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
@@ -363,5 +412,4 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
 }
 
 // ========== STUDY GUIDE MODAL ==========
-// Import from separate file
 export { StudyGuideModal } from './StudyGuideModal';

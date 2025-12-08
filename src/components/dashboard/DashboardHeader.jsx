@@ -22,6 +22,18 @@ const DashboardHeader = ({
   const handleAskAI = async () => {
     if (!userInput.trim() || isLoading) return;
 
+    // ✅ CHECK: Don't allow AI chat if user is not logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+      setChatMessages(prev => [...prev, 
+        { role: "user", content: userInput },
+        { role: "assistant", content: "Please log in to use the AI Coach feature. Create an account or sign in to get personalized study recommendations!" }
+      ]);
+      setUserInput("");
+      return;
+    }
+
     const newMessage = { role: "user", content: userInput };
     setChatMessages(prev => [...prev, newMessage]);
     setUserInput("");
@@ -74,6 +86,17 @@ const DashboardHeader = ({
   };
 
   const handleSuggestionClick = (suggestionText) => {
+    // ✅ CHECK: Don't allow AI chat if user is not logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+      setChatMessages([
+        { role: "user", content: suggestionText },
+        { role: "assistant", content: "Please log in to use the AI Coach feature. Create an account or sign in to get personalized study recommendations and progress analysis!" }
+      ]);
+      return;
+    }
+
     setUserInput(suggestionText);
     if (suggestionText === "Analyze my progress") {
       setTimeout(() => {

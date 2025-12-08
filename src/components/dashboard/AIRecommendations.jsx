@@ -8,14 +8,16 @@ export function SmartRecommendations({ theme = "light", data }) {
   const isDark = theme === "dark";
   const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // ✅ Changed to false - don't load on mount
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showTipsModal, setShowTipsModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
 
   useEffect(() => {
     if (data) {
-      fetchRecommendations();
+      // ✅ CRITICAL FIX: Show default recommendations immediately, DON'T call AI automatically
+      setRecommendations(getDefaultRecommendations());
+      // User can click "Refresh" button to get AI recommendations if they want
     }
   }, [data]);
 
@@ -28,7 +30,6 @@ export function SmartRecommendations({ theme = "light", data }) {
       { name: "Analytical Ability", score: data.sections.analytical || 0 },
       { name: "General Knowledge", score: data.sections.generalInfo || 0 },
       { name: "Clerical Ability", score: data.sections.clerical || 0 },
-      { name: "Numerical Reasoning", score: data.sections.numericalReasoning || 0 },
       { name: "Philippine Constitution", score: data.sections.constitution || 0 },
     ];
 
@@ -48,7 +49,6 @@ export function SmartRecommendations({ theme = "light", data }) {
       { name: "Analytical Ability", score: data.sections.analytical || 0 },
       { name: "General Knowledge", score: data.sections.generalInfo || 0 },
       { name: "Clerical Ability", score: data.sections.clerical || 0 },
-      { name: "Numerical Reasoning", score: data.sections.numericalReasoning || 0 },
       { name: "Philippine Constitution", score: data.sections.constitution || 0 },
     ];
 
@@ -69,30 +69,14 @@ export function SmartRecommendations({ theme = "light", data }) {
       case "Start Practice":
         navigate('/test');
         break;
-      case "Take a Test":
-        navigate('/test');
-        break;
       case "Schedule Tests":
         setShowScheduleModal(true);
         break;
-      case "Review Errors":
-        navigate('/history');
-        break;
-      case "View Guide":
       case "Study Guide":
         setShowGuideModal(true);
         break;
-      case "View Forecast":
-        const forecastSection = document.querySelector('[data-section="forecast"]');
-        if (forecastSection) {
-          forecastSection.scrollIntoView({ behavior: 'smooth' });
-        }
-        break;
-      case "View All Tips":
+      case "View Tips":
         setShowTipsModal(true);
-        break;
-      case "Get Started":
-        navigate('/test-setup');
         break;
       default:
         console.log('Action:', action);
@@ -101,6 +85,7 @@ export function SmartRecommendations({ theme = "light", data }) {
 
   const fetchRecommendations = async () => {
     try {
+      setIsLoading(true);
       const token = localStorage.getItem('token');
       
       const weakTopics = getWeakTopics();
@@ -112,6 +97,8 @@ export function SmartRecommendations({ theme = "light", data }) {
         setIsLoading(false);
         return;
       }
+
+      console.log('🤖 Fetching AI recommendations...');
 
       const response = await fetch('http://localhost:5000/api/ai/recommendations', {
         method: 'POST',
@@ -171,15 +158,22 @@ export function SmartRecommendations({ theme = "light", data }) {
             icon: "📈",
             title: "Motivation",
             description: responseData.recommendations.tips[0] || "Stay consistent!",
-            action: "View All Tips",
+            action: "View Tips",
             color: "from-purple-500 to-pink-500",
             confidence: "Keep Going"
           },
         ];
         setRecommendations(formattedRecs);
+        console.log('✅ AI recommendations loaded successfully');
       }
     } catch (error) {
       console.error('Failed to fetch recommendations:', error);
+      
+      // ✅ Show user-friendly error for quota exceeded
+      if (error.message?.includes('AI_OVERLOAD') || error.message?.includes('quota')) {
+        alert('⚠️ AI quota exceeded. Please wait a minute and try again, or use the default recommendations below.');
+      }
+      
       setRecommendations(getDefaultRecommendations());
     } finally {
       setIsLoading(false);
@@ -201,7 +195,7 @@ export function SmartRecommendations({ theme = "light", data }) {
         description: hasData 
           ? `${weakestTopic} – needs more practice based on your recent tests`
           : "Complete your first test to get personalized recommendations",
-        action: hasData ? "Start Practice" : "Take a Test",
+        action: "Start Practice",
         color: "from-blue-500 to-purple-500",
         confidence: hasData ? "High Priority" : "Get Started"
       },
@@ -221,19 +215,19 @@ export function SmartRecommendations({ theme = "light", data }) {
         description: hasData
           ? `Review your mistakes in ${weakestTopic} to strengthen fundamentals`
           : "Focus on understanding concepts before taking timed tests",
-        action: hasData ? "Review Errors" : "Study Guide",
+        action: "Study Guide",
         color: "from-orange-500 to-red-500",
         confidence: hasData ? `${totalExams} Tests` : "Begin Learning"
       },
       {
         icon: "📈",
-        title: "Progress Insight",
+        title: "Motivation",
         description: hasData
-          ? `Current average: ${avgScore}% – AI predicts +5% improvement with consistent practice`
+          ? `Current average: ${avgScore}% – Keep consistent practice to improve by 5-10%`
           : "Track your progress with regular practice tests",
-        action: hasData ? "View Forecast" : "Get Started",
+        action: "View Tips",
         color: "from-purple-500 to-pink-500",
-        confidence: hasData ? "AI Prediction" : "Start Journey"
+        confidence: hasData ? "Keep Going" : "Get Started"
       },
     ];
   };
@@ -276,7 +270,7 @@ export function SmartRecommendations({ theme = "light", data }) {
             onClick={fetchRecommendations}
             className={`px-2 py-1 sm:px-2.5 sm:py-1.5 lg:px-3 lg:py-1.5 rounded-md lg:rounded-lg text-[10px] sm:text-xs font-medium ${isDark ? "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30" : "bg-purple-100 text-purple-700 hover:bg-purple-200"} transition-colors flex-shrink-0`}
           >
-            Refresh
+            🤖 AI
           </button>
         </div>
 
@@ -330,6 +324,7 @@ export function SmartRecommendations({ theme = "light", data }) {
         isOpen={showTipsModal} 
         onClose={() => setShowTipsModal(false)} 
         theme={theme}
+        analyticsData={data}
       />
       <StudyGuideModal 
         isOpen={showGuideModal} 

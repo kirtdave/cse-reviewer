@@ -153,23 +153,15 @@ exports.getRecommendations = async (req, res) => {
 };
 
 
-// ==================== 6. CHAT WITH AI (UPDATED) ====================
+// ==================== 6. CHAT WITH AI (FIXED WITH TIMEOUT & BETTER ERROR HANDLING) ====================
 exports.chat = async (req, res) => {
   try {
     const { message, conversationHistory = [], questionData, userData } = req.body;
 
-    // ✅ DEBUG: Log what we received
     console.log('=== AI CHAT REQUEST ===');
-    console.log('Message:', message);
-    console.log('userData received?', !!userData);
-    if (userData) {
-      console.log('userData.avgScore:', userData.avgScore);
-      console.log('userData.totalExams:', userData.totalExams);
-      console.log('userData.sections:', userData.sections);
-    } else {
-      console.log('⚠️ NO userData in request body!');
-      console.log('Request body keys:', Object.keys(req.body));
-    }
+    console.log('Message:', message?.substring(0, 100) + '...');
+    console.log('Has userData?', !!userData);
+    console.log('Has questionData?', !!questionData);
 
     if (!message) {
       return res.status(400).json({ 
@@ -178,22 +170,41 @@ exports.chat = async (req, res) => {
       });
     }
 
+    // ✅ ADD TIMEOUT - Prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI_TIMEOUT: AI service took too long to respond (30s timeout)')), 30000);
+    });
+
     let response;
 
     // If questionData is provided, use question-specific help
     if (questionData && questionData.questionText) {
-      // Check if helpWithQuestion exists in aiService
+      console.log('📝 Using question-specific help...');
+      
       if (typeof aiService.helpWithQuestion === 'function') {
-        response = await aiService.helpWithQuestion(questionData, message);
+        const aiPromise = aiService.helpWithQuestion(questionData, message);
+        response = await Promise.race([aiPromise, timeoutPromise]);
       } else {
         // Fallback: Use regular chat with context
         const contextMessage = `Help me understand this question:\n\nQuestion: ${questionData.questionText}\nCategory: ${questionData.category}\nStudent's Answer: ${questionData.isCorrect ? 'Correct' : 'Wrong'}\n\nStudent asks: ${message}`;
-        response = await aiService.chatWithAI(contextMessage, conversationHistory, userData);
+        const aiPromise = aiService.chatWithAI(contextMessage, conversationHistory, userData);
+        response = await Promise.race([aiPromise, timeoutPromise]);
       }
     } else {
-      // ✅ PASS userData TO chatWithAI
-      response = await aiService.chatWithAI(message, conversationHistory, userData);
+      console.log('💬 Using general chat...');
+      
+      // ✅ CRITICAL FIX: Check if chatWithAI exists
+      if (typeof aiService.chatWithAI !== 'function') {
+        console.error('❌ aiService.chatWithAI is not a function!');
+        throw new Error('AI_GENERIC_ERROR: Chat service is not properly configured');
+      }
+
+      // ✅ Add timeout protection
+      const aiPromise = aiService.chatWithAI(message, conversationHistory, userData);
+      response = await Promise.race([aiPromise, timeoutPromise]);
     }
+
+    console.log('✅ AI response received:', response?.substring(0, 100) + '...');
 
     // ✅ Track successful chat
     await trackAIUsage(req.user.id, 0, true);
@@ -204,10 +215,24 @@ exports.chat = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('AI Chat error:', error);
+    console.error('❌ AI Chat error:', error.message);
+    console.error('Stack:', error.stack);
     
     // ✅ Track failed chat
-    await trackAIUsage(req.user.id, 0, false);
+    try {
+      await trackAIUsage(req.user.id, 0, false);
+    } catch (trackError) {
+      console.error('Failed to track error:', trackError);
+    }
+    
+    // ✅ Handle timeout specifically
+    if (error.message.includes('AI_TIMEOUT')) {
+      return res.status(504).json({
+        success: false,
+        message: 'The AI service is taking too long to respond. Please try again.',
+        type: 'TIMEOUT_ERROR'
+      });
+    }
     
     handleAiError(res, error);
   }

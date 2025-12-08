@@ -1,4 +1,8 @@
-// models/TestAttempt.js
+// ================================
+// FILE 1: models/TestAttempt.js
+// REPLACE YOUR ENTIRE FILE WITH THIS
+// ================================
+
 const { DataTypes, Op } = require('sequelize');
 const { sequelize } = require('../config/db');
 
@@ -36,10 +40,31 @@ const TestAttempt = sequelize.define('TestAttempt', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  
+  // ✅ SOFT DELETE FIELDS
+  isDeleted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false
+  },
+  deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: null
+  },
+  deletedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: null,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  
   details: {
     type: DataTypes.JSON,
     allowNull: false,
-    // ✅ Add getter/setter for safe JSON parsing
     get() {
       const rawValue = this.getDataValue('details');
       if (!rawValue) return {};
@@ -55,13 +80,10 @@ const TestAttempt = sequelize.define('TestAttempt', {
   questionResponses: {
     type: DataTypes.JSON,
     defaultValue: [],
-    // ✅ CRITICAL FIX: Add getter/setter to handle JSON parsing
     get() {
       const rawValue = this.getDataValue('questionResponses');
       if (!rawValue) return [];
-      // If it's already an array/object, return it
       if (typeof rawValue === 'object') return rawValue;
-      // If it's a string, parse it
       try {
         const parsed = JSON.parse(rawValue);
         return Array.isArray(parsed) ? parsed : [];
@@ -71,7 +93,6 @@ const TestAttempt = sequelize.define('TestAttempt', {
       }
     },
     set(value) {
-      // Ensure we're storing an array
       const arrayValue = Array.isArray(value) ? value : [];
       this.setDataValue('questionResponses', arrayValue);
     }
@@ -79,7 +100,6 @@ const TestAttempt = sequelize.define('TestAttempt', {
   testConfig: {
     type: DataTypes.JSON,
     defaultValue: {},
-    // ✅ Add getter/setter for safe JSON parsing
     get() {
       const rawValue = this.getDataValue('testConfig');
       if (!rawValue) return {};
@@ -106,7 +126,9 @@ const TestAttempt = sequelize.define('TestAttempt', {
     { fields: ['userId', 'completedAt'] },
     { fields: ['userId', 'score'] },
     { fields: ['result'] },
-    { fields: ['isMockExam'] }
+    { fields: ['isMockExam'] },
+    { fields: ['isDeleted'] },
+    { fields: ['userId', 'isDeleted'] }
   ]
 });
 
@@ -126,9 +148,10 @@ TestAttempt.prototype.getAccuracy = function() {
   return 0;
 };
 
-// Static method to get user stats
+// ✅ UPDATED: Static method to get user stats - INCLUDES ALL (even deleted)
 TestAttempt.getUserStats = async function(userId, filter = {}) {
   const whereClause = { userId, ...filter };
+  // ✅ DON'T filter by isDeleted for accurate stats
 
   const results = await this.findAll({
     where: whereClause,
@@ -148,7 +171,6 @@ TestAttempt.getUserStats = async function(userId, filter = {}) {
     where: { ...whereClause, result: 'Failed' }
   });
 
-  // For section scores, we need to extract from JSON
   const attempts = await this.findAll({
     where: whereClause,
     attributes: ['details']
@@ -193,17 +215,24 @@ TestAttempt.getUserStats = async function(userId, filter = {}) {
   };
 };
 
-// Static method to get recent attempts
+// ✅ UPDATED: Static method to get recent attempts - EXCLUDES deleted by default
 TestAttempt.getRecentAttempts = async function(userId, options = {}) {
   const { 
     page = 1, 
     limit = 10, 
     sortBy = 'completedAt', 
     sortOrder = 'desc',
-    result = null 
+    result = null,
+    includeDeleted = false
   } = options;
 
   const where = { userId };
+  
+  // ✅ Exclude deleted unless explicitly requested (for analytics)
+  if (!includeDeleted) {
+    where.isDeleted = false;
+  }
+  
   if (result) {
     where.result = result;
   }
@@ -229,30 +258,31 @@ TestAttempt.getRecentAttempts = async function(userId, options = {}) {
   };
 };
 
-// Static method to get performance trend
-TestAttempt.getPerformanceTrend = async function(userId, limit = 7) {
+// ✅ UPDATED: Static method to get performance trend - INCLUDES ALL
+TestAttempt.getPerformanceTrend = async function(userId, limit = 7, filter = {}) {
   return await this.findAll({
-    where: { userId },
+    where: { userId, ...filter },
+    // ✅ DON'T filter by isDeleted for accurate trends
     order: [['completedAt', 'DESC']],
     limit,
     attributes: ['name', 'score', 'completedAt', 'details']
   });
 };
 
-// Static method to get test for review
+// ✅ UPDATED: Static method to get test for review - ALLOWS viewing deleted
 TestAttempt.getTestForReview = async function(attemptId, userId) {
   const attempt = await this.findOne({
     where: {
       id: attemptId,
       userId: userId
     }
+    // ✅ No isDeleted filter - allow reviewing deleted tests
   });
 
   if (!attempt) {
     return null;
   }
 
-  // ✅ Now questionResponses is safely parsed as array
   const responses = attempt.questionResponses || [];
 
   return {
@@ -271,13 +301,14 @@ TestAttempt.getTestForReview = async function(attemptId, userId) {
       explanation: q.explanation
     })),
     userAnswers: responses.map(q => q.userAnswerIndex),
-    correctAnswers: responses.map(q => q.correctAnswerIndex)
+    correctAnswers: responses.map(q => q.correctAnswerIndex),
+    isDeleted: attempt.isDeleted,
+    deletedAt: attempt.deletedAt
   };
 };
 
 // Instance method to toggle bookmark
 TestAttempt.prototype.toggleBookmark = async function(questionIndex, note = '') {
-  // ✅ Get safely parsed array
   const responses = this.questionResponses || [];
   
   if (!responses[questionIndex]) {
@@ -303,13 +334,14 @@ TestAttempt.prototype.toggleBookmark = async function(questionIndex, note = '') 
   return { bookmarked: question.bookmarked, note: question.bookmarkNote };
 };
 
-// Static method to get all bookmarks
+// ✅ UPDATED: Static method to get all bookmarks - EXCLUDES deleted
 TestAttempt.getAllBookmarks = async function(userId) {
   console.log('📚 Fetching all bookmarks for user:', userId);
   
   const attempts = await this.findAll({
     where: {
       userId,
+      isDeleted: false,  // ✅ Only non-deleted tests
       questionResponses: {
         [Op.ne]: null
       }
@@ -321,10 +353,7 @@ TestAttempt.getAllBookmarks = async function(userId) {
   const bookmarks = [];
   
   attempts.forEach(attempt => {
-    // ✅ questionResponses is now safely parsed as array
     const responses = attempt.questionResponses || [];
-    
-    console.log(`Attempt ${attempt.id}: ${responses.length} questions, type: ${typeof responses}, isArray: ${Array.isArray(responses)}`);
     
     if (Array.isArray(responses)) {
       responses.forEach((question, index) => {
@@ -343,8 +372,6 @@ TestAttempt.getAllBookmarks = async function(userId) {
           });
         }
       });
-    } else {
-      console.warn(`⚠️ questionResponses is not an array for attempt ${attempt.id}:`, typeof responses);
     }
   });
 
@@ -353,6 +380,63 @@ TestAttempt.getAllBookmarks = async function(userId) {
   return bookmarks.sort((a, b) => 
     new Date(b.bookmarkedAt) - new Date(a.bookmarkedAt)
   );
+};
+
+// ✅ NEW: Soft delete method
+TestAttempt.softDelete = async function(attemptId, userId, deletedByUserId) {
+  const attempt = await this.findOne({
+    where: {
+      id: attemptId,
+      userId: userId
+    }
+  });
+
+  if (!attempt) {
+    throw new Error('Test attempt not found');
+  }
+
+  attempt.isDeleted = true;
+  attempt.deletedAt = new Date();
+  attempt.deletedBy = deletedByUserId;
+  
+  await attempt.save();
+  
+  return attempt;
+};
+
+// ✅ NEW: Get deleted attempts
+TestAttempt.getDeletedAttempts = async function(userId, limit = 50) {
+  return await this.findAll({
+    where: {
+      userId,
+      isDeleted: true
+    },
+    order: [['deletedAt', 'DESC']],
+    limit
+  });
+};
+
+// ✅ NEW: Restore deleted attempt
+TestAttempt.restore = async function(attemptId, userId) {
+  const attempt = await this.findOne({
+    where: {
+      id: attemptId,
+      userId: userId,
+      isDeleted: true
+    }
+  });
+
+  if (!attempt) {
+    throw new Error('Deleted test attempt not found');
+  }
+
+  attempt.isDeleted = false;
+  attempt.deletedAt = null;
+  attempt.deletedBy = null;
+  
+  await attempt.save();
+  
+  return attempt;
 };
 
 module.exports = TestAttempt;

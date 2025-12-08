@@ -27,78 +27,78 @@ const QuickActions = ({ theme = "light", data }) => {
   const scoreDiff = latestScore - previousScore;
   const isImproving = scoreDiff > 0;
 
-  // ✅ FIXED: Calculate consecutive days streak using MOCK EXAM attempts
-  const calculateStudyStreak = () => {
-    if (!data?.recentAttempts || data.recentAttempts.length === 0) {
-      console.log('⚠️ No recent attempts found');
-      return 0;
-    }
+const calculateStudyStreak = () => {
+  // ✅ Use allAttempts for streak (contains ALL test types)
+  if (!data?.allAttempts || data.allAttempts.length === 0) {
+    console.log('⚠️ No attempts found for streak calculation');
+    return 0;
+  }
 
-    console.log('🔍 Calculating streak from attempts:', data.recentAttempts);
+  console.log('🔍 Calculating streak from ALL test attempts:', data.allAttempts);
 
-    // Get unique dates (in YYYY-MM-DD format) from attempts
-    const attemptDates = data.recentAttempts
-      .map(attempt => {
-        const dateStr = attempt.date;
-        const parsedDate = new Date(dateStr);
-        
-        // Format as YYYY-MM-DD for comparison
-        const year = parsedDate.getFullYear();
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
-        const day = String(parsedDate.getDate()).padStart(2, '0');
-        
-        return `${year}-${month}-${day}`;
-      })
-      .filter((date, index, self) => self.indexOf(date) === index) // Remove duplicates
-      .sort((a, b) => new Date(b) - new Date(a)); // Sort newest first
-
-    console.log('📅 Unique attempt dates:', attemptDates);
-
-    if (attemptDates.length === 0) return 0;
-
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    console.log('📅 Today is:', todayStr);
-
-    // Get yesterday's date
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-    
-    console.log('📅 Yesterday was:', yesterdayStr);
-
-    // ✅ FIX: Streak should start from today OR yesterday
-    let streak = 0;
-    let checkDate = new Date(today);
-    
-    // Start checking from today, going backwards
-    for (let i = 0; i < attemptDates.length + 1; i++) {
-      const checkDateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+  // Get unique dates (in YYYY-MM-DD format) from ALL attempts
+  const attemptDates = data.allAttempts
+    .map(attempt => {
+      const dateStr = attempt.date;
+      const parsedDate = new Date(dateStr);
       
-      if (attemptDates.includes(checkDateStr)) {
-        // Found a test on this date
-        streak++;
-        console.log(`✅ Found test on ${checkDateStr}, streak now: ${streak}`);
-      } else if (streak > 0) {
-        // Gap found after we started counting, break the streak
-        console.log(`❌ No test on ${checkDateStr}, breaking streak`);
-        break;
-      } else if (i === 1) {
-        // If we didn't find a test today OR yesterday, streak is 0
-        console.log('❌ No test today or yesterday, streak = 0');
-        break;
-      }
+      // Format as YYYY-MM-DD for comparison
+      const year = parsedDate.getFullYear();
+      const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(parsedDate.getDate()).padStart(2, '0');
       
-      // Move to previous day
-      checkDate.setDate(checkDate.getDate() - 1);
-    }
+      return `${year}-${month}-${day}`;
+    })
+    .filter((date, index, self) => self.indexOf(date) === index) // Remove duplicates
+    .sort((a, b) => new Date(b) - new Date(a)); // Sort newest first
 
-    console.log('🔥 Calculated streak:', streak, 'days');
-    return streak;
-  };
+  console.log('📅 Unique attempt dates (ALL tests):', attemptDates);
+
+  if (attemptDates.length === 0) return 0;
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  console.log('📅 Today is:', todayStr);
+
+  // Get yesterday's date
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+  
+  console.log('📅 Yesterday was:', yesterdayStr);
+
+  // ✅ Streak counts ANY test taken (mock exam OR practice test)
+  let streak = 0;
+  let checkDate = new Date(today);
+  
+  // Start checking from today, going backwards
+  for (let i = 0; i < attemptDates.length + 1; i++) {
+    const checkDateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+    
+    if (attemptDates.includes(checkDateStr)) {
+      // Found a test on this date (ANY type of test)
+      streak++;
+      console.log(`✅ Found test on ${checkDateStr}, streak now: ${streak}`);
+    } else if (streak > 0) {
+      // Gap found after we started counting, break the streak
+      console.log(`❌ No test on ${checkDateStr}, breaking streak`);
+      break;
+    } else if (i === 1) {
+      // If we didn't find a test today OR yesterday, streak is 0
+      console.log('❌ No test today or yesterday, streak = 0');
+      break;
+    }
+    
+    // Move to previous day
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  console.log('🔥 Calculated streak (ALL tests):', streak, 'days');
+  return streak;
+};
 
   const studyStreak = calculateStudyStreak();
 
