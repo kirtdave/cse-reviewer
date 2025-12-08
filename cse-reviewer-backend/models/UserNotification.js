@@ -45,12 +45,10 @@ const UserNotification = sequelize.define('UserNotification', {
   tableName: 'user_notifications',
   timestamps: true,
   indexes: [
-    { fields: ['userId'] },
-    { fields: ['notificationId'] },
-    { fields: ['isRead'] },
-    { fields: ['isDismissed'] },
-    { fields: ['hasViewed'] },
-    { unique: true, fields: ['userId', 'notificationId'], name: 'unique_user_notification' }
+    { fields: ['userId', 'notificationId'], unique: true, name: 'unique_user_notification' },
+    { fields: ['userId', 'isRead', 'createdAt'] },
+    { fields: ['userId', 'isDismissed'] },
+    { fields: ['notificationId'] }
   ]
 });
 

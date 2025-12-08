@@ -1,33 +1,53 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, Sparkles } from "lucide-react";
+import { X, Loader2, Sparkles, Clock } from "lucide-react";
 
 export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsData }) {
   const isDark = theme === "dark";
   const [tips, setTips] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // ✅ Changed to false by default
-  const [useAI, setUseAI] = useState(false); // ✅ New state to track if AI should be used
+  const [isLoading, setIsLoading] = useState(false);
+  const [useAI, setUseAI] = useState(false);
+  const [lastGenerateTime, setLastGenerateTime] = useState(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   useEffect(() => {
     if (isOpen && analyticsData) {
-      // ✅ Show fallback tips immediately, try AI in background
       setTips(getFallbackTips());
-      
-      // Try to get AI tips in background (don't block UI)
-      if (useAI) {
-        generatePersonalizedTips();
-      }
     }
   }, [isOpen, analyticsData]);
 
+  useEffect(() => {
+    if (cooldownRemaining > 0) {
+      const timer = setTimeout(() => {
+        setCooldownRemaining(cooldownRemaining - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownRemaining]);
+
   const generatePersonalizedTips = async () => {
+    const now = Date.now();
+    const timeSinceLastCall = now - lastGenerateTime;
+    const cooldownMs = 30000;
+
+    if (timeSinceLastCall < cooldownMs) {
+      const remainingSeconds = Math.ceil((cooldownMs - timeSinceLastCall) / 1000);
+      setCooldownRemaining(remainingSeconds);
+      return;
+    }
+
+    if (!analyticsData) {
+      console.error('No analytics data available');
+      return;
+    }
+
     setIsLoading(true);
+    setLastGenerateTime(now);
+
     try {
       const token = localStorage.getItem('token');
-      
-      // ✅ Add timeout to prevent infinite loading
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
       
       const response = await fetch('http://localhost:5000/api/ai/chat', {
         method: 'POST',
@@ -36,62 +56,145 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: "Generate 10 personalized study tips for me based on my performance data. Format each tip as: ICON|TITLE|DESCRIPTION (e.g., 📚|Review Mistakes|Focus on your 15 recent errors in Numerical Ability). Be specific and actionable.",
+          message: `Generate exactly 10 personalized study tips based on my performance data. 
+
+IMPORTANT: Format EACH tip on a new line using this EXACT format:
+ICON|Title|Description
+
+Examples:
+📚|Review Mistakes|Focus on your 15 recent errors in Numerical Ability
+⏰|Time Management|You're averaging 65s per question. Aim for under 60s
+🎯|Practice Consistency|Take 3 practice tests per week for best results
+
+Generate all 10 tips now, one per line, using the format above.`,
           conversationHistory: [],
           userData: {
-            avgScore: analyticsData.avgScore,
-            totalExams: analyticsData.totalExams,
-            sections: analyticsData.sections,
-            timeMetrics: analyticsData.timeMetrics,
-            recentAttempts: analyticsData.recentAttempts?.slice(0, 3)
+            avgScore: analyticsData?.avgScore || 0,
+            totalExams: analyticsData?.totalExams || 0,
+            sections: analyticsData?.sections || {},
+            timeMetrics: analyticsData?.timeMetrics || {},
+            recentAttempts: analyticsData?.recentAttempts?.slice(0, 3) || []
           }
         }),
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
-
       const data = await response.json();
       
       if (data.success && data.response) {
+        console.log('📥 AI Response:', data.response);
         const parsedTips = parseAIResponse(data.response);
+        console.log('✅ Parsed Tips:', parsedTips);
+        
         if (parsedTips.length > 0) {
           setTips(parsedTips);
+        } else {
+          console.warn('⚠️ No tips parsed, keeping fallback tips');
         }
+      } else {
+        throw new Error(data.message || 'Failed to generate tips');
       }
     } catch (error) {
       console.error('Error generating tips:', error);
-      // Keep fallback tips if AI fails
+      
+      if (error.message?.includes('AI_OVERLOAD') || error.message?.includes('quota')) {
+        alert('⏳ AI service is busy. Please wait 30 seconds and try again.');
+        setCooldownRemaining(30);
+      } else if (error.name === 'AbortError') {
+        alert('⏱️ Request timed out. Please try again.');
+      } else {
+        alert('❌ Failed to generate tips. Using fallback recommendations.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const parseAIResponse = (response) => {
-    const lines = response.split('\n').filter(line => line.trim());
+    console.log('🔍 Parsing AI response...');
     const tips = [];
     
-    for (const line of lines) {
-      const parts = line.split('|');
-      if (parts.length >= 3) {
-        tips.push({
-          icon: parts[0].trim(),
-          title: parts[1].trim(),
-          description: parts[2].trim()
-        });
-      } else {
-        const match = line.match(/([📚📊🎯💪⏰🧘✍️🏆🎓🤝💡🔥⚡📖🌟]+)\s*(.+?)[:.-]\s*(.+)/);
-        if (match) {
+    // Split by newlines and filter out empty lines
+    const lines = response.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    console.log('📝 Found lines:', lines.length);
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Method 1: Try parsing ICON|TITLE|DESCRIPTION format
+      if (line.includes('|')) {
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length >= 3) {
+          const icon = parts[0].match(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '💡';
           tips.push({
-            icon: match[1],
-            title: match[2].trim(),
-            description: match[3].trim()
+            icon: icon,
+            title: parts[1],
+            description: parts.slice(2).join('|')
           });
+          console.log(`✅ Parsed tip ${tips.length}:`, tips[tips.length - 1].title);
+          continue;
         }
+      }
+      
+      // Method 2: Try parsing numbered format (1. Title: Description)
+      const numberedMatch = line.match(/^\d+[\.\)]\s*(.+?)[:]\s*(.+)$/);
+      if (numberedMatch) {
+        const icon = line.match(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '💡';
+        tips.push({
+          icon: icon,
+          title: numberedMatch[1].replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim(),
+          description: numberedMatch[2].trim()
+        });
+        console.log(`✅ Parsed tip ${tips.length}:`, tips[tips.length - 1].title);
+        continue;
+      }
+      
+      // Method 3: Try parsing with emoji at start
+      const emojiMatch = line.match(/^([\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}])\s*(.+?)[:.-]\s*(.+)$/u);
+      if (emojiMatch) {
+        tips.push({
+          icon: emojiMatch[1],
+          title: emojiMatch[2].trim(),
+          description: emojiMatch[3].trim()
+        });
+        console.log(`✅ Parsed tip ${tips.length}:`, tips[tips.length - 1].title);
+        continue;
+      }
+      
+      // Method 4: Try bold text format (**Title**: Description)
+      const boldMatch = line.match(/\*\*(.+?)\*\*[:]\s*(.+)/);
+      if (boldMatch) {
+        const icon = line.match(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '💡';
+        tips.push({
+          icon: icon,
+          title: boldMatch[1].trim(),
+          description: boldMatch[2].trim()
+        });
+        console.log(`✅ Parsed tip ${tips.length}:`, tips[tips.length - 1].title);
+        continue;
+      }
+      
+      // Method 5: Generic fallback - treat line as description if it's substantial
+      if (line.length > 30 && tips.length < 10) {
+        const icon = line.match(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)?.[0] || '💡';
+        const cleanLine = line.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+        
+        // Try to extract title from first sentence
+        const firstSentence = cleanLine.split(/[.!?]/)[0];
+        const title = firstSentence.length > 50 ? firstSentence.substring(0, 30) + '...' : firstSentence;
+        
+        tips.push({
+          icon: icon,
+          title: title || `Study Tip ${tips.length + 1}`,
+          description: cleanLine
+        });
+        console.log(`✅ Parsed tip ${tips.length} (fallback):`, tips[tips.length - 1].title);
       }
     }
     
-    return tips.length > 0 ? tips.slice(0, 10) : [];
+    console.log(`📊 Total tips parsed: ${tips.length}`);
+    return tips.slice(0, 10);
   };
 
   const getFallbackTips = () => {
@@ -117,6 +220,11 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
   };
 
   const handleRegenerateTips = () => {
+    if (cooldownRemaining > 0) {
+      alert(`⏳ Please wait ${cooldownRemaining} seconds before generating tips again.`);
+      return;
+    }
+
     setUseAI(true);
     generatePersonalizedTips();
   };
@@ -145,7 +253,7 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
                     AI-Powered Study Tips
                   </h3>
                   <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"} truncate`}>
-                    Personalized for your performance
+                    {useAI ? "AI-generated recommendations" : "Smart tips based on your data"}
                   </p>
                 </div>
               </div>
@@ -163,6 +271,14 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
                   <Loader2 className="w-6 h-6 text-purple-500 animate-spin mr-2" />
                   <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                     AI is generating personalized tips...
+                  </p>
+                </div>
+              )}
+              
+              {cooldownRemaining > 0 && !isLoading && (
+                <div className={`p-3 rounded-lg mb-4 ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}>
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-yellow-300" : "text-yellow-700"}`}>
+                    ⏳ Please wait {cooldownRemaining} seconds before generating new tips to avoid rate limits.
                   </p>
                 </div>
               )}
@@ -205,7 +321,7 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
               </button>
               <button
                 onClick={handleRegenerateTips}
-                disabled={isLoading}
+                disabled={isLoading || cooldownRemaining > 0}
                 className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg lg:rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
@@ -213,8 +329,16 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Generating...</span>
                   </>
+                ) : cooldownRemaining > 0 ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    <span>Wait {cooldownRemaining}s</span>
+                  </>
                 ) : (
-                  "Generate AI Tips"
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Generate AI Tips</span>
+                  </>
                 )}
               </button>
             </div>

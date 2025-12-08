@@ -121,8 +121,9 @@ const User = sequelize.define('User', {
 }, {
   timestamps: true,
   indexes: [
-    { fields: ['email'] },
-    { fields: ['role'] }
+    { fields: ['email'], unique: true },
+    { fields: ['role', 'lastActive'] },
+    { fields: ['createdAt'] }
   ],
   hooks: {
     beforeSave: async (user) => {

@@ -72,12 +72,9 @@ const Question = sequelize.define('Question', {
 }, {
   timestamps: true,
   indexes: [
-    { fields: ['category', 'difficulty', 'usageCount'] },
-    { fields: ['isActive', 'category', 'difficulty'] },
-    { fields: ['category'] },
-    // Indexing subCategory helps search speed for study guides
-    { fields: ['subCategory'] }, 
-    { fields: ['difficulty'] },
+    { fields: ['isActive', 'category', 'difficulty', 'usageCount'] },
+    { fields: ['category', 'subCategory', 'difficulty'] },
+    { fields: ['source', 'createdAt'] },
     { fields: ['usageCount'] }
   ]
 });

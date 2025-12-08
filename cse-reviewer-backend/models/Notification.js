@@ -52,9 +52,10 @@ const Notification = sequelize.define('Notification', {
   tableName: 'notifications',
   timestamps: true,
   indexes: [
-    { fields: ['status'] },
-    { fields: ['type'] },
-    { fields: ['publishedDate'] }
+    { fields: ['status', 'publishedDate'] },
+    { fields: ['type', 'status'] },
+    { fields: ['scheduledDate'] },
+    { fields: ['createdBy'] }
   ]
 });
 

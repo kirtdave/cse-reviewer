@@ -1,4 +1,3 @@
-// models/Activity.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
@@ -49,74 +48,36 @@ const Activity = sequelize.define('Activity', {
   tableName: 'Activities',
   timestamps: true,
   indexes: [
-    { fields: ['userId'] },
-    { fields: ['type'] },
+    // ✅ FIXED: Composite for common query
+    { fields: ['userId', 'type', 'createdAt'] },
+    { fields: ['type', 'createdAt'] },
     { fields: ['createdAt'] }
   ]
 });
 
-// ==================== HELPER METHODS ====================
-
-/**
- * Log a user activity
- * @param {number} userId 
- * @param {string} type 
- * @param {string} action 
- * @param {object} metadata 
- * @param {string} ipAddress 
- */
 Activity.logActivity = async function(userId, type, action, metadata = null, ipAddress = null) {
   try {
-    await this.create({
-      userId,
-      type,
-      action,
-      metadata,
-      ipAddress
-    });
+    await this.create({ userId, type, action, metadata, ipAddress });
     console.log(`📝 Activity logged: ${action} (User: ${userId})`);
   } catch (error) {
     console.error('Error logging activity:', error.message);
   }
 };
 
-/**
- * Get recent activities
- * @param {number} limit 
- * @param {array} types - Filter by activity types
- */
 Activity.getRecent = async function(limit = 10, types = null) {
   const where = {};
-  if (types && Array.isArray(types)) {
-    where.type = types;
-  }
-
+  if (types && Array.isArray(types)) where.type = types;
   return await this.findAll({
-    where,
-    limit,
+    where, limit,
     order: [['createdAt', 'DESC']],
-    include: [{
-      model: require('./User'),
-      as: 'user',
-      attributes: ['id', 'name', 'email', 'avatar']
-    }]
+    include: [{ model: require('./User'), as: 'user', attributes: ['id', 'name', 'email', 'avatar'] }]
   });
 };
 
-/**
- * Get activity count by date range
- * @param {Date} startDate 
- * @param {Date} endDate 
- */
 Activity.getActivityByDateRange = async function(startDate, endDate) {
   const { Op } = require('sequelize');
-  
   return await this.findAll({
-    where: {
-      createdAt: {
-        [Op.between]: [startDate, endDate]
-      }
-    },
+    where: { createdAt: { [Op.between]: [startDate, endDate] } },
     attributes: [
       [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
       [sequelize.fn('COUNT', sequelize.col('id')), 'count']
@@ -127,15 +88,9 @@ Activity.getActivityByDateRange = async function(startDate, endDate) {
   });
 };
 
-/**
- * Get user's activity history
- * @param {number} userId 
- * @param {number} limit 
- */
 Activity.getUserActivities = async function(userId, limit = 20) {
   return await this.findAll({
-    where: { userId },
-    limit,
+    where: { userId }, limit,
     order: [['createdAt', 'DESC']]
   });
 };

@@ -123,12 +123,11 @@ const TestAttempt = sequelize.define('TestAttempt', {
 }, {
   timestamps: true,
   indexes: [
-    { fields: ['userId', 'completedAt'] },
+    { fields: ['userId', 'isDeleted', 'completedAt'] },
+    { fields: ['userId', 'result', 'isDeleted'] },
+    { fields: ['userId', 'isMockExam', 'isDeleted'] },
     { fields: ['userId', 'score'] },
-    { fields: ['result'] },
-    { fields: ['isMockExam'] },
-    { fields: ['isDeleted'] },
-    { fields: ['userId', 'isDeleted'] }
+    { fields: ['deletedAt'] }
   ]
 });
 

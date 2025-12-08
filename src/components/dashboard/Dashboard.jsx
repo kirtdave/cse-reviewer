@@ -7,7 +7,6 @@ import QuestionBankStats from "./QuestionBankStats";
 import { SmartRecommendations } from "./AIRecommendations";
 import { 
   getAnalyticsData, 
-  calculateTimeMetrics, 
   calculateStrengthsWeaknesses,
   generateRecommendations,
   calculateReadiness 
@@ -65,21 +64,22 @@ export default function Dashboard({ theme = "light" }) {
         console.log('📊 Fetching dashboard data for logged-in user...');
         const data = await getAnalyticsData();
         
-        // Calculate additional metrics
-        const timeMetrics = calculateTimeMetrics(data.recentAttempts);
+        // ✅ FIX: DON'T recalculate timeMetrics - use what came from getAnalyticsData()
+        // The timeMetrics from getAnalyticsData() already includes deleted tests!
         const strengthsWeaknesses = calculateStrengthsWeaknesses(data.sections);
         const recommendations = generateRecommendations(data);
         const readiness = calculateReadiness(data);
 
         setAnalyticsData({
           ...data,
-          timeMetrics,
+          // timeMetrics is already in data from getAnalyticsData() ✅
           strengthsWeaknesses,
           recommendations,
           readiness
         });
 
         console.log('✅ Dashboard data loaded successfully');
+        console.log('📊 Time Metrics:', data.timeMetrics);
 
       } catch (err) {
         console.error('❌ Error loading dashboard data:', err);

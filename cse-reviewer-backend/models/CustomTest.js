@@ -66,10 +66,10 @@ const CustomTest = sequelize.define('CustomTest', {
 }, {
   timestamps: true,
   indexes: [
-    { fields: ['userId'] },
-    { fields: ['isPublic'] },
-    { fields: ['category'] },
-    { fields: ['userId', 'title'] }
+    { fields: ['userId', 'isActive', 'updatedAt'] },
+    { fields: ['isPublic', 'isActive', 'category'] },
+    { fields: ['attempts'] },
+    { fields: ['createdAt'] }
   ]
 });
 

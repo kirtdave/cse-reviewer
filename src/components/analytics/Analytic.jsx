@@ -7,7 +7,6 @@ import AnalyticsRecommendations from "./AnalyticsRecommendations";
 import AIEnhancedFeatures from "./Aiprocess";
 import { 
   getAnalyticsData, 
-  calculateTimeMetrics, 
   calculateStrengthsWeaknesses,
   generateRecommendations,
   calculateReadiness 
@@ -41,22 +40,24 @@ export default function Analytics({ theme = "light" }) {
         const data = await getAnalyticsData();
         
         console.log('✅ Raw analytics data received:', data);
+        console.log('📊 Time Metrics from API:', data.timeMetrics);
         
-        // Calculate additional metrics (removed questionTypeStrengthsWeaknesses)
-        const timeMetrics = calculateTimeMetrics(data.recentAttempts);
+        // ✅ FIX: DON'T recalculate timeMetrics - use what came from getAnalyticsData()
+        // The timeMetrics from getAnalyticsData() already includes deleted tests!
         const strengthsWeaknesses = calculateStrengthsWeaknesses(data.sections);
         const recommendations = generateRecommendations(data);
         const readiness = calculateReadiness(data);
 
         const enrichedData = {
           ...data,
-          timeMetrics,
+          // timeMetrics is already in data from getAnalyticsData() ✅
           strengthsWeaknesses,
           recommendations,
           readiness
         };
 
         console.log('✅ Enriched analytics data:', enrichedData);
+        console.log('✅ Final Time Metrics:', enrichedData.timeMetrics);
         setAnalyticsData(enrichedData);
 
       } catch (err) {

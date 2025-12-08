@@ -58,9 +58,11 @@ const UserQuestionProgress = sequelize.define('UserQuestionProgress', {
 }, {
   timestamps: true,
   indexes: [
-    { unique: true, fields: ['userId', 'questionId'] },
-    { fields: ['userId', 'status'] },
-    { fields: ['userId', 'lastUsedInTest'] }
+    // ✅ FIXED: Better composite indexes
+    { fields: ['userId', 'questionId'], unique: true, name: 'unique_user_question' },
+    { fields: ['userId', 'status', 'lastAnsweredAt'] },
+    { fields: ['userId', 'lastUsedInTest'] },
+    { fields: ['userId', 'correctStreak'] }
   ]
 });
 
