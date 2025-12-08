@@ -1,4 +1,4 @@
-// Dashboard.jsx - Mobile Responsive Version
+// Dashboard.jsx - Mobile Responsive Version WITH AUTO-REFRESH (FIXED)
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getDashboardStats } from '../../services/adminApi';
@@ -16,14 +16,27 @@ const Dashboard = ({ palette }) => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [dailyActivity, setDailyActivity] = useState([]);
   const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
+  // Initial fetch
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  // ✅ AUTO-REFRESH: Poll every 30 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDashboardData(true); // Pass true for silent refresh
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchDashboardData = async (silentRefresh = false) => {
     try {
-      setLoading(true);
+      if (!silentRefresh) setLoading(true);
+      
       const data = await getDashboardStats();
       
       console.log('📥 Raw API Response:', data);
@@ -34,10 +47,15 @@ const Dashboard = ({ palette }) => {
       setError(null);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data');
+      if (!silentRefresh) setError('Failed to load dashboard data');
     } finally {
-      setLoading(false);
+      if (!silentRefresh) setLoading(false);
     }
+  };
+
+  const handleManualRefresh = () => {
+    fetchDashboardData();
+    setLastRefresh(new Date());
   };
 
   if (loading) {
@@ -92,10 +110,9 @@ const Dashboard = ({ palette }) => {
   };
 
   const chartData = getChartData();
-  const maxCount = Math.max(...chartData.map(d => d.count), 1);
-  
-  // ✅ FIX: Show total unique users, not sum of daily activity
-  const totalUniqueUsers = stats.totalUsers;
+  // ✅ FIX: Include current active users in max calculation for proper scaling
+  const historicalCounts = chartData.map(d => d.count);
+  const maxCount = Math.max(...historicalCounts, stats.activeUsers, 1);
 
   const formatDate = (date) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -109,7 +126,7 @@ const Dashboard = ({ palette }) => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Stats Cards - Responsive Grid */}
+      {/* Stats Cards with Compact Refresh Indicator - Responsive Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statsCards.map((stat, i) => (
           <motion.div
@@ -169,12 +186,34 @@ const Dashboard = ({ palette }) => {
               <h3 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1" style={{ color: textColor }}>{stat.value}</h3>
               <p className="text-xs font-medium truncate" style={{ color: secondaryText }}>{stat.label}</p>
             </div>
+
+            {/* ✅ Compact refresh indicator in last card only */}
+            {i === 3 && (
+              <div className="absolute bottom-2 right-2 flex items-center gap-2 z-20">
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: successColor }}></span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleManualRefresh();
+                  }}
+                  disabled={loading}
+                  className="p-1.5 rounded-lg transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                    color: primaryGradientFrom,
+                  }}
+                  title={`Auto-refresh active • Last updated: ${lastRefresh.toLocaleTimeString()}`}
+                >
+                  <i className={`fas fa-sync-alt text-sm ${loading ? 'fa-spin' : ''}`}></i>
+                </button>
+              </div>
+            )}
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* User Activity Chart */}
+        {/* User Activity Chart - ✅ FIXED: Now shows current active users, not daily totals */}
         <div className="p-4 sm:p-6 rounded-2xl" style={{ 
           backgroundColor: cardBg, 
           border: `1px solid ${borderColor}`, 
@@ -207,10 +246,12 @@ const Dashboard = ({ palette }) => {
             </div>
             
             {chartData.map((item, i) => {
-              const heightPercent = (item.count / maxCount) * 100;
+              const isToday = item.date.toDateString() === new Date().toDateString();
+              // ✅ FIX: Use current active users for today, historical data for other days
+              const displayCount = isToday ? stats.activeUsers : item.count;
+              const heightPercent = (displayCount / maxCount) * 100;
               const barHeight = Math.max((heightPercent / 100) * 180, 10);
               const formatted = formatDate(item.date);
-              const isToday = item.date.toDateString() === new Date().toDateString();
               
               return (
                 <div key={i} style={{ 
@@ -232,8 +273,8 @@ const Dashboard = ({ palette }) => {
                         boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(0,0,0,0.15)'
                       }}
                     >
-                      <div style={{ color: primaryGradientFrom, fontSize: '14px', fontWeight: 'bold' }}>{item.count}</div>
-                      <div style={{ color: secondaryText, fontSize: '9px' }}>active users</div>
+                      <div style={{ color: primaryGradientFrom, fontSize: '14px', fontWeight: 'bold' }}>{displayCount}</div>
+                      <div style={{ color: secondaryText, fontSize: '9px' }}>users active</div>
                     </div>
                     
                     <div 

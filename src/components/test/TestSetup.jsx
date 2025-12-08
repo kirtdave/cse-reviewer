@@ -22,13 +22,25 @@ const sampleQuestions = [
   { question: "Who wrote 'Noli Me Tangere'?", options: ["Andres Bonifacio", "Jose Rizal", "Emilio Aguinaldo", "Apolinario Mabini"], answer: 1, category: "Verbal Ability" },
 ];
 
-// ✅ Printable PDF Generator Function
+// ✅ Printable PDF Generator (Includes Answer Key Page)
 const generatePrintablePDF = async (questionsData, selectedType, timeLimit, categories) => {
   try {
     const selectedCategories = Object.entries(categories)
       .filter(([, v]) => v.checked)
       .map(([k, v]) => `${k} (${v.difficulty})`)
       .join(', ');
+
+    // 1. Generate Answer Key HTML (Hidden until the last page)
+    const answerKeyRows = questionsData.map((q, idx) => {
+      // Convert index 0-3 to A-D
+      const letter = String.fromCharCode(65 + q.answer);
+      return `
+        <div style="display: flex; border-bottom: 1px solid #eee; padding: 5px; font-size: 12px;">
+          <span style="width: 30px; font-weight: bold;">${idx + 1}.</span>
+          <span style="width: 30px; color: #6366f1; font-weight: bold;">${letter}</span>
+          <span style="color: #666;">${q.category}</span>
+        </div>`;
+    }).join('');
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -38,172 +50,60 @@ const generatePrintablePDF = async (questionsData, selectedType, timeLimit, cate
         <title>Test Questionnaire - ${selectedType}</title>
         <style>
           @page { size: A4; margin: 20mm; }
-          body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 210mm;
-            margin: 0 auto;
-            padding: 20px;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 3px solid #6366f1;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-          }
-          .header h1 { color: #6366f1; margin: 0 0 10px 0; font-size: 28px; }
-          .header .meta { color: #666; font-size: 14px; margin-top: 10px; }
-          .instructions {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin-bottom: 30px;
-            border-radius: 4px;
-          }
-          .instructions h3 { margin: 0 0 10px 0; color: #d97706; font-size: 16px; }
-          .instructions ul { margin: 0; padding-left: 20px; }
-          .instructions li { margin-bottom: 5px; font-size: 13px; }
-          .question-block {
-            margin-bottom: 35px;
-            page-break-inside: avoid;
-            border-left: 4px solid #e5e7eb;
-            padding-left: 15px;
-          }
-          .question-number {
-            color: #6366f1;
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 8px;
-          }
-          .question-text {
-            font-size: 15px;
-            font-weight: 500;
-            margin-bottom: 12px;
-            color: #1f2937;
-          }
-          .category-badge {
-            display: inline-block;
-            background: #e0e7ff;
-            color: #6366f1;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 10px;
-          }
-          .options { margin: 15px 0; padding-left: 0; }
-          .option {
-            list-style: none;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            background: #f9fafb;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            font-size: 14px;
-          }
-          .option-letter {
-            font-weight: bold;
-            color: #6366f1;
-            margin-right: 8px;
-          }
-          .answer-space {
-            margin-top: 15px;
-            padding: 15px;
-            background: #fff;
-            border: 2px dashed #d1d5db;
-            border-radius: 8px;
-          }
-          .answer-label { font-size: 13px; color: #6b7280; font-weight: 600; }
-          .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #e5e7eb;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 12px;
-          }
-          .student-info {
-            border: 2px solid #e5e7eb;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            background: #f9fafb;
-          }
-          .student-info .field { margin-bottom: 15px; }
-          .student-info .field label {
-            font-weight: bold;
-            color: #4b5563;
-            display: inline-block;
-            width: 120px;
-          }
-          .student-info .field .line {
-            display: inline-block;
-            border-bottom: 1px solid #9ca3af;
-            width: 300px;
-            margin-left: 10px;
-          }
-          @media print {
-            body { padding: 0; }
-            .question-block { page-break-inside: avoid; }
-          }
+          body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; max-width: 210mm; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; border-bottom: 3px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { color: #6366f1; margin: 0 0 10px 0; font-size: 24px; }
+          .header .meta { color: #666; font-size: 14px; margin-top: 5px; }
+          
+          .question-block { margin-bottom: 25px; page-break-inside: avoid; border-left: 4px solid #e5e7eb; padding-left: 15px; }
+          .question-number { color: #6366f1; font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+          .question-text { font-size: 14px; font-weight: 500; margin-bottom: 10px; color: #1f2937; }
+          
+          .options { margin: 10px 0; padding-left: 0; }
+          .option { list-style: none; padding: 6px 12px; margin-bottom: 4px; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; font-size: 13px; }
+          .option-letter { font-weight: bold; color: #6366f1; margin-right: 8px; }
+          
+          .answer-space { margin-top: 10px; font-size: 12px; color: #6b7280; border-top: 1px dashed #ddd; padding-top: 5px; }
+
+          /* Answer Key Page */
+          .page-break { page-break-before: always; }
+          .key-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+          .key-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
         </style>
       </head>
       <body>
+        <!-- EXAM SECTION -->
         <div class="header">
-          <h1>📝 Test Questionnaire</h1>
+          <h1>📝 ${selectedType}</h1>
           <div class="meta">
-            <strong>Test Type:</strong> ${selectedType}<br>
-            <strong>Time Limit:</strong> ${timeLimit} minutes<br>
-            <strong>Categories:</strong> ${selectedCategories || 'All Categories'}<br>
-            <strong>Total Questions:</strong> ${questionsData.length}
+            Time Limit: ${timeLimit} mins <br>
+            Topics: ${selectedCategories || 'Mixed'}
           </div>
-        </div>
-
-        <div class="student-info">
-          <div class="field"><label>Name:</label><span class="line"></span></div>
-          <div class="field"><label>Date:</label><span class="line"></span></div>
-          <div class="field"><label>Section:</label><span class="line"></span></div>
-        </div>
-
-        <div class="instructions">
-          <h3>⚠️ Instructions</h3>
-          <ul>
-            <li>Read each question carefully before answering</li>
-            <li>Choose the best answer from the options provided</li>
-            <li>Write your answer clearly in the space provided</li>
-            <li>You have <strong>${timeLimit} minutes</strong> to complete this test</li>
-            <li>Use pencil or pen with black or blue ink</li>
-            <li>Do not make any stray marks on this questionnaire</li>
-          </ul>
         </div>
 
         ${questionsData.map((q, idx) => `
           <div class="question-block">
-            <div class="question-number">Question ${idx + 1} of ${questionsData.length}</div>
-            <div class="category-badge">${q.category || 'General'}</div>
+            <div class="question-number">Question ${idx + 1}</div>
             <div class="question-text">${q.question}</div>
             <ul class="options">
               ${q.options.map((opt, optIdx) => `
                 <li class="option">
-                  <span class="option-letter">${String.fromCharCode(65 + optIdx)}.</span>
-                  ${opt}
+                  <span class="option-letter">${String.fromCharCode(65 + optIdx)}.</span> ${opt}
                 </li>
               `).join('')}
             </ul>
-            <div class="answer-space">
-              <span class="answer-label">Your Answer:</span> __________
-            </div>
+            <div class="answer-space">Answer: _______</div>
           </div>
         `).join('')}
 
-        <div class="footer">
-          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-          <p><strong>Good luck! 🍀</strong></p>
-          <p style="margin-top: 20px; font-size: 10px; color: #6b7280;">
-            To print: Open this file in your browser and press Ctrl+P (Windows) or Cmd+P (Mac).<br>
-            You can also save as PDF by selecting "Save as PDF" in the print dialog.
-          </p>
+        <!-- ANSWER KEY SECTION (New Page) -->
+        <div class="page-break"></div>
+        <div class="key-header">
+          <h2>🔑 Answer Key</h2>
+          <p style="font-size: 12px; color: #666;">Check your answers only after finishing the test.</p>
+        </div>
+        <div class="key-container">
+          ${answerKeyRows}
         </div>
       </body>
       </html>
@@ -213,15 +113,13 @@ const generatePrintablePDF = async (questionsData, selectedType, timeLimit, cate
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `questionnaire-${selectedType.replace(/\s+/g, '-')}-${Date.now()}.html`;
+    link.download = `Exam_${selectedType.replace(/\s+/g, '_')}_${Date.now()}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-    
     return true;
   } catch (error) {
-    console.error('Error generating printable questionnaire:', error);
+    console.error('Error generating PDF:', error);
     return false;
   }
 };

@@ -34,10 +34,16 @@ const Question = sequelize.define('Question', {
       'Analytical Ability',
       'General Knowledge',
       'Clerical Ability',
-      'Numerical Reasoning',
       'Philippine Constitution'
+      // Removed 'Numerical Reasoning' since we merged it into Analytical/Numerical
     ),
     allowNull: false
+  },
+  // ✅ NEW FIELD ADDED HERE:
+  subCategory: {
+    type: DataTypes.STRING,
+    allowNull: true, // It is null for general mock exams
+    defaultValue: null
   },
   difficulty: {
     type: DataTypes.ENUM('Easy', 'Normal', 'Hard'),
@@ -69,6 +75,8 @@ const Question = sequelize.define('Question', {
     { fields: ['category', 'difficulty', 'usageCount'] },
     { fields: ['isActive', 'category', 'difficulty'] },
     { fields: ['category'] },
+    // Indexing subCategory helps search speed for study guides
+    { fields: ['subCategory'] }, 
     { fields: ['difficulty'] },
     { fields: ['usageCount'] }
   ]

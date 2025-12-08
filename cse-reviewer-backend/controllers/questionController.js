@@ -17,7 +17,8 @@ const aiService = require('../services/aiService');
  */
 exports.generateSmartQuestions = async (req, res) => {
   try {
-    const { topic, difficulty, count = 5 } = req.body;
+    // ✅ EXTRACT subTopic from request body
+    const { topic, difficulty, count = 5, subTopic } = req.body;
     const userId = req.user.id;
 
     if (!topic || !difficulty) {
@@ -27,7 +28,12 @@ exports.generateSmartQuestions = async (req, res) => {
       });
     }
 
-    console.log(`🎯 Generating ${count} ${difficulty} questions for ${topic} (User: ${userId})...`);
+    // ✅ LOGGING: Check if sub-topic is active
+    if (subTopic) {
+      console.log(`🎯 Generating ${count} ${difficulty} questions for "${topic}" (Sub-topic: "${subTopic}") (User: ${userId})...`);
+    } else {
+      console.log(`🎯 Generating ${count} ${difficulty} questions for "${topic}" (User: ${userId})...`);
+    }
 
     // ✅ Step 1: Get questions used in the LAST TEST ONLY (within last 5 minutes)
     const recentCutoff = new Date(Date.now() - 5 * 60 * 1000);
@@ -50,19 +56,35 @@ exports.generateSmartQuestions = async (req, res) => {
     const usedQuestionTexts = new Set();
     const usedQuestionIds = new Set(recentQuestionIds);
 
-    // ✅ Step 3: Get existing questions from DB (EXCLUDING recently used ones)
-    const existingQuestions = await Question.findAll({
-      where: {
-        category: topic,
-        difficulty: difficulty,
-        isActive: true,
-        id: {
-          [Op.notIn]: recentQuestionIds.length > 0 ? recentQuestionIds : [0]
-        }
-      },
+    // ✅ Step 3: Get existing questions from DB
+    // Build query filters dynamically
+    const dbQuery = {
+      category: topic,
+      difficulty: difficulty,
+      isActive: true,
+      id: {
+        [Op.notIn]: recentQuestionIds.length > 0 ? recentQuestionIds : [0]
+      }
+    };
+
+    // ✅ FILTER: If subTopic is provided, try to find DB matches first
+    if (subTopic) {
+      dbQuery.subCategory = subTopic;
+    }
+
+    let existingQuestions = await Question.findAll({
+      where: dbQuery,
       order: [['usageCount', 'ASC']],
       limit: count * 2
     });
+
+    // FALLBACK: If strict subTopic filtering returns 0, try searching without subCategory 
+    // (Only if you want to allow generic questions. If you prefer AI generation for specificity, keep this commented out)
+    /* 
+    if (existingQuestions.length === 0 && subTopic) {
+       console.log(`⚠️ No specific DB questions found for "${subTopic}". Will rely on AI generation.`);
+    } 
+    */
     
     console.log(`✅ Found ${existingQuestions.length} potential questions in DB`);
 
@@ -95,6 +117,7 @@ exports.generateSmartQuestions = async (req, res) => {
         correctAnswer: question.correctAnswer,
         explanation: question.explanation,
         category: question.category,
+        subCategory: question.subCategory, // Include subCategory in response
         _id: questionId
       });
     }
@@ -108,7 +131,16 @@ exports.generateSmartQuestions = async (req, res) => {
       
       try {
         const generateCount = Math.min(questionsToGenerate * 2, 20);
-        const newQuestions = await aiService.generateQuestions(topic, difficulty, generateCount);
+        
+        // ✅ PASS SUB-TOPIC TO AI SERVICE
+        // Signature: generateQuestions(topic, difficulty, count, avoidQuestions, subTopic)
+        const newQuestions = await aiService.generateQuestions(
+          topic, 
+          difficulty, 
+          generateCount, 
+          [], // avoidQuestions (empty for now)
+          subTopic || "" // Pass the subTopic here!
+        );
         
         console.log(`🤖 AI generated ${newQuestions.length} questions`);
 
@@ -134,6 +166,7 @@ exports.generateSmartQuestions = async (req, res) => {
                 correctAnswer: q.correctAnswer,
                 explanation: q.explanation,
                 category: topic,
+                subCategory: subTopic || null, // ✅ SAVE SUB-TOPIC TO DB
                 difficulty: difficulty,
                 usageCount: 1,
                 source: 'AI'
@@ -148,6 +181,7 @@ exports.generateSmartQuestions = async (req, res) => {
                 correctAnswer: savedQuestion.correctAnswer,
                 explanation: savedQuestion.explanation,
                 category: savedQuestion.category,
+                subCategory: savedQuestion.subCategory,
                 _id: savedQuestion.id
               });
 
@@ -180,6 +214,7 @@ exports.generateSmartQuestions = async (req, res) => {
         if (remainingNeeded > 0) {
           console.log(`⚠️ AI failed, fetching ${remainingNeeded} more from DB as fallback`);
           
+          // Fallback: Get generic questions from the main topic if specific sub-topic fails
           const fallbackQuestions = await Question.findAll({
             where: {
               category: topic,
@@ -200,7 +235,6 @@ exports.generateSmartQuestions = async (req, res) => {
             const questionId = q.id;
 
             if (usedQuestionTexts.has(questionText) || usedQuestionIds.has(questionId)) {
-              console.log(`⚠️ Skipping duplicate fallback question: ${questionId}`);
               continue;
             }
 

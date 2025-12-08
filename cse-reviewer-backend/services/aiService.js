@@ -200,7 +200,7 @@ CRITICAL: Return ONLY the JSON array.`;
   }
 };
 
-// ==================== 1. GENERATE CSE PRACTICE QUESTIONS (BEST VERSION) ====================
+// ==================== 1. GENERATE CSE PRACTICE QUESTIONS (UPDATED CONTEXT) ====================
 exports.generateQuestions = async (topic, difficulty, count = 5, avoidQuestions = [], subTopic = "") => {
   try {
     const batchSize = Math.min(count, 10);
@@ -225,13 +225,15 @@ Generate ${questionsInBatch} multiple-choice questions for the topic "${topic}" 
 1. **NO VISUAL REFERENCES**: Do NOT use words like "underlined", "bolded", or "italicized". The user cannot see formatting.
 2. **USE CAPS INSTEAD**: If you need to highlight a word, write it in CAPITAL LETTERS or put it in 'SINGLE QUOTES'.
 
-🌍 CONTEXT RULES (CRITICAL):
-1. Philippine Constitution: Use the 1987 Constitution, Bill of Rights.
-2. General Information: Focus on RA 6713 (Code of Conduct), Peace & Human Rights, Phil. Environment laws.
-3. Numerical Ability: Use Philippine currency (Peso/PHP) and Metric system (meters/kg).
-4. Verbal Ability: Use formal English grammar standards relevant to the CSE.`;
+🌍 CONTEXT RULES (CRITICAL - FOLLOW STRICTLY):
+1. **Philippine Constitution**: Focus on Art. III (Bill of Rights), Citizenship, and 3 Branches of Govt.
+2. **General Knowledge**: Focus ONLY on RA 6713 (Code of Conduct), Peace & Human Rights, and Environmental Laws.
+3. **Numerical Ability**: Use Word Problems (Age, Work, Motion), Fractions, and Basic Operations. Use Peso (PHP).
+4. **Verbal Ability**: Focus on Grammar, Vocabulary, and Paragraph Organization.
+5. **Analytical Ability**: Focus on Logic, Assumptions, Data Sufficiency, and Word Association.
+6. **Clerical Ability**: Focus on Alphabetical Filing Rules, Spelling, and Data Checking (Sub-Professional Level).`;
 
-      // ✅ RESTORED: Your original, strong sub-topic instructions
+      // 🎯 SUB-TOPIC LOGIC: This captures the data sent from your Study Guide
       if (subTopic && subTopic.trim() !== "") {
         prompt += `\n\n🎯 SPECIFIC FOCUS: Your questions MUST be about "${subTopic}".
 Focus ONLY on this specific sub-topic within ${topic}. Do NOT generate general ${topic} questions.
