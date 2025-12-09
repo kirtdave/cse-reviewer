@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import HistoryHeader from "./HistoryHeader";
 import HistorySummary from "./HistorySummary";
 import HistoryTable from "./HistoryTable";
+import DeletedTestsModal from "./DeletedTestsModal";
 import { getTestAttempts, getUserStats, deleteTestAttempt } from "../../services/testAttemptService";
 
 export default function ExamHistoryPage({ theme = "dark" }) {
@@ -21,6 +22,7 @@ export default function ExamHistoryPage({ theme = "dark" }) {
   const [filterResult, setFilterResult] = useState("All");
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showDeletedModal, setShowDeletedModal] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -68,13 +70,10 @@ export default function ExamHistoryPage({ theme = "dark" }) {
       // Fetch user stats
       const statsData = await getUserStats();
 
-      // ✅ FIXED: Transform backend data and include ALL 7 CATEGORIES
+      // Transform backend data
       const transformedAttempts = attemptsData.attempts.map(attempt => {
         let examName = attempt.name;
         examName = examName.replace(/\s*-\s*\w{3}\s+\d{1,2},\s+\d{4}.*$/i, '');
-        
-        // ✅ DEBUG: Log the section scores from backend
-        console.log('🔍 Backend section scores for', examName, ':', attempt.details.sectionScores);
         
         return {
           id: attempt.id,
@@ -86,30 +85,27 @@ export default function ExamHistoryPage({ theme = "dark" }) {
           }),
           score: attempt.score,
           result: attempt.result,
-          categories: attempt.categories || [], // ✅ CRITICAL: Store test categories
-          isMockExam: attempt.isMockExam || false, // ✅ Store mock exam flag
+          categories: attempt.categories || [],
+          isMockExam: attempt.isMockExam || false,
           details: {
-  verbal: attempt.details.sectionScores.verbal || 
-          attempt.details.sectionScores['Verbal Ability'] || 0,
-  numerical: attempt.details.sectionScores.numerical || 
-             attempt.details.sectionScores['Numerical Ability'] || 0,
-  analytical: attempt.details.sectionScores.analytical || 
-              attempt.details.sectionScores['Analytical Ability'] || 0,
-  generalKnowledge: attempt.details.sectionScores.generalInfo || // ✅ FIXED: Changed from generalKnowledge to generalInfo
-                    attempt.details.sectionScores['General Knowledge'] || 0,
-  clerical: attempt.details.sectionScores.clerical || 
-            attempt.details.sectionScores['Clerical Ability'] || 0,
-  constitution: attempt.details.sectionScores.constitution || 
-                attempt.details.sectionScores['Philippine Constitution'] || 0,
-  timeSpent: attempt.details.timeSpent,
-  correctQuestions: attempt.details.correctQuestions,
-  incorrectQuestions: attempt.details.incorrectQuestions
-}
+            verbal: attempt.details.sectionScores.verbal || 
+                    attempt.details.sectionScores['Verbal Ability'] || 0,
+            numerical: attempt.details.sectionScores.numerical || 
+                       attempt.details.sectionScores['Numerical Ability'] || 0,
+            analytical: attempt.details.sectionScores.analytical || 
+                        attempt.details.sectionScores['Analytical Ability'] || 0,
+            generalKnowledge: attempt.details.sectionScores.generalInfo || 
+                              attempt.details.sectionScores['General Knowledge'] || 0,
+            clerical: attempt.details.sectionScores.clerical || 
+                      attempt.details.sectionScores['Clerical Ability'] || 0,
+            constitution: attempt.details.sectionScores.constitution || 
+                          attempt.details.sectionScores['Philippine Constitution'] || 0,
+            timeSpent: attempt.details.timeSpent,
+            correctQuestions: attempt.details.correctQuestions,
+            incorrectQuestions: attempt.details.incorrectQuestions
+          }
         };
       });
-
-      console.log('📋 Transformed attempts with categories:', transformedAttempts);
-      console.log('📋 First exam details:', transformedAttempts[0]?.details);
 
       setExamAttempts(transformedAttempts);
       setPagination(attemptsData.pagination);
@@ -122,7 +118,6 @@ export default function ExamHistoryPage({ theme = "dark" }) {
 
     } catch (err) {
       console.error('Error fetching history data:', err);
-      // If 401, user session expired - clear auth
       if (err.message.includes('401') || err.message.includes('Authentication')) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -171,6 +166,14 @@ export default function ExamHistoryPage({ theme = "dark" }) {
     }
   };
 
+  const handleViewDeleted = () => {
+    setShowDeletedModal(true);
+  };
+
+  const handleRestoreComplete = async () => {
+    await fetchData();
+  };
+
   return (
     <main className={`relative min-h-screen transition-colors duration-500 ${isDark ? "text-gray-100" : "text-gray-900"}`}>
       {/* Animated background grid */}
@@ -183,7 +186,7 @@ export default function ExamHistoryPage({ theme = "dark" }) {
       </div>
 
       {/* Content */}
-      <HistoryHeader theme={theme} />
+      <HistoryHeader theme={theme} onViewDeleted={handleViewDeleted} />
       <div className="relative z-10 p-6 lg:p-10">
         <div className="max-w-[1600px] mx-auto space-y-6">  
 
@@ -314,6 +317,14 @@ export default function ExamHistoryPage({ theme = "dark" }) {
           )}
         </div>
       </div>
+
+      {/* Deleted Tests Modal */}
+      <DeletedTestsModal
+        theme={theme}
+        isOpen={showDeletedModal}
+        onClose={() => setShowDeletedModal(false)}
+        onRestore={handleRestoreComplete}
+      />
     </main>
   );
 }

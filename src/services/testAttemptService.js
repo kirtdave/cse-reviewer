@@ -237,3 +237,28 @@ export const deleteAllTestAttempts = async () => {
     throw error.response?.data?.error || error.message || 'Failed to delete all test attempts';
   }
 };
+// ✅ NEW: Get deleted test attempts
+export const getDeletedAttempts = async () => {
+  try {
+    console.log('🗑️ Fetching deleted test attempts...');
+    const response = await api.get('/test-attempts/deleted/list');
+    console.log('✅ Deleted attempts fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching deleted attempts:', error);
+    throw error.response?.data?.error || error.message || 'Failed to load deleted tests';
+  }
+};
+
+// ✅ NEW: Restore deleted test attempt
+export const restoreTestAttempt = async (attemptId) => {
+  try {
+    console.log('♻️ Restoring test attempt:', attemptId);
+    const response = await api.post(`/test-attempts/${attemptId}/restore`);
+    console.log('✅ Test attempt restored successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error restoring test attempt:', error);
+    throw error.response?.data?.error || error.message || 'Failed to restore test';
+  }
+};

@@ -336,7 +336,38 @@ IMPORTANT: The content inside the JSON must be in English.`;
 // ==================== 4. CHATBOT FOR CSE QUESTIONS - ✅ OPTIMIZED ====================
 exports.chatWithAI = async (userMessage, conversationHistory = [], userData = null) => {
   try {
-    // ✅ LIMIT conversation history to last 3 messages to reduce prompt size
+    // ✅ CHECK: Is this a study tips request?
+    const isStudyTipsRequest = 
+      userMessage.toLowerCase().includes('study tips') ||
+      userMessage.includes('Format each tip as') ||
+      userMessage.includes('EMOJI|Title|Description') ||
+      userMessage.includes('ICON|Title|Description');
+
+    // ✅ FOR STUDY TIPS: Use structured output mode
+    if (isStudyTipsRequest && userData) {
+      const structuredPrompt = `You are a study tips generator. Output EXACTLY 10 tips in this format:
+
+EMOJI|Title|Description
+
+CRITICAL RULES:
+1. NO greetings, NO "Here are your tips", NO conversational text
+2. Start immediately with first tip
+3. Each tip on a new line
+4. Use emojis: 📚⏰🎯💪🧘📊✍️🎓🏆🔥
+
+Student Performance Data:
+- Average Score: ${userData.avgScore}%
+- Total Exams: ${userData.totalExams}
+${userData.sections ? `- Weak Areas: ${Object.entries(userData.sections).filter(([_, s]) => s > 0 && s < 65).map(([n, s]) => `${n} (${s}%)`).join(', ')}` : ''}
+
+Output 10 tips now (ONLY tips in EMOJI|Title|Description format):`;
+
+      console.log('💬 Using STRUCTURED mode for study tips...');
+      const response = await callGeminiAPI(structuredPrompt, false);
+      return response;
+    }
+
+    // ✅ FOR REGULAR CHAT: Use conversational mode (existing logic)
     const recentHistory = conversationHistory.slice(-3);
     
     let systemContext = `You are a helpful and friendly Civil Service Exam tutor for the Philippines.
@@ -347,31 +378,25 @@ IMPORTANT STYLE RULE: You must write your entire response in short but concise s
 
 Answer questions about exam topics, study tips, and exam procedures. Be clear and educational.`;
 
-    // ✅ SIMPLIFIED userData section - only include if relevant
     if (userData && (userData.avgScore !== undefined || userData.totalExams > 0)) {
       systemContext += `\n\n📊 STUDENT PERFORMANCE:`;
       systemContext += `\n- Average Score: ${userData.avgScore}%`;
       systemContext += `\n- Total Tests: ${userData.totalExams}`;
       
-      // Only include sections if they exist and have data
       if (userData.sections && Object.keys(userData.sections).length > 0) {
         const weakSections = Object.entries(userData.sections)
           .filter(([_, score]) => score > 0 && score < 65)
           .map(([name, score]) => `${name} (${score}%)`)
-          .slice(0, 3); // Only top 3 weak areas
+          .slice(0, 3);
         
         if (weakSections.length > 0) {
           systemContext += `\n- Weak Areas: ${weakSections.join(', ')}`;
         }
       }
-
-      // ✅ REMOVED: timeMetrics and recentAttempts to reduce prompt size
-      // These can be added back if specifically asked by user
     }
 
     let fullPrompt = systemContext + "\n\n";
     
-    // ✅ Only include recent conversation history
     recentHistory.forEach(msg => {
       fullPrompt += `${msg.role === 'user' ? 'Student' : 'Tutor'}: ${msg.content}\n`;
     });
@@ -379,6 +404,7 @@ Answer questions about exam topics, study tips, and exam procedures. Be clear an
     fullPrompt += `Student: ${userMessage}\nTutor:`;
 
     console.log(`📝 Chat prompt size: ${fullPrompt.length} characters`);
+    console.log('💬 Using general chat...');
 
     const response = await callGeminiAPI(fullPrompt, false);
     return response;

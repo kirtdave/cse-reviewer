@@ -56,17 +56,15 @@ export function AIStudyTipsModal({ isOpen, onClose, theme = "light", analyticsDa
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          message: `Generate exactly 10 personalized study tips based on my performance data. 
+          message: `Generate 10 personalized study tips. Format each tip as: EMOJI|Title|Description
 
-IMPORTANT: Format EACH tip on a new line using this EXACT format:
-ICON|Title|Description
+CRITICAL: Output ONLY the 10 tips in EMOJI|Title|Description format. NO greetings, NO extra text.
 
-Examples:
-📚|Review Mistakes|Focus on your 15 recent errors in Numerical Ability
-⏰|Time Management|You're averaging 65s per question. Aim for under 60s
-🎯|Practice Consistency|Take 3 practice tests per week for best results
+Example:
+📚|Focus on Weak Areas|Spend 60% of study time on your lowest scoring section
+⏰|Improve Speed|Practice timed drills to reduce time per question
 
-Generate all 10 tips now, one per line, using the format above.`,
+Generate 10 tips now:`,
           conversationHistory: [],
           userData: {
             avgScore: analyticsData?.avgScore || 0,
