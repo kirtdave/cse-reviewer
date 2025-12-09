@@ -342,7 +342,8 @@ export default function SignupForm({ theme, onSignup }) {
         )}
       </motion.button>
 
-      {/* Social Signup Divider */}
+      {/* Social Signup Divider - COMMENTED OUT */}
+      {/* 
       <div className="relative my-1 sm:my-2">
         <div className={`absolute inset-0 flex items-center`}>
           <div className={`w-full border-t ${isDark ? "border-gray-700" : "border-gray-300"}`}></div>
@@ -353,8 +354,10 @@ export default function SignupForm({ theme, onSignup }) {
           </span>
         </div>
       </div>
+      */}
 
-      {/* Social Signup Buttons - Touch-Friendly */}
+      {/* Social Signup Buttons - COMMENTED OUT (Feature not yet implemented) */}
+      {/* 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <button
           type="button"
@@ -379,6 +382,7 @@ export default function SignupForm({ theme, onSignup }) {
           <span className="font-medium">Facebook</span>
         </button>
       </div>
+      */}
     </motion.form>
   );
 }

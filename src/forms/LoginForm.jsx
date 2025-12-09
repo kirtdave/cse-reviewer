@@ -197,7 +197,8 @@ export default function LoginForm({ theme, onLogin }) {
         )}
       </motion.button>
 
-      {/* Social Login Divider */}
+      {/* Social Login Divider - COMMENTED OUT */}
+      {/* 
       <div className="relative my-1 sm:my-2">
         <div className={`absolute inset-0 flex items-center`}>
           <div className={`w-full border-t ${isDark ? "border-gray-700" : "border-gray-300"}`}></div>
@@ -208,8 +209,10 @@ export default function LoginForm({ theme, onLogin }) {
           </span>
         </div>
       </div>
+      */}
 
-      {/* Social Login Buttons - More Touch-Friendly */}
+      {/* Social Login Buttons - COMMENTED OUT (Feature not yet implemented) */}
+      {/* 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <button
           type="button"
@@ -234,6 +237,7 @@ export default function LoginForm({ theme, onLogin }) {
           <span className="font-medium">Facebook</span>
         </button>
       </div>
+      */}
     </motion.form>
   );
 }
