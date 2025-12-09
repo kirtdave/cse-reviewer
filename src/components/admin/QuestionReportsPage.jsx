@@ -54,18 +54,28 @@ export default function QuestionReportsPage({ palette }) {
     }
   };
 
-  const handleStatusChange = async (reportId, newStatus) => {
-    try {
-      await updateReportStatus(reportId, newStatus);
-      fetchReports();
-      if (selectedReport?.id === reportId) {
-        setSelectedReport({ ...selectedReport, status: newStatus });
-      }
-    } catch (error) {
-      console.error('Error updating report status:', error);
-      alert('Failed to update report status');
+const handleStatusChange = async (reportId, newStatus) => {
+  try {
+    const response = await updateReportStatus(reportId, newStatus);
+    
+    // ✅ Show success message with notification info
+    if (response.notificationSent && newStatus === 'Resolved') {
+      alert('✅ Report marked as RESOLVED!\n\nThe reporter has been notified that their issue was fixed.');
+    } else if (response.notificationSent && newStatus === 'In Review') {
+      alert('📝 Report marked as IN REVIEW!\n\nThe reporter has been notified that we\'re looking into it.');
+    } else {
+      alert(`Status updated to: ${newStatus}`);
     }
-  };
+    
+    fetchReports();
+    if (selectedReport?.id === reportId) {
+      setSelectedReport({ ...selectedReport, status: newStatus });
+    }
+  } catch (error) {
+    console.error('Error updating report status:', error);
+    alert('Failed to update report status');
+  }
+};
 
   const handleDeleteReport = async (reportId) => {
     if (window.confirm("Are you sure you want to delete this report?")) {

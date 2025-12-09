@@ -52,15 +52,18 @@ const NotificationModal = ({
     setViewingNotification(null);
   };
 
+  // ✅ FIXED: Now properly refreshes the list after deleting
   const handleDeleteNotification = async (notificationId) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${notificationId}/dismiss`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${notificationId}/dismiss`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (onRefresh) await onRefresh();
+      if (response.ok && onRefresh) {
+        await onRefresh(); // Force UI update
+      }
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
@@ -89,7 +92,7 @@ const NotificationModal = ({
             onClick={onClose}
           />
 
-          {/* Modal Container - Responsive width */}
+          {/* Modal Container */}
           <motion.div
             className={`relative rounded-2xl shadow-2xl w-full max-w-sm lg:max-w-lg max-h-[90vh] lg:max-h-[85vh] flex flex-col overflow-hidden ${
               isDark 
@@ -121,7 +124,7 @@ const NotificationModal = ({
               style={{ backgroundSize: '200% 100%' }}
             />
 
-            {/* Header - Mobile Optimized */}
+            {/* Header */}
             <div className={`px-4 lg:px-6 py-3 lg:py-4 border-b ${isDark ? "border-gray-800/50" : "border-gray-200"}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 lg:gap-3">
@@ -223,7 +226,7 @@ const NotificationModal = ({
               </div>
             </div>
 
-            {/* Notifications List - Mobile Optimized */}
+            {/* Notifications List */}
             <div className="flex-1 overflow-y-auto px-3 lg:px-6 py-3 lg:py-4 space-y-2 lg:space-y-3">
               {loading ? (
                 <motion.div
@@ -292,7 +295,7 @@ const NotificationModal = ({
             </div>
           </motion.div>
 
-          {/* View Notification Detail Modal - Mobile Optimized */}
+          {/* View Notification Detail Modal */}
           <AnimatePresence>
             {viewingNotification && (
               <motion.div

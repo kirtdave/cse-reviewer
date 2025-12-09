@@ -4,6 +4,11 @@ import { X, Eye, Sparkles, Flag } from "lucide-react";
 
 export default function QuestionDetailsModal({ bookmark, isDark, onClose, onViewFullTest, onAskAI }) {
   const [showReportModal, setShowReportModal] = useState(false);
+  const [fetchedQuestionId, setFetchedQuestionId] = useState(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+
+  // Helper to safely get the ID
+  const activeQuestionId = fetchedQuestionId || bookmark.questionId || bookmark.id;
 
   return (
     <>
@@ -59,7 +64,6 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
 
           {/* Content */}
           <div className="p-3 max-h-[60vh] overflow-y-auto">
-            {/* Question */}
             <div className="mb-3">
               <h3 className={`text-[10px] font-semibold mb-1.5 uppercase ${
                 isDark ? "text-gray-400" : "text-gray-600"
@@ -71,10 +75,14 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
               </p>
             </div>
 
-            {/* Options */}
             <QuestionOptions 
               bookmark={bookmark}
               isDark={isDark}
+              onDetailsLoaded={(id) => {
+                setFetchedQuestionId(id);
+                setIsLoadingDetails(false);
+              }}
+              onError={() => setIsLoadingDetails(false)}
             />
           </div>
 
@@ -100,16 +108,26 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
                 <Eye size={14} className="inline mr-1" />
                 View Test
               </button>
+              
               <button
                 onClick={() => setShowReportModal(true)}
-                className={`px-3 py-2 rounded-lg font-medium transition-all text-xs ${
+                disabled={isLoadingDetails && !activeQuestionId}
+                className={`px-3 py-2 rounded-lg font-medium transition-all text-xs flex items-center justify-center ${
                   isDark
-                    ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30"
-                    : "bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200"
+                    ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    : "bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 }`}
               >
-                <Flag size={14} className="inline mr-1" />
-                Report
+                {isLoadingDetails && !activeQuestionId ? (
+                  <>
+                    <i className="fa-solid fa-spinner fa-spin mr-2"></i> Loading...
+                  </>
+                ) : (
+                  <>
+                    <Flag size={14} className="inline mr-1" />
+                    Report
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -121,6 +139,7 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
         {showReportModal && (
           <ReportQuestionModal
             bookmark={bookmark}
+            realQuestionId={activeQuestionId}
             isDark={isDark}
             onClose={() => setShowReportModal(false)}
           />
@@ -131,9 +150,9 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
 }
 
 // Report Question Modal Component
-function ReportQuestionModal({ bookmark, isDark, onClose }) {
+function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
   const [reportData, setReportData] = useState({
-    issueType: '',
+    issueType: 'wrong_answer', 
     description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -152,9 +171,13 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!reportData.issueType || !reportData.description) {
-      setErrorMessage('Please select an issue type and provide a description');
-      setTimeout(() => setErrorMessage(''), 3000);
+    if (!realQuestionId) {
+      setErrorMessage('Critical Error: Question ID missing. Please refresh and try again.');
+      return;
+    }
+
+    if (!reportData.description) {
+      setErrorMessage('Please provide a description');
       return;
     }
 
@@ -173,7 +196,7 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            questionId: bookmark.questionId,
+            questionId: realQuestionId,
             attemptId: bookmark.attemptId,
             questionText: bookmark.questionText,
             category: bookmark.category,
@@ -217,7 +240,6 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
           isDark ? "bg-gray-900" : "bg-white"
         } shadow-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} overflow-hidden`}
       >
-        {/* Header */}
         <div className={`p-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -239,9 +261,7 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-3 max-h-[60vh] overflow-y-auto">
-          {/* Success/Error Messages */}
           {successMessage && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -262,9 +282,7 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
             </motion.div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Issue Type */}
             <div>
               <label className={`block text-xs font-medium mb-1.5 ${
                 isDark ? "text-gray-300" : "text-gray-700"
@@ -280,9 +298,7 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
                     ? "bg-gray-800 border-gray-700 text-white"
                     : "bg-white border-gray-300 text-gray-900"
                 } focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all disabled:opacity-50`}
-                required
               >
-                <option value="">Select issue type</option>
                 {issueTypes.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
@@ -291,7 +307,6 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
               </select>
             </div>
 
-            {/* Description */}
             <div>
               <label className={`block text-xs font-medium mb-1.5 ${
                 isDark ? "text-gray-300" : "text-gray-700"
@@ -309,11 +324,9 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
                     ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
                 } focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all resize-none disabled:opacity-50`}
-                required
               />
             </div>
 
-            {/* Question Preview */}
             <div className={`p-2.5 rounded-lg ${
               isDark ? "bg-gray-800/50" : "bg-gray-50"
             }`}>
@@ -325,11 +338,13 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
               <p className={`text-xs line-clamp-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 {bookmark.questionText}
               </p>
+              <p className="text-[10px] mt-1 opacity-50">
+                Ref ID: {realQuestionId || "Searching..."}
+              </p>
             </div>
           </form>
         </div>
 
-        {/* Footer */}
         <div className={`p-3 border-t ${isDark ? "border-gray-800" : "border-gray-200"}`}>
           <div className="flex gap-2">
             <button
@@ -346,7 +361,7 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !realQuestionId}
               onClick={handleSubmit}
               className="flex-1 px-3 py-2.5 text-sm rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
@@ -369,8 +384,7 @@ function ReportQuestionModal({ bookmark, isDark, onClose }) {
   );
 }
 
-// Component to fetch and display question options
-function QuestionOptions({ bookmark, isDark }) {
+function QuestionOptions({ bookmark, isDark, onDetailsLoaded, onError }) {
   const [questionData, setQuestionData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -395,8 +409,15 @@ function QuestionOptions({ bookmark, isDark }) {
 
       const data = await response.json();
       const question = data.questions[bookmark.questionIndex];
-      const userAnswer = data.userAnswers[bookmark.questionIndex];
-      const correctAnswer = data.correctAnswers[bookmark.questionIndex];
+      // ✅ FIX: Ensure these are Integers for comparison
+      const userAnswer = parseInt(data.userAnswers[bookmark.questionIndex]);
+      const correctAnswer = parseInt(data.correctAnswers[bookmark.questionIndex]);
+
+      const foundId = question.id || question.questionId || question._id;
+
+      if (foundId && onDetailsLoaded) {
+        onDetailsLoaded(foundId);
+      }
 
       setQuestionData({
         options: question.options || [],
@@ -406,6 +427,7 @@ function QuestionOptions({ bookmark, isDark }) {
       });
     } catch (error) {
       console.error('Error fetching question details:', error);
+      if (onError) onError();
     } finally {
       setLoading(false);
     }
@@ -425,7 +447,6 @@ function QuestionOptions({ bookmark, isDark }) {
 
   return (
     <>
-      {/* Answer Choices */}
       <div className="mb-3">
         <h3 className={`text-[10px] font-semibold mb-1.5 uppercase ${
           isDark ? "text-gray-400" : "text-gray-600"
@@ -434,8 +455,9 @@ function QuestionOptions({ bookmark, isDark }) {
         </h3>
         <div className="space-y-1.5">
           {questionData.options.map((option, idx) => {
-            const isUserAnswer = questionData.userAnswer === idx;
-            const isCorrectAnswer = questionData.correctAnswer === idx;
+            // ✅ FIX: Strict Number comparison
+            const isUserAnswer = Number(questionData.userAnswer) === idx;
+            const isCorrectAnswer = Number(questionData.correctAnswer) === idx;
 
             let bgClass = isDark ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-200";
             let textClass = isDark ? "text-gray-300" : "text-gray-700";
@@ -445,7 +467,7 @@ function QuestionOptions({ bookmark, isDark }) {
               bgClass = "bg-green-500/20 border-green-500";
               textClass = "text-green-500 font-semibold";
               icon = <i className="fa-solid fa-circle-check text-green-500 text-xs"></i>;
-            } else if (isUserAnswer && !bookmark.isCorrect) {
+            } else if (isUserAnswer) {
               bgClass = "bg-red-500/20 border-red-500";
               textClass = "text-red-500 font-semibold";
               icon = <i className="fa-solid fa-circle-xmark text-red-500 text-xs"></i>;
@@ -471,7 +493,6 @@ function QuestionOptions({ bookmark, isDark }) {
         </div>
       </div>
 
-      {/* Explanation */}
       {questionData.explanation && (
         <div className={`p-2.5 rounded-lg ${
           isDark ? "bg-blue-500/10 border border-blue-500/30" : "bg-blue-50 border border-blue-200"

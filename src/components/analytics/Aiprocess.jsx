@@ -72,7 +72,7 @@ const AdaptiveEngine = ({ theme, data }) => {
             </p>
             <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
               {weakestSection.value < 75 
-                ? `40% ${weakestSection.label} • 60% Other sections`
+                ? `25% ${weakestSection.label} • 75% Other sections`
                 : "Balanced across all sections"}
             </p>
           </div>

@@ -1,10 +1,11 @@
-// services/adminApi.js
+// ============================================================
+// FILE: services/adminApi.js - UPDATED TO USE CORRECT ROUTES
+// ============================================================
+
 import axios from 'axios';
 
-// ✅ Use Vite's import.meta.env instead of process.env
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -12,7 +13,6 @@ const api = axios.create({
   },
 });
 
-// Add token to requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,7 +24,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle response errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -80,21 +79,113 @@ export const deleteQuestion = async (id) => {
   return data;
 };
 
-// ==================== REPORTS ====================
+// ==================== REPORTS (UPDATED TO USE /question-reports) ====================
 export const getReports = async (params = {}) => {
-  const { data } = await api.get('/admin/reports', { params });
-  return data;
+  try {
+    // ✅ CHANGED: Use /question-reports instead of /admin/reports
+    const { data } = await api.get('/question-reports', { params });
+    
+    // ✅ Transform data to match frontend expectations
+    const transformedReports = data.reports.map(report => ({
+      id: report.id,
+      questionId: report.questionId || `Q-${report.id}`,
+      questionText: report.questionText,
+      reportedBy: report.reporter?.name || 'Unknown',
+      reportType: formatIssueType(report.issueType),
+      description: report.description,
+      status: capitalizeFirst(report.status),
+      priority: getPriorityFromIssueType(report.issueType),
+      submittedDate: getTimeAgo(report.createdAt),
+      category: report.category,
+      userId: report.userId // ✅ Include userId for notifications
+    }));
+
+    return {
+      reports: transformedReports,
+      pagination: data.pagination
+    };
+  } catch (error) {
+    console.error('❌ Error fetching reports:', error);
+    throw error;
+  }
 };
 
-export const updateReportStatus = async (id, status) => {
-  const { data } = await api.put(`/admin/reports/${id}`, { status });
-  return data;
+export const updateReportStatus = async (reportId, status) => {
+  try {
+    console.log(`📝 Updating report ${reportId} to status: ${status}`);
+    
+    // ✅ CHANGED: Use /question-reports/:id/status
+    const response = await api.patch(`/question-reports/${reportId}/status`, { 
+      status: status.toLowerCase() // Convert "Resolved" to "resolved"
+    });
+    
+    console.log('✅ Report status updated:', response.data);
+    return response.data; // Returns { success, message, data, notificationSent }
+  } catch (error) {
+    console.error('❌ Error updating report status:', error);
+    throw error.response?.data?.message || error.message || 'Failed to update report status';
+  }
 };
 
-export const deleteReport = async (id) => {
-  const { data } = await api.delete(`/admin/reports/${id}`);
-  return data;
+export const deleteReport = async (reportId) => {
+  try {
+    // ✅ CHANGED: Use /question-reports/:id
+    const { data } = await api.delete(`/question-reports/${reportId}`);
+    return data;
+  } catch (error) {
+    console.error('❌ Error deleting report:', error);
+    throw error.response?.data?.message || error.message || 'Failed to delete report';
+  }
 };
+
+// ==================== HELPER FUNCTIONS ====================
+function formatIssueType(type) {
+  const map = {
+    'wrong_answer': 'Incorrect Answer',
+    'typo': 'Typo Error',
+    'unclear': 'Unclear Wording',
+    'duplicate': 'Duplicate Question',
+    'outdated': 'Outdated Content',
+    'other': 'Other'
+  };
+  return map[type] || type;
+}
+
+function capitalizeFirst(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function getPriorityFromIssueType(type) {
+  const highPriority = ['wrong_answer', 'outdated'];
+  const mediumPriority = ['typo', 'unclear'];
+  
+  if (highPriority.includes(type)) return 'High';
+  if (mediumPriority.includes(type)) return 'Medium';
+  return 'Low';
+}
+
+function getTimeAgo(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
+
+  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+    const interval = Math.floor(seconds / secondsInUnit);
+    if (interval >= 1) {
+      return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+    }
+  }
+  
+  return 'Just now';
+}
 
 // ==================== MESSAGES (Contact Messages) ====================
 export const getMessages = async (filters = {}) => {
@@ -108,7 +199,6 @@ export const getMessages = async (filters = {}) => {
       sortOrder: 'desc'
     };
 
-    // Map status filter to backend format
     if (status && status !== 'All') {
       const statusMap = {
         'Unread': 'pending',
@@ -120,7 +210,6 @@ export const getMessages = async (filters = {}) => {
 
     const { data } = await api.get('/contact', { params });
 
-    // Transform backend data to match frontend expectations
     const transformedMessages = data.messages.map(msg => ({
       id: msg.id,
       sender: msg.name,
@@ -163,7 +252,6 @@ export const deleteMessage = async (id) => {
 
 export const replyToMessage = async (id, replyText) => {
   try {
-    // Send reply to the new endpoint
     const { data } = await api.post(`/contact/${id}/reply`, { replyText });
     return data;
   } catch (error) {
@@ -172,14 +260,12 @@ export const replyToMessage = async (id, replyText) => {
   }
 };
 
-// Get contact statistics
 export const getContactStats = async () => {
   try {
     const { data } = await api.get('/contact/stats');
     return data;
   } catch (error) {
     console.error('Error fetching contact stats:', error);
-    // Return default values if fetch fails
     return {
       success: false,
       stats: {

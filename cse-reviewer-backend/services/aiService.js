@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 // ==================== ⚙️ MODEL CONFIGURATION ====================
-const GEMINI_MODEL = "gemini-2.5-flash"; 
+const GEMINI_MODEL = "gemini-2.5-flash-lite"; 
 
 // ==================== RETRY LOGIC ====================
 async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {

@@ -421,12 +421,30 @@ router.put('/:id/bookmark/:questionIndex/note', protect, async (req, res) => {
   }
 });
 
-// ✅ UPDATED: Can review deleted tests
+// ✅ UPDATED: Can review deleted tests + FIXED REPORTING ID
 router.get('/:id/review', protect, async (req, res) => {
   try {
-    // ✅ getTestForReview allows viewing deleted tests
+    // 1. Get the data using the helper that works correctly for UI
     const reviewData = await TestAttempt.getTestForReview(req.params.id, req.user.id);
     if (!reviewData) return res.status(404).json({ error: 'Test attempt not found' });
+
+    // 2. Fetch the raw data just to grab the missing IDs
+    const rawAttempt = await TestAttempt.findOne({
+        where: { id: req.params.id, userId: req.user.id },
+        attributes: ['questionResponses']
+    });
+
+    // 3. Inject IDs into the existing working data
+    if (rawAttempt && rawAttempt.questionResponses && reviewData.questions) {
+        reviewData.questions = reviewData.questions.map((q, i) => {
+            const rawQ = rawAttempt.questionResponses[i];
+            return {
+                ...q, // Keep everything else exactly as is
+                id: rawQ ? (rawQ.id || rawQ.questionId || rawQ._id) : null // Add ID
+            };
+        });
+    }
+
     res.json(reviewData);
   } catch (error) {
     console.error('Error fetching test for review:', error);

@@ -80,9 +80,10 @@ const NotificationItem = ({ notification, isDark, onRead, onView, onDelete }) =>
                 }`}>
                   {notification.time}
                 </span>
+                {/* ✅ FIX: Removed 'opacity-0 group-hover:opacity-100' so it's always visible */}
                 <motion.button
                   onClick={handleDelete}
-                  className={`opacity-0 group-hover:opacity-100 w-5 h-5 lg:w-6 lg:h-6 rounded flex items-center justify-center transition-all ${
+                  className={`w-5 h-5 lg:w-6 lg:h-6 rounded flex items-center justify-center transition-all ${
                     isDark
                       ? "hover:bg-red-500/20 text-gray-500 hover:text-red-400"
                       : "hover:bg-red-50 text-gray-400 hover:text-red-500"

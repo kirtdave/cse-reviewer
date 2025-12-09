@@ -1,4 +1,3 @@
-// models/Notification.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
@@ -7,6 +6,10 @@ const Notification = sequelize.define('Notification', {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true // ✅ NULL = "All Users", specific ID = Private Message
   },
   title: {
     type: DataTypes.STRING(255),
@@ -25,7 +28,7 @@ const Notification = sequelize.define('Notification', {
     defaultValue: 'Draft'
   },
   recipients: {
-    type: DataTypes.ENUM('All Users', 'Active Users', 'Inactive Users'),
+    type: DataTypes.STRING(100),
     defaultValue: 'All Users'
   },
   publishedDate: {
@@ -40,26 +43,33 @@ const Notification = sequelize.define('Notification', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+  isRead: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   createdBy: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Users',
-      key: 'id'
-    }
+    allowNull: true
   }
 }, {
-  tableName: 'notifications',
+  tableName: 'Notifications',
   timestamps: true,
   indexes: [
     { fields: ['status', 'publishedDate'] },
     { fields: ['type', 'status'] },
-    { fields: ['scheduledDate'] },
-    { fields: ['createdBy'] }
+    { fields: ['userId'] },
+    { fields: ['isRead'] }
   ]
 });
 
-// Static method to get all notifications with filters
+// Association
+Notification.associate = (models) => {
+  Notification.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+  Notification.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+  Notification.hasMany(models.UserNotification, { foreignKey: 'notificationId', as: 'userNotifications' });
+};
+
+// ✅ ADDED: Static method to fix "Notification.getAll is not a function"
 Notification.getAll = async function(filters = {}) {
   const { status, type, limit, offset } = filters;
   
@@ -77,18 +87,11 @@ Notification.getAll = async function(filters = {}) {
   return { notifications: rows, total: count };
 };
 
-// Instance method to publish notification
 Notification.prototype.publish = async function() {
   this.status = 'Published';
   this.publishedDate = new Date();
   await this.save();
   return this;
-};
-
-// Instance method to increment views
-Notification.prototype.incrementViews = async function() {
-  this.views += 1;
-  await this.save();
 };
 
 module.exports = Notification;

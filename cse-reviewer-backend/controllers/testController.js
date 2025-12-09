@@ -1,4 +1,4 @@
-// controllers/testController.js - WITH SUB-TOPIC SUPPORT
+// controllers/testController.js - WITH SUB-TOPIC SUPPORT AND RETRY LOGIC
 const { Op } = require('sequelize');
 const { Question } = require('../models');
 const aiService = require('../services/aiService');
@@ -187,6 +187,97 @@ exports.generateTest = async (req, res) => {
             }
 
             console.log(`  ✅ Added ${addedFromDB} unique questions from database`);
+          }
+
+          // ✅ STEP 4: RETRY LOOP - Keep generating until we hit the target
+          let retryAttempts = 0;
+          const maxRetries = 3;
+
+          while (questionsForCategory.length < count && retryAttempts < maxRetries) {
+            const stillNeed = count - questionsForCategory.length;
+            retryAttempts++;
+            
+            console.log(`  🔄 Retry #${retryAttempts}: Still need ${stillNeed} more questions, generating...`);
+            
+            try {
+              // Generate exactly what we need (with small buffer for duplicates)
+              const retryQuestions = await aiService.generateQuestions(
+                topic, 
+                difficulty, 
+                Math.min(stillNeed + 2, 10), // Add buffer but cap at 10
+                avoidQuestions || [],
+                subTopic || ""
+              );
+              
+              console.log(`  ✅ Retry generated ${retryQuestions.length} questions`);
+              
+              // Save and add them
+              let addedInRetry = 0;
+              for (const q of retryQuestions) {
+                if (questionsForCategory.length >= count) break; // Stop when we hit target
+                
+                try {
+                  const exists = await Question.questionExists(q.question, topic);
+                  
+                  if (exists) {
+                    console.log(`  ⏭️  Retry question already exists, skipping...`);
+                    continue;
+                  }
+
+                  const savedQuestion = await Question.create({
+                    questionText: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer,
+                    explanation: q.explanation,
+                    category: topic,
+                    difficulty: difficulty,
+                    subCategory: subTopic || null,
+                    usageCount: 1,
+                    source: 'AI'
+                  });
+
+                  const questionId = savedQuestion.id;
+
+                  if (usedQuestionIds.has(questionId)) {
+                    console.log(`  🔄 Retry question already used, skipping...`);
+                    continue;
+                  }
+
+                  usedQuestionIds.add(questionId);
+                  
+                  questionsForCategory.push({
+                    question: savedQuestion.questionText,
+                    options: savedQuestion.options,
+                    correctAnswer: savedQuestion.correctAnswer,
+                    explanation: savedQuestion.explanation,
+                    category: topic,
+                    _id: questionId
+                  });
+
+                  addedInRetry++;
+                  console.log(`  💾 Retry [${addedInRetry}] Saved with ID: ${questionId}`);
+
+                } catch (saveError) {
+                  console.error(`  ❌ Failed to save retry question:`, saveError.message);
+                }
+              }
+              
+              console.log(`  📊 Retry #${retryAttempts} added ${addedInRetry} questions`);
+              
+              if (addedInRetry === 0) {
+                console.log(`  ⚠️  Retry produced no new unique questions, stopping retries`);
+                break;
+              }
+              
+            } catch (retryError) {
+              console.error(`  ❌ Retry #${retryAttempts} failed:`, retryError.message);
+              break;
+            }
+          }
+
+          // Final count check
+          if (questionsForCategory.length < count) {
+            console.warn(`  ⚠️  Could only generate ${questionsForCategory.length}/${count} questions after ${retryAttempts} retries`);
           }
 
         } catch (aiError) {
