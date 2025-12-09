@@ -374,14 +374,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
               <p className="text-sm" style={{ color: secondaryText }}>Manage your Civil Service Reviewer system</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
-              <i className="fas fa-bell"></i>
-            </button>
-            <button className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
-              <i className="fas fa-search"></i>
-            </button>
-          </div>
+          {/* REMOVED: Bell and Search buttons */}
         </header>
 
         <main className="flex-1 overflow-y-auto">
@@ -393,14 +386,7 @@ const AdminPanel = ({ theme: initialTheme = "dark" }) => {
                 </h2>
                 <p className="text-xs sm:text-sm mt-0.5 sm:mt-1 truncate" style={{ color: secondaryText }}>Manage your CSE Reviewer system</p>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <button className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
-                  <i className="fas fa-bell text-sm sm:text-base"></i>
-                </button>
-                <button className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${isDark ? "bg-gray-800 text-gray-400 hover:text-blue-400" : "bg-gray-100 text-gray-600 hover:text-blue-600"}`}>
-                  <i className="fas fa-search text-sm sm:text-base"></i>
-                </button>
-              </div>
+              {/* REMOVED: Bell and Search buttons for mobile */}
             </div>
           </div>
           
