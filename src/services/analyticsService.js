@@ -51,7 +51,7 @@ export const getAnalyticsData = async () => {
       }),
       
       // ✅ VISIBLE MOCK EXAMS ONLY for display
-      axios.get(`${API_URL}`, { 
+      axios.get(`${API_URL}/test-attempts`, {
         headers: getAuthHeader(), 
         params: { 
           ...filterParams, 
@@ -63,7 +63,7 @@ export const getAnalyticsData = async () => {
       }),
       
       // ✅ ALL TESTS (including deleted) for accurate streak
-      axios.get(`${API_URL}`, { 
+      axios.get(`${API_URL}/test-attempts`, {
         headers: getAuthHeader(), 
         params: { 
           includeDeleted: true,  // ✅ INCLUDE DELETED
