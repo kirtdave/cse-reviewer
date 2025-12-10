@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Trash2, Eye, Sparkles } from "lucide-react";
-import { AICoachWidget } from "../Dashboard/AICoachWidget";
+import { AICoachWidget } from "../dashboard/AICoachWidget";
 import QuestionDetailsModal from "./QuestionDetailsModal";
 
 export default function BookmarkCard({
