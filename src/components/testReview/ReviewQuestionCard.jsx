@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import ExplanationSection from "./ExplanationSection";
 import BookmarkButton from "./BookmarkButton";
-import { AICoachWidget } from "../Dashboard/AICoachWidget";
+import { AICoachWidget } from "../dashboard/AICoachWidget";
 
 export default function ReviewQuestionCard({
   question,
