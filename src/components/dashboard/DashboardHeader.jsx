@@ -54,7 +54,8 @@ const DashboardHeader = ({
         } : null
       };
 
-      const response = await fetch('http://localhost:5000/api/ai/chat', {
+ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const response = await fetch(`${API_URL}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +110,8 @@ const DashboardHeader = ({
 
         const token = localStorage.getItem('token');
         
-        fetch('http://localhost:5000/api/ai/chat', {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+fetch(`${API_URL}/ai/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

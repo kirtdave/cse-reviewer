@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Use direct URL - adjust if your backend runs on different port
-const API_URL = 'http://localhost:5000/api/custom-tests';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/custom-tests";
 
 // Get auth token
 const getAuthHeader = () => {

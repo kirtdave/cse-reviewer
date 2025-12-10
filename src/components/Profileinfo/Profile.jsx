@@ -8,7 +8,7 @@ import { AchievementsCard } from "../Profileinfo/AchievementsCard";
 import { StatsCard } from "../Profileinfo/StatsCard";
 import { AlertMessage } from "../Profileinfo/AlertMessage";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function Profile({ theme = "light" }) {
   const isDark = theme === "dark";
