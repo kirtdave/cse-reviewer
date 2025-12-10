@@ -12,9 +12,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql',
     
-    // 👇👇👇 THIS IS THE FIX 👇👇👇
     port: process.env.DB_PORT || 3306,
-    // 👆👆👆 NOW IT WILL WORK 👆👆👆
 
     logging: false, 
     pool: {
@@ -41,7 +39,9 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log(isProduction ? '✅ Cloud MySQL Connected' : '✅ Local MySQL Connected');
     
-    await sequelize.sync({ alter: true });
+    // 👇👇👇 CHANGED TO FORCE: TRUE 👇👇👇
+    // This will wipe the conflicting tables and recreate them clean.
+    await sequelize.sync({ force: true });
     
     console.log('✅ Database Synced');
   } catch (error) {
