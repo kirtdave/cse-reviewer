@@ -1,3 +1,4 @@
+// models/Notification.js
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
@@ -52,7 +53,8 @@ const Notification = sequelize.define('Notification', {
     allowNull: true
   }
 }, {
-  tableName: 'Notifications',
+  // 👇 FIX: Use lowercase table name to match Linux/Cloud standards
+  tableName: 'notifications', 
   timestamps: true,
   indexes: [
     { fields: ['status', 'publishedDate'] },
@@ -66,10 +68,13 @@ const Notification = sequelize.define('Notification', {
 Notification.associate = (models) => {
   Notification.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
   Notification.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-  Notification.hasMany(models.UserNotification, { foreignKey: 'notificationId', as: 'userNotifications' });
+  // Check if UserNotification exists before associating to prevent crashes
+  if (models.UserNotification) {
+    Notification.hasMany(models.UserNotification, { foreignKey: 'notificationId', as: 'userNotifications' });
+  }
 };
 
-// ✅ ADDED: Static method to fix "Notification.getAll is not a function"
+// Static method
 Notification.getAll = async function(filters = {}) {
   const { status, type, limit, offset } = filters;
   
