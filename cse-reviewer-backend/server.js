@@ -24,27 +24,41 @@ const notificationRoutes = require('./routes/notifications');
 const app = express();
 
 // ==========================================
-// 🚀 PERFORMANCE & SECURITY MIDDLEWARE
+// 🚀 MIDDLEWARE (Order is Critical!)
 // ==========================================
 
-// 1. Helmet adds security headers (prevents XSS attacks)
-app.use(helmet());
+// 1. CORS Configuration (MUST BE FIRST)
+// allowing all origins (*) to fix your immediate connection issues.
+app.use(cors({
+    origin: "*", 
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+}));
 
-// 2. Compression shrinks your JSON responses by ~70% (Less Lag!)
+// 2. Explicitly Handle Preflight Requests
+// This fixes: "Response to preflight request doesn't pass access control check"
+app.options('*', cors());
+
+// 3. Helmet Security
+// We disable 'crossOriginResourcePolicy' so it doesn't fight with CORS
+app.use(helmet({
+    crossOriginResourcePolicy: false,
+}));
+
+// 4. Compression
 app.use(compression());
 
-// 3. CORS Configuration
-// In production, we usually restrict this to your frontend URL only.
-// For now, we allow all (*) to ensure your deployment works first try.
-app.use(cors());
-
+// 5. Body Parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ✅ Initialize models and associations
 require('./models');
 
-// Routes
+// ==========================================
+// 🛣️ ROUTES
+// ==========================================
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes); 
@@ -77,7 +91,6 @@ const PORT = process.env.PORT || 5000;
 // ==========================================
 // 🚀 SAFE STARTUP SEQUENCE
 // ==========================================
-// We wrap this in a function to ensure DB is ready BEFORE opening the doors.
 const startServer = async () => {
   try {
     // 1. Connect to Database first
