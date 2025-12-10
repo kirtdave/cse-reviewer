@@ -17,7 +17,7 @@ export default function BookmarkList({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-12 sm:py-16"
+        className="text-center py-12 sm:py-16 pb-20"
       >
         <Bookmark className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 ${isDark ? "text-gray-700" : "text-gray-300"}`} />
         <h3 className={`text-lg sm:text-xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -33,7 +33,7 @@ export default function BookmarkList({
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4 pb-6 sm:pb-8">
       <AnimatePresence mode="popLayout">
         {filteredBookmarks.map((bookmark, idx) => (
           <BookmarkCard

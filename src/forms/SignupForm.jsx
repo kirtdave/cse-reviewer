@@ -321,7 +321,7 @@ export default function SignupForm({ theme, onSignup }) {
         )}
       </div>
 
-      {/* Submit Button - Touch-Friendly */}
+      {/* Submit Button */}
       <motion.button
         type="submit"
         disabled={isLoading}

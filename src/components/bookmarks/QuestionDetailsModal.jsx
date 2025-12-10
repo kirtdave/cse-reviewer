@@ -16,7 +16,7 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4"
         onClick={onClose}
       >
         <motion.div
@@ -24,13 +24,13 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 50, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className={`w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-2xl ${
+          className={`w-full max-w-md rounded-xl sm:rounded-2xl ${
             isDark ? "bg-gray-900" : "bg-white"
           } shadow-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} overflow-hidden`}
         >
           {/* Header */}
-          <div className={`p-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-            <div className="flex items-start justify-between gap-2 mb-2">
+          <div className={`p-2 sm:p-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+            <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                   bookmark.isCorrect
@@ -54,23 +54,23 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
                 <X size={18} />
               </button>
             </div>
-            <h2 className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-sm sm:text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
               Question Details
             </h2>
-            <p className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"} truncate`}>
+            <p className={`text-[10px] sm:text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"} truncate`}>
               From: {bookmark.attemptName}
             </p>
           </div>
 
           {/* Content */}
-          <div className="p-3 max-h-[60vh] overflow-y-auto">
-            <div className="mb-3">
-              <h3 className={`text-[10px] font-semibold mb-1.5 uppercase ${
+          <div className="p-2 sm:p-3 max-h-[55vh] sm:max-h-[60vh] overflow-y-auto">
+            <div className="mb-2 sm:mb-3">
+              <h3 className={`text-[10px] font-semibold mb-1 sm:mb-1.5 uppercase ${
                 isDark ? "text-gray-400" : "text-gray-600"
               }`}>
                 QUESTION
               </h3>
-              <p className={`text-sm leading-relaxed ${isDark ? "text-white" : "text-gray-900"}`}>
+              <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-white" : "text-gray-900"}`}>
                 {bookmark.questionText}
               </p>
             </div>
@@ -87,19 +87,19 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
           </div>
 
           {/* Footer */}
-          <div className={`p-3 border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
+          <div className={`p-2 sm:p-3 border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
             <button
               onClick={onAskAI}
-              className="w-full px-3 py-2.5 mb-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              className="w-full px-3 py-2 sm:py-2.5 mb-1.5 sm:mb-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs sm:text-sm font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
             >
               <Sparkles size={16} />
               Ask AI for Help
             </button>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               <button
                 onClick={onViewFullTest}
-                className={`px-3 py-2 rounded-lg font-medium transition-all text-xs ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-medium transition-all text-xs ${
                   isDark
                     ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30"
                     : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
@@ -112,7 +112,7 @@ export default function QuestionDetailsModal({ bookmark, isDark, onClose, onView
               <button
                 onClick={() => setShowReportModal(true)}
                 disabled={isLoadingDetails && !activeQuestionId}
-                className={`px-3 py-2 rounded-lg font-medium transition-all text-xs flex items-center justify-center ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-medium transition-all text-xs flex items-center justify-center ${
                   isDark
                     ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     : "bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -228,7 +228,7 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4"
       onClick={onClose}
     >
       <motion.div
@@ -236,17 +236,17 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-2xl ${
+        className={`w-full max-w-md rounded-xl sm:rounded-2xl ${
           isDark ? "bg-gray-900" : "bg-white"
         } shadow-2xl border ${isDark ? "border-gray-800" : "border-gray-200"} overflow-hidden`}
       >
-        <div className={`p-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+        <div className={`p-2 sm:p-3 border-b ${isDark ? "border-gray-800" : "border-gray-200"}`}>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+              <h3 className={`text-sm sm:text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                 Report Issue
               </h3>
-              <p className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              <p className={`text-[10px] sm:text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Help us improve quality
               </p>
             </div>
@@ -261,12 +261,12 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
           </div>
         </div>
 
-        <div className="p-3 max-h-[60vh] overflow-y-auto">
+        <div className="p-2 sm:p-3 max-h-[55vh] sm:max-h-[60vh] overflow-y-auto">
           {successMessage && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-3 p-2.5 rounded-lg bg-green-500/10 border border-green-500 text-green-500 text-xs"
+              className="mb-2 sm:mb-3 p-2 sm:p-2.5 rounded-lg bg-green-500/10 border border-green-500 text-green-500 text-xs"
             >
               {successMessage}
             </motion.div>
@@ -276,15 +276,15 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500 text-red-500 text-xs"
+              className="mb-2 sm:mb-3 p-2 sm:p-2.5 rounded-lg bg-red-500/10 border border-red-500 text-red-500 text-xs"
             >
               {errorMessage}
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
             <div>
-              <label className={`block text-xs font-medium mb-1.5 ${
+              <label className={`block text-[10px] sm:text-xs font-medium mb-1 sm:mb-1.5 ${
                 isDark ? "text-gray-300" : "text-gray-700"
               }`}>
                 Issue Type
@@ -293,7 +293,7 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
                 value={reportData.issueType}
                 onChange={(e) => setReportData({ ...reportData, issueType: e.target.value })}
                 disabled={isSubmitting}
-                className={`w-full px-3 py-2.5 text-sm rounded-lg border ${
+                className={`w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg border ${
                   isDark
                     ? "bg-gray-800 border-gray-700 text-white"
                     : "bg-white border-gray-300 text-gray-900"
@@ -308,7 +308,7 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
             </div>
 
             <div>
-              <label className={`block text-xs font-medium mb-1.5 ${
+              <label className={`block text-[10px] sm:text-xs font-medium mb-1 sm:mb-1.5 ${
                 isDark ? "text-gray-300" : "text-gray-700"
               }`}>
                 Description
@@ -319,7 +319,7 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
                 disabled={isSubmitting}
                 rows={3}
                 placeholder="Describe the issue..."
-                className={`w-full px-3 py-2.5 text-sm rounded-lg border ${
+                className={`w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg border ${
                   isDark
                     ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
@@ -327,31 +327,31 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
               />
             </div>
 
-            <div className={`p-2.5 rounded-lg ${
+            <div className={`p-2 sm:p-2.5 rounded-lg ${
               isDark ? "bg-gray-800/50" : "bg-gray-50"
             }`}>
-              <p className={`text-[10px] font-semibold mb-1 uppercase ${
+              <p className={`text-[10px] font-semibold mb-0.5 sm:mb-1 uppercase ${
                 isDark ? "text-gray-400" : "text-gray-600"
               }`}>
                 QUESTION:
               </p>
-              <p className={`text-xs line-clamp-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              <p className={`text-[10px] sm:text-xs line-clamp-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 {bookmark.questionText}
               </p>
-              <p className="text-[10px] mt-1 opacity-50">
+              <p className="text-[9px] sm:text-[10px] mt-0.5 sm:mt-1 opacity-50">
                 Ref ID: {realQuestionId || "Searching..."}
               </p>
             </div>
           </form>
         </div>
 
-        <div className={`p-3 border-t ${isDark ? "border-gray-800" : "border-gray-200"}`}>
-          <div className="flex gap-2">
+        <div className={`p-2 sm:p-3 border-t ${isDark ? "border-gray-800" : "border-gray-200"}`}>
+          <div className="flex gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className={`flex-1 px-3 py-2.5 text-sm rounded-lg font-medium transition-all ${
+              className={`flex-1 px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                 isDark
                   ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -363,7 +363,7 @@ function ReportQuestionModal({ bookmark, realQuestionId, isDark, onClose }) {
               type="submit"
               disabled={isSubmitting || !realQuestionId}
               onClick={handleSubmit}
-              className="flex-1 px-3 py-2.5 text-sm rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="flex-1 px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1 sm:gap-1.5"
             >
               {isSubmitting ? (
                 <>
@@ -447,13 +447,13 @@ function QuestionOptions({ bookmark, isDark, onDetailsLoaded, onError }) {
 
   return (
     <>
-      <div className="mb-3">
-        <h3 className={`text-[10px] font-semibold mb-1.5 uppercase ${
+      <div className="mb-2 sm:mb-3">
+        <h3 className={`text-[10px] font-semibold mb-1 sm:mb-1.5 uppercase ${
           isDark ? "text-gray-400" : "text-gray-600"
         }`}>
           ANSWER CHOICES
         </h3>
-        <div className="space-y-1.5">
+        <div className="space-y-1 sm:space-y-1.5">
           {questionData.options.map((option, idx) => {
             // ✅ FIX: Strict Number comparison
             const isUserAnswer = Number(questionData.userAnswer) === idx;
@@ -476,16 +476,16 @@ function QuestionOptions({ bookmark, isDark, onDetailsLoaded, onError }) {
             return (
               <div
                 key={idx}
-                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border-2 ${bgClass} transition-all`}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg border-2 ${bgClass} transition-all`}
               >
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-3.5 sm:w-4 h-3.5 sm:h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                   isCorrectAnswer ? "border-green-500" : isUserAnswer ? "border-red-500" : isDark ? "border-gray-600" : "border-gray-300"
                 }`}>
                   {(isCorrectAnswer || isUserAnswer) && (
-                    <div className={`w-2 h-2 rounded-full ${isCorrectAnswer ? "bg-green-500" : "bg-red-500"}`} />
+                    <div className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${isCorrectAnswer ? "bg-green-500" : "bg-red-500"}`} />
                   )}
                 </div>
-                <span className={`flex-1 text-xs ${textClass}`}>{option}</span>
+                <span className={`flex-1 text-[11px] sm:text-xs ${textClass}`}>{option}</span>
                 {icon}
               </div>
             );
@@ -494,18 +494,18 @@ function QuestionOptions({ bookmark, isDark, onDetailsLoaded, onError }) {
       </div>
 
       {questionData.explanation && (
-        <div className={`p-2.5 rounded-lg ${
+        <div className={`p-2 sm:p-2.5 rounded-lg ${
           isDark ? "bg-blue-500/10 border border-blue-500/30" : "bg-blue-50 border border-blue-200"
         }`}>
-          <div className="flex items-start gap-2">
-            <i className="fa-solid fa-lightbulb text-blue-500 text-sm mt-0.5 flex-shrink-0"></i>
+          <div className="flex items-start gap-1.5 sm:gap-2">
+            <i className="fa-solid fa-lightbulb text-blue-500 text-xs sm:text-sm mt-0.5 flex-shrink-0"></i>
             <div className="flex-1 min-w-0">
-              <h3 className={`text-[10px] font-semibold mb-1 uppercase ${
+              <h3 className={`text-[10px] font-semibold mb-0.5 sm:mb-1 uppercase ${
                 isDark ? "text-blue-400" : "text-blue-700"
               }`}>
                 EXPLANATION
               </h3>
-              <p className={`text-xs leading-relaxed ${
+              <p className={`text-[11px] sm:text-xs leading-relaxed ${
                 isDark ? "text-blue-200" : "text-blue-900"
               }`}>
                 {questionData.explanation}
