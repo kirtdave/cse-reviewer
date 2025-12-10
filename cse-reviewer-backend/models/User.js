@@ -57,8 +57,8 @@ const User = sequelize.define('User', {
   },
   avatar: {
     type: DataTypes.TEXT('long'),
-    allowNull: true,
-    defaultValue: 'https://i.pravatar.cc/200?img=1'
+    allowNull: true
+    // ❌ REMOVED defaultValue to fix the "BLOB/TEXT" crash
   },
   studyGoal: {
     type: DataTypes.STRING(255),
@@ -127,9 +127,16 @@ const User = sequelize.define('User', {
   ],
   hooks: {
     beforeSave: async (user) => {
+      // 1. Encrypt Password if changed
       if (user.changed('password')) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
+      }
+
+      // 2. ✅ FIX: Set Default Avatar via Code instead of Database Rule
+      // This prevents the "BLOB/TEXT can't have default value" error
+      if (!user.avatar) {
+        user.avatar = 'https://i.pravatar.cc/200?img=1';
       }
     }
   }
