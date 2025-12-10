@@ -33,12 +33,12 @@ export const getAnalyticsData = async () => {
     // ✅ CRITICAL FIX: Fetch ALL data INCLUDING DELETED for accurate analytics
     const [stats, sectionStats, trend, allMockAttempts, visibleMockAttempts, allAttemptsForStreak] = await Promise.all([
       // Stats (already includes deleted) ✅
-      axios.get(`${API_URL}/stats/overview`, { headers: getAuthHeader(), params: filterParams }),
-      axios.get(`${API_URL}/stats/sections`, { headers: getAuthHeader(), params: filterParams }),
-      axios.get(`${API_URL}/stats/trend`, { headers: getAuthHeader(), params: { ...filterParams, limit: 7 } }),
+      axios.get(`${API_URL}/test-attempts/stats/overview`, { headers: getAuthHeader(), params: filterParams }),
+      axios.get(`${API_URL}/test-attempts/stats/sections`, { headers: getAuthHeader(), params: filterParams }),
+      axios.get(`${API_URL}/test-attempts/stats/trend`, { headers: getAuthHeader(), params: { ...filterParams, limit: 7 } }),
       
       // ✅ ALL MOCK EXAMS (including deleted) for time metrics
-      axios.get(`${API_URL}`, { 
+      axios.get(`${API_URL}/test-attempts`, { 
         headers: getAuthHeader(), 
         params: { 
           ...filterParams, 
