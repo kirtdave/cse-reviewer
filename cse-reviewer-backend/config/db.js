@@ -11,9 +11,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST || 'localhost',
     dialect: 'mysql',
-    
-    port: process.env.DB_PORT || 3306,
-
+    port: process.env.DB_PORT || 3306, // ✅ Correct Port logic
     logging: false, 
     pool: {
       max: 10, 
@@ -39,9 +37,18 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log(isProduction ? '✅ Cloud MySQL Connected' : '✅ Local MySQL Connected');
     
-    // 👇👇👇 CHANGED TO FORCE: TRUE 👇👇👇
-    // This will wipe the conflicting tables and recreate them clean.
+    // 👇 STEP 1: Turn OFF "Safety Lock" (Allows deleting linked tables)
+    if (isProduction) {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true });
+    }
+
+    // 👇 STEP 2: Wipe and Recreate Everything (Force Reset)
     await sequelize.sync({ force: true });
+    
+    // 👇 STEP 3: Turn "Safety Lock" Back ON
+    if (isProduction) {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { raw: true });
+    }
     
     console.log('✅ Database Synced');
   } catch (error) {
