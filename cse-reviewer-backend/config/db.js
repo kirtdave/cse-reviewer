@@ -37,15 +37,20 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log(isProduction ? '✅ Cloud MySQL Connected' : '✅ Local MySQL Connected');
     
-    // 👇 STEP 1: Turn OFF "Safety Lock" (Allows deleting linked tables)
+    // 👇 STEP 1: Disable Security Checks
     if (isProduction) {
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true });
     }
 
-    // 👇 STEP 2: Wipe and Recreate Everything (Force Reset)
+    // 👇 STEP 2: KILL THE ZOMBIE TABLE (Capital 'N')
+    // We force delete the old table that is causing the conflict
+    await sequelize.query('DROP TABLE IF EXISTS Notifications', { raw: true });
+    await sequelize.query('DROP TABLE IF EXISTS notifications', { raw: true });
+
+    // 👇 STEP 3: Recreate Fresh
     await sequelize.sync({ force: true });
     
-    // 👇 STEP 3: Turn "Safety Lock" Back ON
+    // 👇 STEP 4: Enable Security Checks
     if (isProduction) {
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { raw: true });
     }
