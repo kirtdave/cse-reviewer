@@ -1,7 +1,11 @@
 // src/utils/axiosConfig.js
 import axios from 'axios';
 
+// 1. Get the URL from the .env file (or use localhost as backup)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// 2. 👇 THIS IS THE MISSING LINE! Tell Axios to use that URL.
+axios.defaults.baseURL = API_URL;
 
 // ✅ MAGIC FIX: Global interceptor that catches ALL 401 errors
 axios.interceptors.response.use(
@@ -53,8 +57,11 @@ axios.interceptors.request.use(
       '/auth/forgot-password',
     ];
     
+    // Safety check to ensure url exists
+    const url = config.url || '';
+    
     const isPublicEndpoint = publicEndpoints.some(endpoint => 
-      config.url?.includes(endpoint)
+      url.includes(endpoint)
     );
     
     if (!isPublicEndpoint) {
@@ -62,7 +69,7 @@ axios.interceptors.request.use(
       const token = localStorage.getItem('token');
       
       if (!isLoggedIn || !token) {
-        console.log('⚠️ Blocking API call - user not logged in:', config.url);
+        console.log('⚠️ Blocking API call - user not logged in:', url);
         
         return Promise.reject({
           response: { status: 401 },
