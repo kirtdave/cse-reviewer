@@ -38,7 +38,7 @@ export const getAnalyticsData = async () => {
       axios.get(`${API_URL}/test-attempts/stats/trend`, { headers: getAuthHeader(), params: { ...filterParams, limit: 7 } }),
       
       // ✅ ALL MOCK EXAMS (including deleted) for time metrics
-      axios.get(`${API_URL}/test-attempts`, { 
+      axios.get(`${API_URL}/test-attempts`, {
         headers: getAuthHeader(), 
         params: { 
           ...filterParams, 
