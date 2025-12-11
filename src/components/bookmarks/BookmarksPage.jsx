@@ -24,31 +24,42 @@ export default function BookmarksPage({ theme = "dark", navigate }) {
     filterBookmarks();
   }, [searchQuery, categoryFilter, statusFilter, bookmarks]);
 
-  const loadBookmarks = async () => {
-    try {
-      // ✅ CHECK: Don't fetch if user is not logged in
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      
-      if (!isLoggedIn) {
-        console.log('👤 Guest user - skipping bookmarks fetch');
-        setBookmarks([]);
-        setFilteredBookmarks([]);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const data = await getAllBookmarks();
-      setBookmarks(data);
-      setFilteredBookmarks(data);
-    } catch (error) {
-      console.error('Failed to load bookmarks:', error);
+const loadBookmarks = async () => {
+  try {
+    // ✅ CHECK: Don't fetch if user is not logged in
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const token = localStorage.getItem('token');
+    
+    console.log('🔍 DEBUG - Login Status:', isLoggedIn);
+    console.log('🔍 DEBUG - Token exists:', !!token);
+    console.log('🔍 DEBUG - API URL:', import.meta.env.VITE_API_URL);
+    
+    if (!isLoggedIn) {
+      console.log('👤 Guest user - skipping bookmarks fetch');
       setBookmarks([]);
       setFilteredBookmarks([]);
-    } finally {
       setLoading(false);
+      return;
     }
-  };
+
+    setLoading(true);
+    console.log('📚 About to call getAllBookmarks()...'); // ✅ ADD THIS
+    const data = await getAllBookmarks();
+    console.log('✅ getAllBookmarks returned:', data); // ✅ ADD THIS
+    console.log('✅ Number of bookmarks:', data?.length || 0); // ✅ ADD THIS
+    
+    setBookmarks(data);
+    setFilteredBookmarks(data);
+  } catch (error) {
+    console.error('❌ Failed to load bookmarks:', error);
+    console.error('❌ Error response:', error.response?.data); // ✅ ADD THIS
+    console.error('❌ Error status:', error.response?.status); // ✅ ADD THIS
+    setBookmarks([]);
+    setFilteredBookmarks([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const filterBookmarks = () => {
     let filtered = [...bookmarks];
