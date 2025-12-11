@@ -38,7 +38,8 @@ app.use(cors({
 
 // 2. Explicitly Handle Preflight Requests
 // This fixes: "Response to preflight request doesn't pass access control check"
-app.options('*', cors());
+// ✅ Use this NEW syntax (Regex wildcard)
+app.options(/.*/, cors());
 
 // 3. Helmet Security
 // We disable 'crossOriginResourcePolicy' so it doesn't fight with CORS
