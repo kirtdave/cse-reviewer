@@ -4,7 +4,7 @@ import { Calendar, Trash2, Eye, Sparkles } from "lucide-react";
 import { AICoachWidget } from "../dashboard/AICoachWidget";
 import QuestionDetailsModal from "./QuestionDetailsModal";
 
-export default function BookmarkCard({
+const BookmarkCard = React.forwardRef(({
   bookmark,
   isDark,
   index,
@@ -12,7 +12,7 @@ export default function BookmarkCard({
   onSaveNote,
   onViewTest,
   theme
-}) {
+}, ref) => {
   const [editingNote, setEditingNote] = useState(false);
   const [noteText, setNoteText] = useState(bookmark.note || "");
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -45,6 +45,7 @@ export default function BookmarkCard({
   return (
     <>
       <motion.div
+        ref={ref}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -209,4 +210,6 @@ export default function BookmarkCard({
       )}
     </>
   );
-}
+});
+
+export default BookmarkCard;
